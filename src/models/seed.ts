@@ -1,0 +1,136 @@
+import { getDb } from '@/libs/DB';
+import { tennisCourtSchema } from './Schema';
+
+const sampleTennisCourts = [
+  {
+    name: 'Lincoln Park Tennis Courts',
+    address: '2045 N Lincoln Park West',
+    city: 'Chicago',
+    latitude: 41.9175,
+    longitude: -87.6372,
+    numberOfCourts: 20,
+    surfaceType: 'Hard',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'Grant Park Tennis Center',
+    address: '1000 S Columbus Dr',
+    city: 'Chicago',
+    latitude: 41.8725,
+    longitude: -87.6189,
+    numberOfCourts: 12,
+    surfaceType: 'Hard',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'Midtown Athletic Club',
+    address: '2444 N Elston Ave',
+    city: 'Chicago',
+    latitude: 41.9275,
+    longitude: -87.6889,
+    numberOfCourts: 8,
+    surfaceType: 'Hard',
+    isIndoor: true,
+    isLighted: true,
+    isPublic: false,
+  },
+  {
+    name: 'Waveland Tennis Courts',
+    address: '3600 N Recreation Dr',
+    city: 'Chicago',
+    latitude: 41.9475,
+    longitude: -87.6389,
+    numberOfCourts: 16,
+    surfaceType: 'Hard',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'McFetridge Sports Center',
+    address: '3843 N California Ave',
+    city: 'Chicago',
+    latitude: 41.9475,
+    longitude: -87.6989,
+    numberOfCourts: 4,
+    surfaceType: 'Hard',
+    isIndoor: true,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'Oak Park Tennis Center',
+    address: '218 Madison St',
+    city: 'Oak Park',
+    latitude: 41.8875,
+    longitude: -87.7989,
+    numberOfCourts: 10,
+    surfaceType: 'Hard',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'Evanston Tennis Club',
+    address: '1500 Central St',
+    city: 'Evanston',
+    latitude: 42.0475,
+    longitude: -87.6889,
+    numberOfCourts: 6,
+    surfaceType: 'Clay',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: false,
+  },
+  {
+    name: 'Glenview Tennis Club',
+    address: '2400 Chestnut Ave',
+    city: 'Glenview',
+    latitude: 42.0775,
+    longitude: -87.8289,
+    numberOfCourts: 8,
+    surfaceType: 'Hard',
+    isIndoor: true,
+    isLighted: true,
+    isPublic: false,
+  },
+  {
+    name: 'Skokie Sports Park',
+    address: '3459 Oakton St',
+    city: 'Skokie',
+    latitude: 42.0375,
+    longitude: -87.7489,
+    numberOfCourts: 12,
+    surfaceType: 'Hard',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: true,
+  },
+  {
+    name: 'Winnetka Tennis Club',
+    address: '1300 Oak St',
+    city: 'Winnetka',
+    latitude: 42.1075,
+    longitude: -87.7389,
+    numberOfCourts: 6,
+    surfaceType: 'Clay',
+    isIndoor: false,
+    isLighted: true,
+    isPublic: false,
+  },
+];
+
+export async function seed() {
+  try {
+    const db = await getDb();
+    await db.insert(tennisCourtSchema).values(sampleTennisCourts);
+    console.error('Successfully seeded tennis courts database');
+  } catch (error) {
+    console.error('Error seeding database:', error);
+    throw error;
+  }
+}

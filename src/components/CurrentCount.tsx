@@ -1,26 +1,34 @@
-import { eq } from 'drizzle-orm';
-import { getTranslations } from 'next-intl/server';
-import { headers } from 'next/headers';
-import { db } from '@/libs/DB';
-import { logger } from '@/libs/Logger';
+'use client';
+
+import { useEffect, useState } from 'react';
+import { getDb } from '@/libs/DB';
 import { counterSchema } from '@/models/Schema';
 
-export const CurrentCount = async () => {
-  const t = await getTranslations('CurrentCount');
+export default function CurrentCount() {
+  const [count, setCount] = useState<number | null>(null);
 
-  // `x-e2e-random-id` is used for end-to-end testing to make isolated requests
-  // The default value is 0 when there is no `x-e2e-random-id` header
-  const id = Number((await headers()).get('x-e2e-random-id')) ?? 0;
-  const result = await db.query.counterSchema.findMany({
-    where: eq(counterSchema.id, id),
-  });
-  const count = result[0]?.count ?? 0;
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const db = await getDb();
+        const result = await db.select().from(counterSchema);
+        setCount(result[0]?.count ?? 0);
+      } catch (error) {
+        console.error('Error fetching count:', error);
+      }
+    };
 
-  logger.info('Counter fetched successfully');
+    fetchCount();
+  }, []);
+
+  if (count === null) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div>
-      {t('count', { count })}
+      Current count:
+      {count}
     </div>
   );
-};
+}
