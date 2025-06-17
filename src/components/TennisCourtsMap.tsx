@@ -55,20 +55,25 @@ export default function TennisCourtsMap() {
   }, []);
 
   if (loading) {
-    return <div className="h-[600px] flex items-center justify-center">Loading tennis courts...</div>;
+    return (
+      <div className="h-[400px] sm:h-[500px] lg:h-[600px] flex items-center justify-center text-sm sm:text-base">
+        Loading tennis courts...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="h-[600px] flex items-center justify-center text-red-500">
+      <div className="h-[400px] sm:h-[500px] lg:h-[600px] flex items-center justify-center text-red-500 text-sm sm:text-base">
         Error:
+        {' '}
         {error}
       </div>
     );
   }
 
   return (
-    <div className="h-[600px] w-full">
+    <div className="h-[400px] sm:h-[500px] lg:h-[600px] w-full">
       <MapContainer
         center={[41.8781, -87.6298]} // Chicago coordinates
         zoom={12}
@@ -85,29 +90,34 @@ export default function TennisCourtsMap() {
             icon={customIcon}
           >
             <Popup>
-              <div className="p-2">
-                <h3 className="font-bold text-lg">{court.name}</h3>
-                <p className="text-sm">{court.address}</p>
-                <p className="text-sm">{court.city}</p>
-                <div className="mt-2 text-sm">
+              <div className="p-2 max-w-xs">
+                <h3 className="font-bold text-lg mb-2">{court.name}</h3>
+                <p className="text-sm mb-1">{court.address}</p>
+                <p className="text-sm mb-2">{court.city}</p>
+                <div className="mt-2 text-sm space-y-1">
                   <p>
-                    Courts:
+                    <strong>Courts:</strong>
+                    {' '}
                     {court.number_of_courts}
                   </p>
                   <p>
-                    Surface:
+                    <strong>Surface:</strong>
+                    {' '}
                     {court.surface_type}
                   </p>
                   <p>
-                    Indoor:
+                    <strong>Indoor:</strong>
+                    {' '}
                     {court.is_indoor ? 'Yes' : 'No'}
                   </p>
                   <p>
-                    Lighted:
+                    <strong>Lighted:</strong>
+                    {' '}
                     {court.is_lighted ? 'Yes' : 'No'}
                   </p>
                   <p>
-                    Public:
+                    <strong>Public:</strong>
+                    {' '}
                     {court.is_public ? 'Yes' : 'No'}
                   </p>
                 </div>

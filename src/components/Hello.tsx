@@ -8,11 +8,11 @@ export const Hello = async () => {
 
   return (
     <>
-      <p>
+      <p className="text-sm sm:text-base mb-4 sm:mb-6">
         {`👋 `}
         {t('hello_message', { email: user?.primaryEmailAddress?.emailAddress ?? '' })}
       </p>
-      <p>
+      <p className="text-sm sm:text-base mb-6 sm:mb-8">
         {t.rich('alternative_message', {
           url: () => (
             <a

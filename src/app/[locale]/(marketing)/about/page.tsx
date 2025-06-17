@@ -28,9 +28,9 @@ export default async function About(props: IAboutProps) {
 
   return (
     <>
-      <p>{t('about_paragraph')}</p>
+      <p className="text-sm sm:text-base">{t('about_paragraph')}</p>
 
-      <div className="mt-2 text-center text-sm">
+      <div className="mt-4 sm:mt-6 text-center text-xs sm:text-sm">
         {`${t('translation_powered_by')} `}
         <a
           className="text-blue-700 hover:border-b-2 hover:border-blue-700"
@@ -42,7 +42,7 @@ export default async function About(props: IAboutProps) {
 
       <a href="https://l.crowdin.com/next-js">
         <Image
-          className="mx-auto mt-2"
+          className="mx-auto mt-4 sm:mt-6"
           src="/assets/images/crowdin-dark.png"
           alt="Crowdin Translation Management System"
           width={128}
@@ -51,4 +51,4 @@ export default async function About(props: IAboutProps) {
       </a>
     </>
   );
-};
+}

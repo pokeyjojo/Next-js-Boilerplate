@@ -40,10 +40,10 @@ export default async function PortfolioDetail(props: IPortfolioDetailProps) {
 
   return (
     <>
-      <h1 className="capitalize">{t('header', { slug })}</h1>
-      <p>{t('content')}</p>
+      <h1 className="capitalize text-xl sm:text-2xl font-bold mb-4 sm:mb-6">{t('header', { slug })}</h1>
+      <p className="text-sm sm:text-base mb-6 sm:mb-8">{t('content')}</p>
 
-      <div className="mt-5 text-center text-sm">
+      <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm">
         {`${t('code_review_powered_by')} `}
         <a
           className="text-blue-700 hover:border-b-2 hover:border-blue-700"
@@ -57,7 +57,7 @@ export default async function PortfolioDetail(props: IPortfolioDetailProps) {
         href="https://www.coderabbit.ai?utm_source=next_js_starter&utm_medium=github&utm_campaign=next_js_starter_oss_2025"
       >
         <Image
-          className="mx-auto mt-2"
+          className="mx-auto mt-4 sm:mt-6"
           src="/assets/images/coderabbit-logo-light.svg"
           alt="CodeRabbit"
           width={128}

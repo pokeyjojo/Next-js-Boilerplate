@@ -8,6 +8,13 @@ import { routing } from '@/libs/i18nRouting';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: '#ffffff',
   icons: [
     {
       rel: 'apple-touch-icon',
@@ -50,6 +57,12 @@ export default async function RootLayout(props: {
 
   return (
     <html lang={locale}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="theme-color" content="#ffffff" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+      </head>
       <body>
         <NextIntlClientProvider>
           <PostHogProvider>

@@ -1,34 +1,40 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDb } from '@/libs/DB';
-import { counterSchema } from '@/models/Schema';
 
-export default function CurrentCount() {
+export const CurrentCount = () => {
   const [count, setCount] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCount = async () => {
       try {
-        const db = await getDb();
-        const result = await db.select().from(counterSchema);
-        setCount(result[0]?.count ?? 0);
+        const response = await fetch('/api/counter');
+        if (!response.ok) {
+          throw new Error('Failed to fetch count');
+        }
+        const data = await response.json();
+        setCount(data.count ?? 0);
       } catch (error) {
         console.error('Error fetching count:', error);
+        setCount(0);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchCount();
   }, []);
 
-  if (count === null) {
-    return <div>Loading...</div>;
+  if (loading) {
+    return <div className="text-sm sm:text-base text-gray-600">Loading...</div>;
   }
 
   return (
-    <div>
+    <div className="text-sm sm:text-base font-medium">
       Current count:
-      {count}
+      {' '}
+      <span className="font-bold text-blue-600">{count}</span>
     </div>
   );
-}
+};

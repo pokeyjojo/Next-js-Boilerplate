@@ -27,13 +27,13 @@ export default function Counter() {
     <>
       <CounterForm />
 
-      <div className="mt-3">
-        <Suspense fallback={<p>{t('loading_counter')}</p>}>
+      <div className="mt-4 sm:mt-6">
+        <Suspense fallback={<p className="text-sm sm:text-base">{t('loading_counter')}</p>}>
           <CurrentCount />
         </Suspense>
       </div>
 
-      <div className="mt-5 text-center text-sm">
+      <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm">
         {`${t('security_powered_by')} `}
         <a
           className="text-blue-700 hover:border-b-2 hover:border-blue-700"
@@ -47,7 +47,7 @@ export default function Counter() {
         href="https://launch.arcjet.com/Q6eLbRE"
       >
         <Image
-          className="mx-auto mt-2"
+          className="mx-auto mt-4 sm:mt-6"
           src="/assets/images/arcjet-light.svg"
           alt="Arcjet"
           width={128}
@@ -56,4 +56,4 @@ export default function Counter() {
       </a>
     </>
   );
-};
+}
