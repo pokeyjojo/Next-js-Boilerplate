@@ -1,8 +1,9 @@
 'use client';
 
 import { Icon } from 'leaflet';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer } from 'react-leaflet';
+import { MapContainer, Marker, TileLayer } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icon in Next.js
@@ -31,6 +32,7 @@ type TennisCourt = {
 };
 
 export default function TennisCourtsMap() {
+  const router = useRouter();
   const [courts, setCourts] = useState<TennisCourt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,10 @@ export default function TennisCourtsMap() {
 
     fetchCourts();
   }, []);
+
+  const handleMarkerClick = (courtId: number) => {
+    router.push(`/en/courts/${courtId}`);
+  };
 
   if (loading) {
     return (
@@ -88,42 +94,10 @@ export default function TennisCourtsMap() {
             key={court.id}
             position={[court.latitude, court.longitude]}
             icon={customIcon}
-          >
-            <Popup>
-              <div className="p-2 max-w-xs">
-                <h3 className="font-bold text-lg mb-2">{court.name}</h3>
-                <p className="text-sm mb-1">{court.address}</p>
-                <p className="text-sm mb-2">{court.city}</p>
-                <div className="mt-2 text-sm space-y-1">
-                  <p>
-                    <strong>Courts:</strong>
-                    {' '}
-                    {court.number_of_courts}
-                  </p>
-                  <p>
-                    <strong>Surface:</strong>
-                    {' '}
-                    {court.surface_type}
-                  </p>
-                  <p>
-                    <strong>Indoor:</strong>
-                    {' '}
-                    {court.is_indoor ? 'Yes' : 'No'}
-                  </p>
-                  <p>
-                    <strong>Lighted:</strong>
-                    {' '}
-                    {court.is_lighted ? 'Yes' : 'No'}
-                  </p>
-                  <p>
-                    <strong>Public:</strong>
-                    {' '}
-                    {court.is_public ? 'Yes' : 'No'}
-                  </p>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+            eventHandlers={{
+              click: () => handleMarkerClick(court.id),
+            }}
+          />
         ))}
       </MapContainer>
     </div>

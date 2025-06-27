@@ -24,6 +24,15 @@ export default async function SignInPage(props: ISignInPageProps) {
   setRequestLocale(locale);
 
   return (
-    <SignIn path={getI18nPath('/sign-in', locale)} />
+    <SignIn
+      path={getI18nPath('/sign-in', locale)}
+      appearance={{
+        elements: {
+          rootBox: 'mx-auto max-w-md',
+          card: 'shadow-lg border border-gray-200 rounded-lg',
+        },
+      }}
+      signUpUrl={getI18nPath('/sign-up', locale)}
+    />
   );
 };

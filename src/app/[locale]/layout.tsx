@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
+import { ClerkProvider } from '@clerk/nextjs';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
 import { DemoBadge } from '@/components/DemoBadge';
 import { routing } from '@/libs/i18nRouting';
+import { ClerkLocalizations } from '@/utils/AppConfig';
 import '@/styles/global.css';
 
 export const metadata: Metadata = {
@@ -55,6 +57,21 @@ export default async function RootLayout(props: {
 
   setRequestLocale(locale);
 
+  const clerkLocale = ClerkLocalizations.supportedLocales[locale] ?? ClerkLocalizations.defaultLocale;
+  let signInUrl = '/sign-in';
+  let signUpUrl = '/sign-up';
+  let dashboardUrl = '/dashboard';
+  let mainPageUrl = '/';
+  let afterSignOutUrl = '/';
+
+  if (locale !== routing.defaultLocale) {
+    signInUrl = `/${locale}${signInUrl}`;
+    signUpUrl = `/${locale}${signUpUrl}`;
+    dashboardUrl = `/${locale}${dashboardUrl}`;
+    mainPageUrl = `/${locale}${mainPageUrl}`;
+    afterSignOutUrl = `/${locale}${afterSignOutUrl}`;
+  }
+
   return (
     <html lang={locale}>
       <head>
@@ -64,12 +81,21 @@ export default async function RootLayout(props: {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body>
-        <NextIntlClientProvider>
-          <PostHogProvider>
-            {props.children}
-          </PostHogProvider>
-          <DemoBadge />
-        </NextIntlClientProvider>
+        <ClerkProvider
+          localization={clerkLocale}
+          signInUrl={signInUrl}
+          signUpUrl={signUpUrl}
+          signInFallbackRedirectUrl={dashboardUrl}
+          signUpFallbackRedirectUrl={mainPageUrl}
+          afterSignOutUrl={afterSignOutUrl}
+        >
+          <NextIntlClientProvider>
+            <PostHogProvider>
+              {props.children}
+            </PostHogProvider>
+            <DemoBadge />
+          </NextIntlClientProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

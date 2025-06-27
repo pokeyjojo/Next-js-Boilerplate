@@ -2,9 +2,10 @@
 
 import type { LatLngTuple } from 'leaflet';
 import L from 'leaflet';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
@@ -73,17 +74,11 @@ export function MapController() {
   return null;
 }
 
-export function TennisCourtMarkers({ selectedCourtId }: { selectedCourtId: number | null }) {
+export function TennisCourtMarkers() {
   const [courts, setCourts] = useState<TennisCourt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const popupRefs = useRef<{ [key: number]: any }>({});
-  const map = useMap();
-
-  const getDirectionsUrl = (court: TennisCourt) => {
-    const address = `${court.address}, ${court.city}, ${court.state} ${court.zip}`.replace(/\s+/g, '+');
-    return `https://www.google.com/maps/dir/?api=1&destination=${address}`;
-  };
+  const router = useRouter();
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -105,11 +100,9 @@ export function TennisCourtMarkers({ selectedCourtId }: { selectedCourtId: numbe
     fetchCourts();
   }, []);
 
-  useEffect(() => {
-    if (selectedCourtId && popupRefs.current[selectedCourtId]) {
-      popupRefs.current[selectedCourtId]?.openOn(map);
-    }
-  }, [selectedCourtId, map]);
+  const handleMarkerClick = (courtId: number) => {
+    router.push(`/en/courts/${courtId}`);
+  };
 
   if (loading) {
     return null;
@@ -127,67 +120,10 @@ export function TennisCourtMarkers({ selectedCourtId }: { selectedCourtId: numbe
             key={court.id}
             position={[court.latitude, court.longitude]}
             icon={createCustomIcon(court.membership_required)}
-          >
-            <Popup
-              ref={(popup) => {
-                popupRefs.current[court.id] = popup;
-              }}
-            >
-              <div className="p-2 max-w-xs">
-                <h3 className="font-bold text-lg mb-2">{court.name}</h3>
-                <p className="mb-1 text-sm">{court.address}</p>
-                <p className="mb-1 text-sm">{court.city}</p>
-                <p className="mb-1 text-sm">
-                  {court.state}
-                  {(court.zip && court.zip !== '00000') ? ` ${court.zip}` : ''}
-                </p>
-                <div className="mt-2 text-sm">
-                  {court.number_of_courts !== null
-                    && court.number_of_courts !== undefined
-                    && court.number_of_courts !== 0
-                    && String(court.number_of_courts) !== '0' && (
-                    <p>
-                      <strong>Courts:</strong>
-                      {' '}
-                      {court.number_of_courts}
-                    </p>
-                  )}
-                  {court.surface && court.surface !== '' && (
-                    <p>
-                      <strong>Surface:</strong>
-                      {' '}
-                      {court.surface}
-                    </p>
-                  )}
-                  <p>
-                    <strong>Type:</strong>
-                    {' '}
-                    {court.court_type}
-                  </p>
-                  <p>
-                    <strong>Lights:</strong>
-                    {' '}
-                    {court.lighted ? 'Yes' : 'No'}
-                  </p>
-                  <p>
-                    <strong>Access:</strong>
-                    {' '}
-                    {court.membership_required ? 'Private' : 'Public'}
-                  </p>
-                </div>
-                <div className="mt-4">
-                  <a
-                    href={getDirectionsUrl(court)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 hover:underline text-sm"
-                  >
-                    Get Directions
-                  </a>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
+            eventHandlers={{
+              click: () => handleMarkerClick(court.id),
+            }}
+          />
         );
       })}
     </>
@@ -753,7 +689,7 @@ const OptimizedSearchBar = React.memo(({
 
 export default function MapComponent() {
   const [courts, setCourts] = useState<TennisCourt[]>([]);
-  const [selectedCourtId, setSelectedCourtId] = useState<number | null>(null);
+  const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
   const [showCourtList, setShowCourtList] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
@@ -774,12 +710,22 @@ export default function MapComponent() {
         console.error('Error fetching courts:', err);
       }
     };
-
     fetchCourts();
   }, []);
 
+  // Marker click handler
+  const handleMarkerClick = useCallback((courtId: number) => {
+    const court = courts.find(c => c.id === courtId) || null;
+    setSelectedCourt(court);
+    // On mobile, show the details panel as a bottom sheet
+    if (window.innerWidth < 1024) {
+      setShowCourtList(false);
+    }
+  }, [courts]);
+
+  // List item click handler
   const handleCourtSelect = useCallback((court: TennisCourt) => {
-    setSelectedCourtId(court.id);
+    setSelectedCourt(court);
     if (mapRef.current) {
       mapRef.current.flyTo(
         [court.latitude, court.longitude],
@@ -791,19 +737,16 @@ export default function MapComponent() {
         },
       );
     }
-    // On mobile, hide the court list after selection
-    setShowCourtList(false);
-  }, []);
-
-  // Handle mobile search change
-  const handleMobileSearchChange = useCallback((query: string) => {
-    setMobileSearchQuery(query);
+    // On mobile, hide the court list and show details
+    if (window.innerWidth < 1024) {
+      setShowCourtList(false);
+    }
   }, []);
 
   // Handle drag start
   const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     setIsDragging(true);
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientY = 'touches' in e ? e.touches[0]?.clientY || 0 : e.clientY;
     setDragStartY(clientY);
     setDragCurrentY(clientY);
   }, []);
@@ -814,7 +757,7 @@ export default function MapComponent() {
       return;
     }
 
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientY = 'touches' in e ? e.touches[0]?.clientY || 0 : e.clientY;
     setDragCurrentY(clientY);
   }, [isDragging]);
 
@@ -857,12 +800,187 @@ export default function MapComponent() {
     }
   }, [isDragging, handleDragMove, handleDragEnd]);
 
+  // Disable map touch events when details panel is open on mobile
+  useEffect(() => {
+    if (selectedCourt && window.innerWidth < 1024 && mapRef.current) {
+      const map = mapRef.current;
+      // Disable map dragging and touch events
+      map.dragging.disable();
+      map.touchZoom.disable();
+      map.doubleClickZoom.disable();
+      map.scrollWheelZoom.disable();
+
+      return () => {
+        // Re-enable map interactions when details panel closes
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+      };
+    }
+  }, [selectedCourt]);
+
+  // Render markers with selection logic
+  function TennisCourtMarkers() {
+    return (
+      <>
+        {courts.map(court => (
+          <Marker
+            key={court.id}
+            position={[court.latitude, court.longitude]}
+            icon={createCustomIcon(court.membership_required)}
+            eventHandlers={{
+              click: () => handleMarkerClick(court.id),
+            }}
+          />
+        ))}
+      </>
+    );
+  }
+
+  // Render the details panel
+  function CourtDetailsPanel() {
+    const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
+    if (!selectedCourt) {
+      return null;
+    }
+    // Responsive: right sidebar on desktop, bottom sheet on mobile
+    return (
+      <div
+        className={
+          'fixed z-50 bg-white shadow-2xl border-t border-l border-gray-200 '
+          + 'transition-all duration-300 '
+          + 'w-full max-w-lg bottom-0 left-0 right-0 mx-auto rounded-t-xl p-6 '
+          + 'lg:static lg:rounded-none lg:border-t-0 lg:border-l lg:w-[400px] lg:max-w-[400px] lg:h-full lg:overflow-y-auto lg:shadow-none lg:p-8 '
+          + 'overflow-y-auto overscroll-contain'
+        }
+        style={{
+          height: window.innerWidth < 1024 ? '80vh' : '100%',
+          top: window.innerWidth < 1024 ? undefined : 0,
+          maxHeight: window.innerWidth < 1024 ? '80vh' : '100%',
+        }}
+        onWheel={(e) => {
+          // Only prevent wheel events from bubbling to the map, allow scrolling within panel
+          e.stopPropagation();
+        }}
+        onTouchMove={(e) => {
+          // Allow touch scrolling within the panel, but prevent map interaction
+          const target = e.target as HTMLElement;
+          const panel = target.closest('[class*="fixed"]');
+          if (panel) {
+            // Allow scrolling within the panel
+            return;
+          }
+          // Prevent map interaction
+          e.stopPropagation();
+        }}
+      >
+        <button
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+          onClick={() => setSelectedCourt(null)}
+          aria-label="Close details"
+        >
+          ×
+        </button>
+        <h2 className="text-2xl font-bold mb-2">{selectedCourt.name}</h2>
+        <div className="text-gray-600 mb-2">
+          {selectedCourt.address}
+          ,
+          {' '}
+          {selectedCourt.city}
+        </div>
+        <div className="flex items-center space-x-4 mb-4">
+          <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+            {selectedCourt.membership_required ? 'Private' : 'Public'}
+          </span>
+          {selectedCourt.lighted && (
+            <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs">Lights</span>
+          )}
+        </div>
+        {/* Tabs */}
+        <div className="flex space-x-8 border-b mb-4">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          >
+            Reviews
+          </button>
+        </div>
+        {/* Tab content */}
+        {activeTab === 'overview' ? (
+          <div>
+            {selectedCourt.court_type && (
+              <div className="mb-2">
+                <strong>Type:</strong>
+                {' '}
+                {selectedCourt.court_type}
+              </div>
+            )}
+            {selectedCourt.surface && (
+              <div className="mb-2">
+                <strong>Surface:</strong>
+                {' '}
+                {selectedCourt.surface}
+              </div>
+            )}
+            {selectedCourt.number_of_courts !== null && selectedCourt.number_of_courts !== undefined && selectedCourt.number_of_courts > 0 && (
+              <div className="mb-2">
+                <strong>Number of Courts:</strong>
+                {' '}
+                {selectedCourt.number_of_courts}
+              </div>
+            )}
+            {selectedCourt.court_condition && (
+              <div className="mb-2">
+                <strong>Condition:</strong>
+                {' '}
+                {selectedCourt.court_condition}
+              </div>
+            )}
+            {selectedCourt.parking && (
+              <div className="mb-2">
+                <strong>Parking:</strong>
+                {' '}
+                {selectedCourt.parking}
+              </div>
+            )}
+            <div className="mb-2">
+              <strong>Hitting Wall:</strong>
+              {' '}
+              {selectedCourt.hitting_wall ? 'Yes' : 'No'}
+            </div>
+          </div>
+        ) : (
+          <div>
+            {/* Mock reviews for now */}
+            <div className="mb-4">
+              <div className="font-semibold">Tennis Player</div>
+              <div className="text-yellow-500">★★★★☆</div>
+              <div className="text-gray-600 text-sm">Great courts with good lighting. Surface is well-maintained.</div>
+            </div>
+            <div>
+              <div className="font-semibold">Local Resident</div>
+              <div className="text-yellow-500">★★★★☆</div>
+              <div className="text-gray-600 text-sm">Nice public courts. Can get busy during peak hours.</div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col lg:flex-row h-screen relative">
       {/* Mobile: Search bar at top (Google Maps style) */}
       <div className="lg:hidden absolute top-4 left-4 right-4 z-50">
         <OptimizedSearchBar
-          onSearchChange={handleMobileSearchChange}
+          onSearchChange={setMobileSearchQuery}
           onToggleList={() => setShowCourtList(!showCourtList)}
           isMobile={true}
         />
@@ -905,7 +1023,7 @@ export default function MapComponent() {
               isMobile={true}
               shouldFocus={showCourtList}
               externalSearchQuery={mobileSearchQuery}
-              onExternalSearchChange={handleMobileSearchChange}
+              onExternalSearchChange={setMobileSearchQuery}
             />
           </div>
         </div>
@@ -937,8 +1055,26 @@ export default function MapComponent() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapController />
-          <TennisCourtMarkers selectedCourtId={selectedCourtId} />
+          <TennisCourtMarkers />
         </MapContainer>
+        {/* Details panel: right for desktop, bottom for mobile */}
+        {selectedCourt && (
+          <div>
+            {/* Desktop: right sidebar */}
+            <div className="hidden lg:block fixed top-0 right-0 h-full w-[400px] z-50">
+              <CourtDetailsPanel />
+            </div>
+            {/* Mobile: bottom sheet */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
+              <CourtDetailsPanel />
+            </div>
+            {/* Mobile overlay to prevent map interaction */}
+            <div
+              className="lg:hidden fixed inset-0 bg-transparent z-40"
+              style={{ pointerEvents: 'none' }}
+            />
+          </div>
+        )}
       </div>
     </div>
   );
