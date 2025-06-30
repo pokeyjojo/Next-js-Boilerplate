@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { ClerkProvider } from '@clerk/nextjs';
+import { ReactPlugin } from '@stagewise-plugins/react';
+import { StagewiseToolbar } from '@stagewise/toolbar-next';
 import { hasLocale, NextIntlClientProvider } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -81,6 +83,7 @@ export default async function RootLayout(props: {
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
       </head>
       <body>
+        <StagewiseToolbar config={{ plugins: [ReactPlugin] }} />
         <ClerkProvider
           localization={clerkLocale}
           signInUrl={signInUrl}

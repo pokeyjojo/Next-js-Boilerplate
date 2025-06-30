@@ -1,5 +1,6 @@
 'use client';
 
+import { useUser } from '@clerk/nextjs';
 import { Building, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -37,6 +38,11 @@ export default function CourtDetailPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewRating, setReviewRating] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const { isSignedIn } = useUser();
 
   useEffect(() => {
     const fetchCourtData = async () => {
@@ -47,37 +53,45 @@ export default function CourtDetailPage() {
         }
         const data = await response.json();
         setCourt(data);
-
-        // For now, we'll use mock reviews until we implement the reviews API
-        setReviews([
-          {
-            id: 1,
-            courtId: Number.parseInt(courtId),
-            rating: 4.5,
-            comment: 'Great courts with good lighting. Surface is well-maintained.',
-            author: 'Tennis Player',
-            createdAt: '2024-01-15T10:30:00Z',
-          },
-          {
-            id: 2,
-            courtId: Number.parseInt(courtId),
-            rating: 4.0,
-            comment: 'Nice public courts. Can get busy during peak hours.',
-            author: 'Local Resident',
-            createdAt: '2024-01-10T14:20:00Z',
-          },
-        ]);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);
       }
     };
-
     if (courtId) {
       fetchCourtData();
     }
   }, [courtId]);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      try {
+        const response = await fetch(`/api/tennis-courts/${courtId}/reviews`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch reviews');
+        }
+        const data = await response.json();
+        setReviews(
+          Array.isArray(data)
+            ? data.map((r: any) => ({
+                id: r.id,
+                courtId: r.courtId,
+                rating: r.rating,
+                comment: r.text,
+                author: r.userName,
+                createdAt: r.createdAt,
+              }))
+            : [],
+        );
+      } catch {
+        setReviews([]);
+      }
+    };
+    if (courtId) {
+      fetchReviews();
+    }
+  }, [courtId, submitting]);
 
   if (loading) {
     return (
@@ -102,6 +116,30 @@ export default function CourtDetailPage() {
   if (reviews.length > 0) {
     averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
   }
+
+  const handleSubmitReview = async () => {
+    if (!reviewRating || !reviewText) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/tennis-courts/${courtId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: reviewRating, text: reviewText }),
+      });
+      if (!res.ok) {
+        throw new Error('Failed to submit review');
+      }
+      setShowReviewModal(false);
+      setReviewText('');
+      setReviewRating(0);
+    } catch {
+      // Optionally show error
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -279,12 +317,16 @@ export default function CourtDetailPage() {
             <div className="p-6 border-b">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Reviews</h2>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                  Write a Review
-                </button>
+                {isSignedIn && (
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() => setShowReviewModal(true)}
+                  >
+                    Write a Review
+                  </button>
+                )}
               </div>
             </div>
-
             <div className="p-6">
               {reviews.length === 0 && (
                 <div className="text-center py-8">
@@ -317,6 +359,49 @@ export default function CourtDetailPage() {
                 </div>
               )}
             </div>
+            {/* Review Modal */}
+            {showReviewModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+                  <button
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+                    onClick={() => setShowReviewModal(false)}
+                  >
+                    &times;
+                  </button>
+                  <h3 className="text-lg font-bold mb-4">Leave a Review</h3>
+                  <div className="mb-4 flex items-center">
+                    {[1, 2, 3, 4, 5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        className={`text-2xl ${reviewRating >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                        onClick={() => setReviewRating(star)}
+                        aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+                        disabled={submitting}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <textarea
+                    className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
+                    placeholder="Share your experience..."
+                    value={reviewText}
+                    onChange={e => setReviewText(e.target.value)}
+                    maxLength={2000}
+                    disabled={submitting}
+                  />
+                  <button
+                    className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
+                    onClick={handleSubmitReview}
+                    disabled={submitting || reviewRating < 1 || !reviewText}
+                  >
+                    {submitting ? 'Saving...' : 'Submit Review'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

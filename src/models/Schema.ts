@@ -1,4 +1,4 @@
-import { boolean, decimal, integer, pgTable, serial, timestamp, varchar } from 'drizzle-orm/pg-core';
+import { boolean, decimal, integer, pgTable, serial, timestamp, varchar, uuid } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
 
@@ -37,4 +37,18 @@ export const tennisCourtSchema = pgTable('tennis_courts', {
     .$onUpdate(() => new Date())
     .notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+});
+
+export const reviewSchema = pgTable('reviews', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  courtId: varchar('court_id', { length: 36 }).notNull(), // FK to tennis_courts.id (UUID)
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  userName: varchar('user_name', { length: 255 }).notNull(),
+  rating: integer('rating').notNull(), // 1-5
+  text: varchar('text', { length: 2000 }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
 });

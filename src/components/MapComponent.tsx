@@ -1,10 +1,10 @@
 'use client';
 
 import type { LatLngTuple } from 'leaflet';
+import { useUser } from '@clerk/nextjs';
 import L from 'leaflet';
 import { useRouter } from 'next/navigation';
-import React from 'react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -617,7 +617,7 @@ const OptimizedSearchBar = React.memo(({
   isMobile?: boolean;
 }) => {
   const [localQuery, setLocalQuery] = useState('');
-  const debounceRef = useRef<NodeJS.Timeout>();
+  const debounceRef = useRef<NodeJS.Timeout | null>(null);
 
   // Debounced search to prevent lag
   const debouncedSearch = useCallback((query: string) => {
@@ -687,6 +687,366 @@ const OptimizedSearchBar = React.memo(({
   );
 });
 
+// StarRating component for displaying and selecting stars
+function StarRating({ value, onChange, editable = false }: { value: number; onChange?: (v: number) => void; editable?: boolean }) {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button
+          key={star}
+          type="button"
+          className={`text-2xl ${star <= value ? 'text-yellow-400' : 'text-gray-300'} ${editable ? 'hover:text-yellow-500' : ''}`}
+          onClick={editable && onChange ? () => onChange(star) : undefined}
+          disabled={!editable}
+          aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
+        >
+          ★
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// ReviewModal for creating/editing reviews
+function ReviewModal({
+  open,
+  onClose,
+  onSubmit,
+  initialRating = 0,
+  initialText = '',
+  loading = false,
+  isEdit = false,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (rating: number, text: string) => void;
+  initialRating?: number;
+  initialText?: string;
+  loading?: boolean;
+  isEdit?: boolean;
+}) {
+  const [rating, setRating] = useState(initialRating);
+  const [text, setText] = useState(initialText);
+  useEffect(() => {
+    setRating(initialRating);
+    setText(initialText);
+  }, [initialRating, initialText, open]);
+  if (!open) {
+    return null;
+  }
+  return (
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-40">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={onClose}>&times;</button>
+        <h3 className="text-lg font-bold mb-4">{isEdit ? 'Edit Review' : 'Leave a Review'}</h3>
+        <div className="mb-4">
+          <StarRating value={rating} onChange={setRating} editable />
+        </div>
+        <textarea
+          className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
+          placeholder="Share your experience..."
+          value={text}
+          onChange={e => setText(e.target.value)}
+          maxLength={2000}
+        />
+        <button
+          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
+          onClick={() => onSubmit(rating, text)}
+          disabled={loading || rating < 1}
+        >
+          {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Submit Review'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId }: {
+  selectedCourt: TennisCourt | null;
+  setSelectedCourt: (court: TennisCourt | null) => void;
+  isSignedIn: boolean;
+  userId?: string;
+}) {
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [editReview, setEditReview] = useState<any | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!selectedCourt) {
+      return;
+    }
+    setLoadingReviews(true);
+    fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`)
+      .then(res => res.json())
+      .then(data => setReviews(Array.isArray(data) ? data : []))
+      .finally(() => setLoadingReviews(false));
+  }, [selectedCourt]);
+
+  const myReview = useMemo(
+    () => Array.isArray(reviews) ? reviews.find(r => r.userId === userId) : undefined,
+    [reviews, userId],
+  );
+
+  const handleSubmit = async (rating: number, text: string) => {
+    if (!selectedCourt) {
+      return;
+    }
+    setModalLoading(true);
+    const method = editReview ? 'PUT' : 'POST';
+    const body = editReview
+      ? { reviewId: editReview.id, rating, text }
+      : { rating, text };
+    const res = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      const updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+      setReviews(updated);
+      setShowModal(false);
+      setEditReview(null);
+    }
+    setModalLoading(false);
+  };
+
+  const handleDelete = async (reviewId: number) => {
+    if (!selectedCourt) {
+      return;
+    }
+    setDeleteConfirmId(reviewId);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedCourt || deleteConfirmId === null) {
+      return;
+    }
+    await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewId: deleteConfirmId }),
+    });
+    const updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+    setReviews(Array.isArray(updated) ? updated : []);
+    setDeleteConfirmId(null);
+  };
+
+  const cancelDelete = () => setDeleteConfirmId(null);
+
+  if (!selectedCourt) {
+    return null;
+  }
+  return (
+    <div
+      className={
+        'fixed z-50 bg-white shadow-2xl border-t border-l border-gray-200 '
+        + 'transition-all duration-300 '
+        + 'w-full max-w-lg bottom-0 left-0 right-0 mx-auto rounded-t-xl p-6 '
+        + 'lg:static lg:rounded-none lg:border-t-0 lg:border-l lg:w-[400px] lg:max-w-[400px] lg:h-full lg:overflow-y-auto lg:shadow-none lg:p-8 '
+        + 'overflow-y-auto overscroll-contain'
+      }
+      style={{
+        height: window.innerWidth < 1024 ? '80vh' : '100%',
+        top: window.innerWidth < 1024 ? undefined : 0,
+        maxHeight: window.innerWidth < 1024 ? '80vh' : '100%',
+      }}
+      onWheel={e => e.stopPropagation()}
+      onTouchMove={(e) => {
+        const target = e.target as HTMLElement;
+        const panel = target.closest('[class*="fixed"]');
+        if (panel) {
+          return;
+        }
+        e.stopPropagation();
+      }}
+    >
+      <button
+        className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+        onClick={() => setSelectedCourt(null)}
+        aria-label="Close details"
+      >
+        ×
+      </button>
+      <h2 className="text-2xl font-bold mb-2">{selectedCourt.name}</h2>
+      <div className="text-gray-600 mb-2">
+        {selectedCourt.address}
+        ,
+        {selectedCourt.city}
+      </div>
+      <div className="flex items-center space-x-4 mb-4">
+        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+          {selectedCourt.membership_required ? 'Private' : 'Public'}
+        </span>
+        {selectedCourt.lighted && (
+          <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs">Lights</span>
+        )}
+      </div>
+      <div className="flex space-x-8 border-b mb-4">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          Overview
+        </button>
+        <button
+          onClick={() => setActiveTab('reviews')}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          Reviews
+        </button>
+      </div>
+      {activeTab === 'overview'
+        ? (
+            <div>
+              {selectedCourt.court_type && (
+                <div className="mb-2">
+                  <strong>Type:</strong>
+                  {' '}
+                  {selectedCourt.court_type}
+                </div>
+              )}
+              {selectedCourt.surface && (
+                <div className="mb-2">
+                  <strong>Surface:</strong>
+                  {' '}
+                  {selectedCourt.surface}
+                </div>
+              )}
+              {selectedCourt.number_of_courts !== null && selectedCourt.number_of_courts !== undefined && selectedCourt.number_of_courts > 0 && (
+                <div className="mb-2">
+                  <strong>Number of Courts:</strong>
+                  {' '}
+                  {selectedCourt.number_of_courts}
+                </div>
+              )}
+              {selectedCourt.court_condition && (
+                <div className="mb-2">
+                  <strong>Condition:</strong>
+                  {' '}
+                  {selectedCourt.court_condition}
+                </div>
+              )}
+              {selectedCourt.parking && (
+                <div className="mb-2">
+                  <strong>Parking:</strong>
+                  {' '}
+                  {selectedCourt.parking}
+                </div>
+              )}
+              <div className="mb-2">
+                <strong>Hitting Wall:</strong>
+                {' '}
+                {selectedCourt.hitting_wall ? 'Yes' : 'No'}
+              </div>
+            </div>
+          )
+        : (
+            <div>
+              {loadingReviews
+                ? (
+                    <div className="text-center text-gray-400">Loading reviews...</div>
+                  )
+                : (
+                    <>
+                      {reviews.length === 0 && (
+                        <div className="text-center text-gray-400">No reviews yet.</div>
+                      )}
+                      {reviews.map(review => (
+                        <div key={review.id} className="mb-4 border-b pb-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold">{review.userName}</span>
+                            <StarRating value={review.rating} />
+                            <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                          </div>
+                          <div className="text-gray-700 text-sm whitespace-pre-line">{review.text}</div>
+                          {userId && review.userId === userId && (
+                            <div className="flex gap-2 mt-2">
+                              <button
+                                className="text-xs text-blue-600 hover:underline"
+                                onClick={() => {
+                                  setEditReview(review);
+                                  setShowModal(true);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="text-xs text-red-600 hover:underline"
+                                onClick={() => handleDelete(review.id)}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  )}
+              {isSignedIn && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
+                    onClick={() => {
+                      setEditReview(null);
+                      setShowModal(true);
+                    }}
+                  >
+                    {myReview ? 'Edit Your Review' : 'Leave a Review'}
+                  </button>
+                </div>
+              )}
+              <ReviewModal
+                open={showModal}
+                onClose={() => {
+                  setShowModal(false);
+                  setEditReview(null);
+                }}
+                onSubmit={handleSubmit}
+                initialRating={editReview ? editReview.rating : myReview ? myReview.rating : 0}
+                initialText={editReview ? editReview.text : myReview ? myReview.text : ''}
+                loading={modalLoading}
+                isEdit={!!editReview}
+              />
+              {/* Delete confirmation modal */}
+              {deleteConfirmId !== null && (
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
+                  <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
+                    <div className="mb-4 text-center">Delete your review?</div>
+                    <div className="flex gap-2 justify-center">
+                      <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" onClick={confirmDelete}>Delete</button>
+                      <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300" onClick={cancelDelete}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+    </div>
+  );
+}
+
+// Place this at the top level, outside MapComponent
+function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts: TennisCourt[]; handleMarkerClick: (courtId: number) => void }) {
+  return (
+    <>
+      {courts.map(court => (
+        <Marker
+          key={court.id}
+          position={[court.latitude, court.longitude]}
+          icon={createCustomIcon(court.membership_required)}
+          eventHandlers={{
+            click: () => handleMarkerClick(court.id),
+          }}
+        />
+      ))}
+    </>
+  );
+}
+
 export default function MapComponent() {
   const [courts, setCourts] = useState<TennisCourt[]>([]);
   const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
@@ -696,6 +1056,7 @@ export default function MapComponent() {
   const [dragCurrentY, setDragCurrentY] = useState(0);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const mapRef = useRef<any>(null);
+  const { isSignedIn, user } = useUser();
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -820,161 +1181,6 @@ export default function MapComponent() {
     }
   }, [selectedCourt]);
 
-  // Render markers with selection logic
-  function TennisCourtMarkers() {
-    return (
-      <>
-        {courts.map(court => (
-          <Marker
-            key={court.id}
-            position={[court.latitude, court.longitude]}
-            icon={createCustomIcon(court.membership_required)}
-            eventHandlers={{
-              click: () => handleMarkerClick(court.id),
-            }}
-          />
-        ))}
-      </>
-    );
-  }
-
-  // Render the details panel
-  function CourtDetailsPanel() {
-    const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
-    if (!selectedCourt) {
-      return null;
-    }
-    // Responsive: right sidebar on desktop, bottom sheet on mobile
-    return (
-      <div
-        className={
-          'fixed z-50 bg-white shadow-2xl border-t border-l border-gray-200 '
-          + 'transition-all duration-300 '
-          + 'w-full max-w-lg bottom-0 left-0 right-0 mx-auto rounded-t-xl p-6 '
-          + 'lg:static lg:rounded-none lg:border-t-0 lg:border-l lg:w-[400px] lg:max-w-[400px] lg:h-full lg:overflow-y-auto lg:shadow-none lg:p-8 '
-          + 'overflow-y-auto overscroll-contain'
-        }
-        style={{
-          height: window.innerWidth < 1024 ? '80vh' : '100%',
-          top: window.innerWidth < 1024 ? undefined : 0,
-          maxHeight: window.innerWidth < 1024 ? '80vh' : '100%',
-        }}
-        onWheel={(e) => {
-          // Only prevent wheel events from bubbling to the map, allow scrolling within panel
-          e.stopPropagation();
-        }}
-        onTouchMove={(e) => {
-          // Allow touch scrolling within the panel, but prevent map interaction
-          const target = e.target as HTMLElement;
-          const panel = target.closest('[class*="fixed"]');
-          if (panel) {
-            // Allow scrolling within the panel
-            return;
-          }
-          // Prevent map interaction
-          e.stopPropagation();
-        }}
-      >
-        <button
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-          onClick={() => setSelectedCourt(null)}
-          aria-label="Close details"
-        >
-          ×
-        </button>
-        <h2 className="text-2xl font-bold mb-2">{selectedCourt.name}</h2>
-        <div className="text-gray-600 mb-2">
-          {selectedCourt.address}
-          ,
-          {' '}
-          {selectedCourt.city}
-        </div>
-        <div className="flex items-center space-x-4 mb-4">
-          <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
-            {selectedCourt.membership_required ? 'Private' : 'Public'}
-          </span>
-          {selectedCourt.lighted && (
-            <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs">Lights</span>
-          )}
-        </div>
-        {/* Tabs */}
-        <div className="flex space-x-8 border-b mb-4">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-          >
-            Overview
-          </button>
-          <button
-            onClick={() => setActiveTab('reviews')}
-            className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
-          >
-            Reviews
-          </button>
-        </div>
-        {/* Tab content */}
-        {activeTab === 'overview' ? (
-          <div>
-            {selectedCourt.court_type && (
-              <div className="mb-2">
-                <strong>Type:</strong>
-                {' '}
-                {selectedCourt.court_type}
-              </div>
-            )}
-            {selectedCourt.surface && (
-              <div className="mb-2">
-                <strong>Surface:</strong>
-                {' '}
-                {selectedCourt.surface}
-              </div>
-            )}
-            {selectedCourt.number_of_courts !== null && selectedCourt.number_of_courts !== undefined && selectedCourt.number_of_courts > 0 && (
-              <div className="mb-2">
-                <strong>Number of Courts:</strong>
-                {' '}
-                {selectedCourt.number_of_courts}
-              </div>
-            )}
-            {selectedCourt.court_condition && (
-              <div className="mb-2">
-                <strong>Condition:</strong>
-                {' '}
-                {selectedCourt.court_condition}
-              </div>
-            )}
-            {selectedCourt.parking && (
-              <div className="mb-2">
-                <strong>Parking:</strong>
-                {' '}
-                {selectedCourt.parking}
-              </div>
-            )}
-            <div className="mb-2">
-              <strong>Hitting Wall:</strong>
-              {' '}
-              {selectedCourt.hitting_wall ? 'Yes' : 'No'}
-            </div>
-          </div>
-        ) : (
-          <div>
-            {/* Mock reviews for now */}
-            <div className="mb-4">
-              <div className="font-semibold">Tennis Player</div>
-              <div className="text-yellow-500">★★★★☆</div>
-              <div className="text-gray-600 text-sm">Great courts with good lighting. Surface is well-maintained.</div>
-            </div>
-            <div>
-              <div className="font-semibold">Local Resident</div>
-              <div className="text-yellow-500">★★★★☆</div>
-              <div className="text-gray-600 text-sm">Nice public courts. Can get busy during peak hours.</div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col lg:flex-row h-screen relative">
       {/* Mobile: Search bar at top (Google Maps style) */}
@@ -1055,20 +1261,27 @@ export default function MapComponent() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapController />
-          <TennisCourtMarkers />
+          <TennisCourtMarkersMapComponent courts={courts} handleMarkerClick={handleMarkerClick} />
         </MapContainer>
         {/* Details panel: right for desktop, bottom for mobile */}
         {selectedCourt && (
           <div>
-            {/* Desktop: right sidebar */}
             <div className="hidden lg:block fixed top-0 right-0 h-full w-[400px] z-50">
-              <CourtDetailsPanel />
+              <CourtDetailsPanel
+                selectedCourt={selectedCourt}
+                setSelectedCourt={setSelectedCourt}
+                isSignedIn={!!isSignedIn}
+                userId={typeof user?.id === 'string' ? user.id : undefined}
+              />
             </div>
-            {/* Mobile: bottom sheet */}
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
-              <CourtDetailsPanel />
+              <CourtDetailsPanel
+                selectedCourt={selectedCourt}
+                setSelectedCourt={setSelectedCourt}
+                isSignedIn={!!isSignedIn}
+                userId={typeof user?.id === 'string' ? user.id : undefined}
+              />
             </div>
-            {/* Mobile overlay to prevent map interaction */}
             <div
               className="lg:hidden fixed inset-0 bg-transparent z-40"
               style={{ pointerEvents: 'none' }}
