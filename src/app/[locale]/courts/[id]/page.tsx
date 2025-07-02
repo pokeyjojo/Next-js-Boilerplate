@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 type TennisCourt = {
-  id: number;
+  id: string;
   name: string;
   address: string;
   city: string;
@@ -22,8 +22,8 @@ type TennisCourt = {
 };
 
 type Review = {
-  id: number;
-  courtId: number;
+  id: string;
+  courtId: string;
   rating: number;
   comment: string;
   author: string;

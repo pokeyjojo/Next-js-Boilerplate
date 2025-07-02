@@ -773,7 +773,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [editReview, setEditReview] = useState<any | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!selectedCourt) {
@@ -814,7 +814,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
     setModalLoading(false);
   };
 
-  const handleDelete = async (reviewId: number) => {
+  const handleDelete = async (reviewId: string) => {
     if (!selectedCourt) {
       return;
     }

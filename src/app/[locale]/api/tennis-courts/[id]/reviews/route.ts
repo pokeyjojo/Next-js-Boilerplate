@@ -7,7 +7,7 @@ import { reviewSchema } from '@/models/Schema';
 
 // GET: List all reviews for a court
 export async function GET(req: NextRequest, context: { params: { id: string } }) {
-  const { id } = (await context).params;
+  const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
@@ -23,8 +23,12 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
-  const userName = user.fullName || userId;
-  const { id } = (await context).params;
+  const userName
+    = user.fullName
+      || user.username
+      || user.primaryEmailAddress?.emailAddress
+      || user.id;
+  const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
@@ -50,7 +54,7 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
-  const { id } = (await context).params;
+  const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
@@ -78,7 +82,7 @@ export async function DELETE(req: NextRequest, context: { params: { id: string }
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = user.id;
-  const { id } = (await context).params;
+  const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }

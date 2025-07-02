@@ -1,4 +1,4 @@
-import { boolean, decimal, integer, pgTable, serial, timestamp, varchar, uuid } from 'drizzle-orm/pg-core';
+import { boolean, decimal, integer, pgTable, serial, timestamp, uuid, varchar } from 'drizzle-orm/pg-core';
 
 // This file defines the structure of your database tables using the Drizzle ORM.
 
@@ -21,7 +21,7 @@ export const counterSchema = pgTable('counter', {
 });
 
 export const tennisCourtSchema = pgTable('tennis_courts', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey().defaultRandom(),
   name: varchar('name', { length: 255 }).notNull(),
   address: varchar('address', { length: 255 }).notNull(),
   city: varchar('city', { length: 100 }).notNull(),
@@ -40,8 +40,8 @@ export const tennisCourtSchema = pgTable('tennis_courts', {
 });
 
 export const reviewSchema = pgTable('reviews', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  courtId: varchar('court_id', { length: 36 }).notNull(), // FK to tennis_courts.id (UUID)
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  courtId: uuid('court_id').notNull(), // FK to tennis_courts.id (uuid)
   userId: varchar('user_id', { length: 255 }).notNull(),
   userName: varchar('user_name', { length: 255 }).notNull(),
   rating: integer('rating').notNull(), // 1-5
@@ -52,3 +52,19 @@ export const reviewSchema = pgTable('reviews', {
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+// NOTE: If you need to reset the reviews table to use UUIDs, run the following SQL in a migration or manually:
+//
+// DROP TABLE IF EXISTS "reviews";
+// CREATE TABLE "reviews" (
+//   id uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+//   court_id uuid NOT NULL,
+//   user_id varchar(255) NOT NULL,
+//   user_name varchar(255) NOT NULL,
+//   rating integer NOT NULL,
+//   text varchar(2000),
+//   created_at timestamp DEFAULT now() NOT NULL,
+//   updated_at timestamp DEFAULT now() NOT NULL
+// );
+//
+// Make sure your Drizzle/ORM schema matches this structure.

@@ -1,5 +1,5 @@
-CREATE TABLE "tennis_courts" (
-  "id" serial PRIMARY KEY NOT NULL,
+CREATE TABLE IF NOT EXISTS "tennis_courts" (
+  "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
   "name" varchar(255) NOT NULL,
   "address" varchar(255) NOT NULL,
   "city" varchar(100) NOT NULL,

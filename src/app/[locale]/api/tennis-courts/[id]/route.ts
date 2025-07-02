@@ -8,15 +8,7 @@ export async function GET(
   { params }: { params: { id: string } },
 ) {
   try {
-    const courtId = Number.parseInt(params.id);
-
-    if (Number.isNaN(courtId)) {
-      return NextResponse.json(
-        { error: 'Invalid court ID' },
-        { status: 400 },
-      );
-    }
-
+    const courtId = params.id;
     const db = await getDb();
     const court = await db
       .select()
