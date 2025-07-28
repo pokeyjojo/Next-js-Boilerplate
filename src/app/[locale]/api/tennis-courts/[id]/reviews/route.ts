@@ -6,6 +6,50 @@ import { getDb } from '@/libs/DB';
 import { deletePhotosFromUrls } from '@/libs/DigitalOceanSpaces';
 import { photoModerationSchema, reviewSchema } from '@/models/Schema';
 
+// Admin user IDs - you can add more admin user IDs here
+const ADMIN_USER_IDS: string[] = [
+  'user_2z6iXo450oCxAddzoUnmcC229Xf',
+];
+
+// Admin email domains - users with these email domains will be considered admins
+const ADMIN_EMAIL_DOMAINS: string[] = [
+  'admin.com',
+  'yourcompany.com',
+];
+
+async function checkIsAdmin(user: any): Promise<boolean> {
+  try {
+    if (!user) {
+      return false;
+    }
+
+    // Check if user ID is in admin list
+    if (ADMIN_USER_IDS.includes(user.id)) {
+      return true;
+    }
+
+    // Check if user's email domain is in admin domains
+    const userEmail = user.primaryEmailAddress?.emailAddress;
+    if (userEmail) {
+      const domain = userEmail.split('@')[1];
+      if (domain && ADMIN_EMAIL_DOMAINS.includes(domain)) {
+        return true;
+      }
+    }
+
+    // Check if user has admin role in Clerk (if you set up custom roles)
+    const userRoles = user.publicMetadata?.roles as string[] || [];
+    if (userRoles.includes('admin')) {
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error('Error checking admin status:', error);
+    return false;
+  }
+}
+
 // GET: List all reviews for a court
 export async function GET(_req: NextRequest, context: { params: { id: string } }) {
   const { id } = await context.params;
@@ -86,10 +130,15 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   if (!reviewId) {
     return NextResponse.json({ error: 'Missing reviewId' }, { status: 400 });
   }
-  // Only allow editing own review
+  // Only allow editing own review or admin can edit any review
   const db = await getDb();
   const review = await db.select().from(reviewSchema).where(eq(reviewSchema.id, reviewId));
-  if (!review[0] || review[0].userId !== userId) {
+  if (!review[0]) {
+    return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+  }
+
+  const isAdmin = await checkIsAdmin(user);
+  if (review[0].userId !== userId && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -169,10 +218,15 @@ export async function DELETE(req: NextRequest, context: { params: { id: string }
   if (!reviewId) {
     return NextResponse.json({ error: 'Missing reviewId' }, { status: 400 });
   }
-  // Only allow deleting own review
+  // Only allow deleting own review or admin can delete any review
   const db = await getDb();
   const review = await db.select().from(reviewSchema).where(eq(reviewSchema.id, reviewId));
-  if (!review[0] || review[0].userId !== userId) {
+  if (!review[0]) {
+    return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+  }
+
+  const isAdmin = await checkIsAdmin(user);
+  if (review[0].userId !== userId && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

@@ -763,12 +763,84 @@ function ReviewModal({
   const [rating, setRating] = useState(initialRating);
   const [text, setText] = useState(initialText);
   const [photos, setPhotos] = useState<string[]>(initialPhotos);
+  const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
+  const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
 
   useEffect(() => {
     setRating(initialRating);
     setText(initialText);
     setPhotos(initialPhotos);
   }, [initialRating, initialText, initialPhotos, open]);
+
+  const openPhotoViewer = (photoUrl: string, index: number) => {
+    setPhotoViewerIndex(index);
+    setPhotoViewerOpen(true);
+  };
+
+  const closePhotoViewer = () => {
+    setPhotoViewerOpen(false);
+  };
+
+  const nextPhoto = () => {
+    setPhotoViewerIndex(prev => (prev + 1) % photos.length);
+  };
+
+  const prevPhoto = () => {
+    setPhotoViewerIndex(prev => (prev - 1 + photos.length) % photos.length);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (!photoViewerOpen) {
+      return;
+    }
+
+    switch (e.key) {
+      case 'Escape':
+        closePhotoViewer();
+        break;
+      case 'ArrowLeft':
+        if (photos.length > 1) {
+          prevPhoto();
+        }
+        break;
+      case 'ArrowRight':
+        if (photos.length > 1) {
+          nextPhoto();
+        }
+        break;
+    }
+  };
+
+  useEffect(() => {
+    if (photoViewerOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [photoViewerOpen, photos.length]);
+
+  useEffect(() => {
+    if (open) {
+      // Hide profile icons when review modal is open
+      const profileIcons = document.querySelectorAll('.fixed.top-3.right-3, .fixed.top-20.right-4');
+      profileIcons.forEach((icon) => {
+        (icon as HTMLElement).style.display = 'none';
+      });
+    } else {
+      // Show profile icons again when review modal is closed
+      const profileIcons = document.querySelectorAll('.fixed.top-3.right-3, .fixed.top-20.right-4');
+      profileIcons.forEach((icon) => {
+        (icon as HTMLElement).style.display = '';
+      });
+    }
+
+    return () => {
+      // Show profile icons again on cleanup
+      const profileIcons = document.querySelectorAll('.fixed.top-3.right-3, .fixed.top-20.right-4');
+      profileIcons.forEach((icon) => {
+        (icon as HTMLElement).style.display = '';
+      });
+    };
+  }, [open]);
 
   if (!open) {
     return null;
@@ -797,6 +869,8 @@ function ReviewModal({
             onPhotosChange={setPhotos}
             maxPhotos={5}
             className="mb-4"
+            initialPhotos={initialPhotos}
+            onPhotoClick={openPhotoViewer}
           />
         </div>
 
@@ -807,18 +881,70 @@ function ReviewModal({
         >
           {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Submit Review'}
         </button>
+
+        {/* Full-Screen Photo Viewer */}
+        {photoViewerOpen && (
+          <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black bg-opacity-90">
+            <div className="relative w-full h-full flex items-center justify-center">
+              {/* Close button */}
+              <button
+                onClick={closePhotoViewer}
+                className="absolute top-4 right-4 z-10 text-white hover:text-gray-300 text-2xl font-bold bg-black bg-opacity-50 rounded-full w-10 h-10 flex items-center justify-center"
+              >
+                ×
+              </button>
+
+              {/* Previous button */}
+              {photos.length > 1 && (
+                <button
+                  onClick={prevPhoto}
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 text-2xl font-bold bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center"
+                >
+                  ‹
+                </button>
+              )}
+
+              {/* Next button */}
+              {photos.length > 1 && (
+                <button
+                  onClick={nextPhoto}
+                  className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 text-white hover:text-gray-300 text-2xl font-bold bg-black bg-opacity-50 rounded-full w-12 h-12 flex items-center justify-center"
+                >
+                  ›
+                </button>
+              )}
+
+              {/* Photo counter */}
+              {photos.length > 1 && (
+                <div className="absolute top-4 left-4 z-10 text-white bg-black bg-opacity-50 px-3 py-1 rounded text-sm">
+                  {photoViewerIndex + 1}
+                  {' '}
+                  /
+                  {photos.length}
+                </div>
+              )}
+
+              {/* Main photo */}
+              <img
+                src={photos[photoViewerIndex]}
+                alt={`Review ${photoViewerIndex + 1}`}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId }: {
+function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId, isAdmin }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
   isSignedIn: boolean;
   userId?: string;
+  isAdmin: boolean;
 }) {
-  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -833,25 +959,6 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
   const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
   const [reportReason, setReportReason] = useState('');
   const [reportLoading, setReportLoading] = useState(false);
-
-  // Check admin status
-  useEffect(() => {
-    const checkAdminStatus = async () => {
-      try {
-        const response = await fetch('/api/test-admin');
-        if (response.ok) {
-          const data = await response.json();
-          setIsAdmin(data.isAdmin);
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error);
-      }
-    };
-
-    if (isSignedIn) {
-      checkAdminStatus();
-    }
-  }, [isSignedIn]);
 
   useEffect(() => {
     if (!selectedCourt) {
@@ -1174,7 +1281,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                       ))}
                     </>
                   )}
-              {isSignedIn && (
+              {isSignedIn && !myReview && (
                 <div className="mt-6 flex justify-center">
                   <button
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
@@ -1183,8 +1290,13 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                       setShowModal(true);
                     }}
                   >
-                    {myReview ? (isAdmin ? 'Edit Review' : 'Edit Your Review') : 'Leave a Review'}
+                    Leave a Review
                   </button>
+                </div>
+              )}
+              {isAdmin && (
+                <div className="mt-2 text-center">
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Admin Mode</span>
                 </div>
               )}
               <ReviewModal
@@ -1312,8 +1424,28 @@ export default function MapComponent() {
   const [dragStartY, setDragStartY] = useState(0);
   const [dragCurrentY, setDragCurrentY] = useState(0);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
+
+  // Check admin status once on page load
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/admin/check');
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.isAdmin);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+
+    if (isSignedIn) {
+      checkAdminStatus();
+    }
+  }, [isSignedIn]);
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -1529,6 +1661,7 @@ export default function MapComponent() {
                 setSelectedCourt={setSelectedCourt}
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
+                isAdmin={isAdmin}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -1537,6 +1670,7 @@ export default function MapComponent() {
                 setSelectedCourt={setSelectedCourt}
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
+                isAdmin={isAdmin}
               />
             </div>
             <div

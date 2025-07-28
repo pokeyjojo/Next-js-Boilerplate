@@ -1,15 +1,21 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
 type PhotoUploadProps = {
   onPhotosChange: (photos: string[]) => void;
   maxPhotos?: number;
   className?: string;
+  initialPhotos?: string[];
+  onPhotoClick?: (photoUrl: string, index: number) => void;
 };
 
-export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className = '' }: PhotoUploadProps) {
-  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>([]);
+export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className = '', initialPhotos = [], onPhotoClick }: PhotoUploadProps) {
+  const [uploadedPhotos, setUploadedPhotos] = useState<string[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    setUploadedPhotos(initialPhotos);
+  }, [initialPhotos]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (uploadedPhotos.length + acceptedFiles.length > maxPhotos) {
@@ -102,11 +108,17 @@ export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className =
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
           {uploadedPhotos.map((photo, index) => (
             <div key={index} className="relative group">
-              <img
-                src={photo}
-                alt={`Upload ${index + 1}`}
-                className="w-full h-24 object-cover rounded-lg"
-              />
+              <button
+                onClick={() => onPhotoClick?.(photo, index)}
+                className="w-full h-24 block focus:outline-none focus:ring-2 focus:ring-blue-500"
+                aria-label={`View photo ${index + 1}`}
+              >
+                <img
+                  src={photo}
+                  alt={`Upload ${index + 1}`}
+                  className="w-full h-24 object-cover rounded-lg"
+                />
+              </button>
               <button
                 onClick={() => removePhoto(index)}
                 className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
