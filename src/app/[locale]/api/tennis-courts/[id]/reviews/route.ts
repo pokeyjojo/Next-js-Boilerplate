@@ -2,11 +2,12 @@ import type { NextRequest } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { deletePhotosFromUrls } from '@/libs/Cloudinary';
 import { getDb } from '@/libs/DB';
 import { reviewSchema } from '@/models/Schema';
 
 // GET: List all reviews for a court
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
+export async function GET(_req: NextRequest, context: { params: { id: string } }) {
   const { id } = await context.params;
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
-  const { rating, text } = await req.json();
+  const { rating, text, photos } = await req.json();
   if (!rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: 'Invalid rating' }, { status: 400 });
   }
@@ -43,6 +44,7 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
     userName,
     rating,
     text,
+    photos: photos ? JSON.stringify(photos) : null,
   }).returning();
   return NextResponse.json(review[0]);
 }
@@ -58,7 +60,7 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   if (!id) {
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
-  const { reviewId, rating, text } = await req.json();
+  const { reviewId, rating, text, photos } = await req.json();
   if (!reviewId) {
     return NextResponse.json({ error: 'Missing reviewId' }, { status: 400 });
   }
@@ -68,8 +70,29 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   if (!review[0] || review[0].userId !== userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  // Delete old photos from Cloudinary if they exist and are being replaced
+  if (review[0].photos && photos) {
+    try {
+      const oldPhotoUrls = JSON.parse(review[0].photos) as string[];
+      const newPhotoUrls = photos as string[];
+
+      // Find photos that are no longer in the new list
+      const photosToDelete = oldPhotoUrls.filter(oldUrl => !newPhotoUrls.includes(oldUrl));
+
+      await deletePhotosFromUrls(photosToDelete);
+    } catch (error) {
+      console.error('Error deleting old photos from Cloudinary:', error);
+      // Continue with review update even if photo deletion fails
+    }
+  }
+
   const updated = await db.update(reviewSchema)
-    .set({ rating, text })
+    .set({
+      rating,
+      text,
+      photos: photos ? JSON.stringify(photos) : null,
+    })
     .where(eq(reviewSchema.id, reviewId))
     .returning();
   return NextResponse.json(updated[0]);
@@ -96,6 +119,18 @@ export async function DELETE(req: NextRequest, context: { params: { id: string }
   if (!review[0] || review[0].userId !== userId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
+
+  // Delete photos from Cloudinary if they exist
+  if (review[0].photos) {
+    try {
+      const photoUrls = JSON.parse(review[0].photos) as string[];
+      await deletePhotosFromUrls(photoUrls);
+    } catch (error) {
+      console.error('Error deleting photos from Cloudinary:', error);
+      // Continue with review deletion even if photo deletion fails
+    }
+  }
+
   await db.delete(reviewSchema).where(eq(reviewSchema.id, reviewId));
   return NextResponse.json({ success: true });
 }

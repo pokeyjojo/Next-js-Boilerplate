@@ -76,6 +76,16 @@ a {
   z-index: 2 !important;
 }
 
+/* Hide AuthNav when photo viewer is open */
+.photo-viewer-open .fixed.top-3.right-3,
+.photo-viewer-open .fixed.top-20.right-4,
+.photo-viewer-open [class*='fixed'][class*='top-3'][class*='right-3'],
+.photo-viewer-open [class*='fixed'][class*='top-20'][class*='right-4'] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
 /* Mobile-friendly table styles */
 @media (max-width: 640px) {
   table {

@@ -93,6 +93,17 @@ export default function CourtDetailPage() {
     }
   }, [courtId, submitting]);
 
+  let averageRating = 0;
+  if (reviews.length > 0) {
+    averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+  }
+
+  useEffect(() => {
+    if (activeTab === 'reviews') {
+      console.warn('DEBUG: Rendering Reviews tab', { averageRating, reviewsLength: reviews.length });
+    }
+  }, [activeTab, averageRating, reviews.length]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -110,11 +121,6 @@ export default function CourtDetailPage() {
         </div>
       </div>
     );
-  }
-
-  let averageRating = 0;
-  if (reviews.length > 0) {
-    averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
   }
 
   const handleSubmitReview = async () => {
@@ -325,6 +331,29 @@ export default function CourtDetailPage() {
                     Write a Review
                   </button>
                 )}
+              </div>
+            </div>
+            {/* Average Rating Display */}
+            <div className="p-6 pt-4 pb-0">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center">
+                  {[...Array.from({ length: 5 })].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-6 h-6 ${i < Math.round(averageRating) ? 'text-yellow-400' : 'text-gray-300'}`}
+                    />
+                  ))}
+                </div>
+                <span className="text-2xl font-bold text-gray-900">{averageRating.toFixed(1)}</span>
+                <span className="text-gray-500 text-lg">/ 5</span>
+                <span className="text-gray-500 ml-2">
+                  (
+                  {reviews.length}
+                  {' '}
+                  review
+                  {reviews.length !== 1 ? 's' : ''}
+                  )
+                </span>
               </div>
             </div>
             <div className="p-6">

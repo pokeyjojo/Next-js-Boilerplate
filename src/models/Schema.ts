@@ -46,6 +46,7 @@ export const reviewSchema = pgTable('reviews', {
   userName: varchar('user_name', { length: 255 }).notNull(),
   rating: integer('rating').notNull(), // 1-5
   text: varchar('text', { length: 2000 }),
+  photos: varchar('photos', { length: 2000 }), // JSON array of photo URLs
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()

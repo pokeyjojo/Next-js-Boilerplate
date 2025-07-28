@@ -3,28 +3,47 @@ import postgres from 'postgres';
 
 export async function GET() {
   try {
-    // Create a new postgres client (use DATABASE_URL from env if available)
     const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:tennis@localhost:5432/tennis_courts');
     const courts = await sql`
       SELECT 
-        id,
-        name,
-        address,
-        city,
-        state,
-        zip,
-        latitude,
-        longitude,
-        lighted,
-        membership_required,
-        court_type,
-        hitting_wall,
-        court_condition,
-        number_of_courts,
-        surface,
-        parking
-      FROM courts
-      WHERE latitude IS NOT NULL AND longitude IS NOT NULL
+        c.id,
+        c.name,
+        c.address,
+        c.city,
+        c.state,
+        c.zip,
+        c.latitude,
+        c.longitude,
+        c.lighted,
+        c.membership_required,
+        c.court_type,
+        c.hitting_wall,
+        c.court_condition,
+        c.number_of_courts,
+        c.surface,
+        c.parking,
+        COALESCE(AVG(r.rating), 0) as average_rating,
+        COUNT(r.id) as review_count
+      FROM courts c
+      LEFT JOIN reviews r ON c.id = r.court_id
+      WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+      GROUP BY 
+        c.id,
+        c.name,
+        c.address,
+        c.city,
+        c.state,
+        c.zip,
+        c.latitude,
+        c.longitude,
+        c.lighted,
+        c.membership_required,
+        c.court_type,
+        c.hitting_wall,
+        c.court_condition,
+        c.number_of_courts,
+        c.surface,
+        c.parking
     `;
     return NextResponse.json(courts);
   } catch (error) {

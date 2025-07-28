@@ -6,6 +6,8 @@ import L from 'leaflet';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import PhotoUpload from './PhotoUpload';
+import PhotoViewer from './PhotoViewer';
 import 'leaflet/dist/leaflet.css';
 
 const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
@@ -27,6 +29,10 @@ type TennisCourt = {
   number_of_courts: number;
   surface: string;
   parking: string;
+  averageRating?: number;
+  reviewCount?: number;
+  average_rating?: number;
+  review_count?: number;
 };
 
 // Custom marker icons for public and private courts
@@ -563,7 +569,7 @@ const CourtList = ({
                   {', '}
                   {court.state}
                 </p>
-                <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap`}>
+                <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
                   <span className={`px-2 py-1 rounded text-xs sm:text-sm ${court.membership_required ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
                     {court.membership_required ? 'Private' : 'Public'}
                   </span>
@@ -571,6 +577,33 @@ const CourtList = ({
                     <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs sm:text-sm">
                       Lights
                     </span>
+                  )}
+                  {court.average_rating && Number(court.average_rating) > 0 && (
+                    <div className="flex items-center gap-1">
+                      <div className="flex items-center">
+                        {[...Array.from({ length: 5 })].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-3 h-3 ${i < Math.round(Number(court.average_rating)) ? 'text-yellow-400' : 'text-gray-300'}`}
+                            fill="currentColor"
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-600 font-medium">
+                        {Number(court.average_rating).toFixed(1)}
+                        {court.review_count && Number(court.review_count) > 0 && (
+                          <span className="text-gray-500">
+                            {' '}
+                            (
+                            {court.review_count}
+                            )
+                          </span>
+                        )}
+                      </span>
+                    </div>
                   )}
                 </div>
               </button>
@@ -714,34 +747,43 @@ function ReviewModal({
   onSubmit,
   initialRating = 0,
   initialText = '',
+  initialPhotos = [],
   loading = false,
   isEdit = false,
 }: {
   open: boolean;
   onClose: () => void;
-  onSubmit: (rating: number, text: string) => void;
+  onSubmit: (rating: number, text: string, photos: string[]) => void;
   initialRating?: number;
   initialText?: string;
+  initialPhotos?: string[];
   loading?: boolean;
   isEdit?: boolean;
 }) {
   const [rating, setRating] = useState(initialRating);
   const [text, setText] = useState(initialText);
+  const [photos, setPhotos] = useState<string[]>(initialPhotos);
+
   useEffect(() => {
     setRating(initialRating);
     setText(initialText);
-  }, [initialRating, initialText, open]);
+    setPhotos(initialPhotos);
+  }, [initialRating, initialText, initialPhotos, open]);
+
   if (!open) {
     return null;
   }
+
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
         <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={onClose}>&times;</button>
         <h3 className="text-lg font-bold mb-4">{isEdit ? 'Edit Review' : 'Leave a Review'}</h3>
+
         <div className="mb-4">
           <StarRating value={rating} onChange={setRating} editable />
         </div>
+
         <textarea
           className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
           placeholder="Share your experience..."
@@ -749,9 +791,18 @@ function ReviewModal({
           onChange={e => setText(e.target.value)}
           maxLength={2000}
         />
+
+        <div className="mb-4">
+          <PhotoUpload
+            onPhotosChange={setPhotos}
+            maxPhotos={5}
+            className="mb-4"
+          />
+        </div>
+
         <button
           className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
-          onClick={() => onSubmit(rating, text)}
+          onClick={() => onSubmit(rating, text, photos)}
           disabled={loading || rating < 1}
         >
           {loading ? 'Saving...' : isEdit ? 'Save Changes' : 'Submit Review'}
@@ -774,6 +825,9 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
   const [modalLoading, setModalLoading] = useState(false);
   const [editReview, setEditReview] = useState<any | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
+  const [photoViewerPhotos, setPhotoViewerPhotos] = useState<string[]>([]);
+  const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
 
   useEffect(() => {
     if (!selectedCourt) {
@@ -791,15 +845,15 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
     [reviews, userId],
   );
 
-  const handleSubmit = async (rating: number, text: string) => {
+  const handleSubmit = async (rating: number, text: string, photos: string[]) => {
     if (!selectedCourt) {
       return;
     }
     setModalLoading(true);
     const method = editReview ? 'PUT' : 'POST';
     const body = editReview
-      ? { reviewId: editReview.id, rating, text }
-      : { rating, text };
+      ? { reviewId: editReview.id, rating, text, photos }
+      : { rating, text, photos };
     const res = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`, {
       method,
       headers: { 'Content-Type': 'application/json' },
@@ -963,6 +1017,29 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                             <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                           </div>
                           <div className="text-gray-700 text-sm whitespace-pre-line">{review.text}</div>
+                          {review.photos && (
+                            <div className="mt-2 grid grid-cols-2 gap-2">
+                              {JSON.parse(review.photos).map((photo: string, index: number) => (
+                                <button
+                                  key={index}
+                                  className="w-full h-24 overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  onClick={() => {
+                                    setPhotoViewerPhotos(JSON.parse(review.photos));
+                                    setPhotoViewerIndex(index);
+                                    setPhotoViewerOpen(true);
+                                  }}
+                                  aria-label={`View photo ${index + 1}`}
+                                  type="button"
+                                >
+                                  <img
+                                    src={photo}
+                                    alt={`${index + 1}`}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          )}
                           {userId && review.userId === userId && (
                             <div className="flex gap-2 mt-2">
                               <button
@@ -1008,6 +1085,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                 onSubmit={handleSubmit}
                 initialRating={editReview ? editReview.rating : myReview ? myReview.rating : 0}
                 initialText={editReview ? editReview.text : myReview ? myReview.text : ''}
+                initialPhotos={editReview ? (editReview.photos ? JSON.parse(editReview.photos) : []) : myReview ? (myReview.photos ? JSON.parse(myReview.photos) : []) : []}
                 loading={modalLoading}
                 isEdit={!!editReview}
               />
@@ -1023,6 +1101,13 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                   </div>
                 </div>
               )}
+              {/* Photo Viewer */}
+              <PhotoViewer
+                photos={photoViewerPhotos}
+                initialIndex={photoViewerIndex}
+                isOpen={photoViewerOpen}
+                onClose={() => setPhotoViewerOpen(false)}
+              />
             </div>
           )}
     </div>
