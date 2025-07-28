@@ -818,6 +818,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
   isSignedIn: boolean;
   userId?: string;
 }) {
+  const [isAdmin, setIsAdmin] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
@@ -828,13 +829,43 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [photoViewerPhotos, setPhotoViewerPhotos] = useState<string[]>([]);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
+  const [reportModalOpen, setReportModalOpen] = useState(false);
+  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [reportLoading, setReportLoading] = useState(false);
+
+  // Check admin status
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      try {
+        const response = await fetch('/api/test-admin');
+        if (response.ok) {
+          const data = await response.json();
+          setIsAdmin(data.isAdmin);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+      }
+    };
+
+    if (isSignedIn) {
+      checkAdminStatus();
+    }
+  }, [isSignedIn]);
 
   useEffect(() => {
     if (!selectedCourt) {
       return;
     }
     setLoadingReviews(true);
-    fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`)
+    fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`)
+      .then((res) => {
+        if (!res.ok) {
+          // Fallback to original endpoint if the new one fails
+          return fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`);
+        }
+        return res;
+      })
       .then(res => res.json())
       .then(data => setReviews(Array.isArray(data) ? data : []))
       .finally(() => setLoadingReviews(false));
@@ -844,6 +875,11 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
     () => Array.isArray(reviews) ? reviews.find(r => r.userId === userId) : undefined,
     [reviews, userId],
   );
+
+  // Check if user can edit/delete a review (own review or admin)
+  const canEditReview = (review: any) => {
+    return isSignedIn && (review.userId === userId || isAdmin);
+  };
 
   const handleSubmit = async (rating: number, text: string, photos: string[]) => {
     if (!selectedCourt) {
@@ -860,7 +896,11 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      const updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+      let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
+      if (!Array.isArray(updated)) {
+        // Fallback to original endpoint if the new one fails
+        updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+      }
       setReviews(updated);
       setShowModal(false);
       setEditReview(null);
@@ -884,12 +924,70 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reviewId: deleteConfirmId }),
     });
-    const updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+    let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
+    if (!Array.isArray(updated)) {
+      // Fallback to original endpoint if the new one fails
+      updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
+    }
     setReviews(Array.isArray(updated) ? updated : []);
     setDeleteConfirmId(null);
   };
 
   const cancelDelete = () => setDeleteConfirmId(null);
+
+  const handleReport = (reviewId: string) => {
+    setReportingReviewId(reviewId);
+    setReportModalOpen(true);
+  };
+
+  const [reportMessage, setReportMessage] = useState<string | null>(null);
+  const [reportMessageType, setReportMessageType] = useState<'success' | 'error'>('success');
+
+  const submitReport = async () => {
+    if (!reportingReviewId || !reportReason.trim()) {
+      return;
+    }
+
+    try {
+      setReportLoading(true);
+      const response = await fetch(`/api/tennis-courts/${selectedCourt?.id}/reviews/${reportingReviewId}/report`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: reportReason.trim() }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setReportMessage('Report submitted successfully! Thank you for your feedback.');
+        setReportMessageType('success');
+      } else {
+        // Handle specific error cases with user-friendly messages
+        if (response.status === 400 && data.error === 'You have already reported this review') {
+          setReportMessage('You have already reported this review. Thank you for your feedback!');
+          setReportMessageType('success');
+        } else {
+          setReportMessage(data.error || 'Failed to submit report. Please try again.');
+          setReportMessageType('error');
+        }
+      }
+    } catch (error) {
+      console.error('Error reporting review:', error);
+      setReportMessage('Failed to submit report. Please check your connection and try again.');
+      setReportMessageType('error');
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const cancelReport = () => {
+    setReportModalOpen(false);
+    setReportingReviewId(null);
+    setReportReason('');
+    setReportMessage(null);
+  };
 
   if (!selectedCourt) {
     return null;
@@ -1013,6 +1111,9 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                         <div key={review.id} className="mb-4 border-b pb-3">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold">{review.userName}</span>
+                            {isAdmin && review.userId !== userId && (
+                              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>
+                            )}
                             <StarRating value={review.rating} />
                             <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
                           </div>
@@ -1040,25 +1141,35 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                               ))}
                             </div>
                           )}
-                          {userId && review.userId === userId && (
-                            <div className="flex gap-2 mt-2">
+                          <div className="flex gap-2 mt-2">
+                            {canEditReview(review) && (
+                              <>
+                                <button
+                                  className="text-xs text-blue-600 hover:underline"
+                                  onClick={() => {
+                                    setEditReview(review);
+                                    setShowModal(true);
+                                  }}
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  className="text-xs text-red-600 hover:underline"
+                                  onClick={() => handleDelete(review.id)}
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                            {isSignedIn && (
                               <button
-                                className="text-xs text-blue-600 hover:underline"
-                                onClick={() => {
-                                  setEditReview(review);
-                                  setShowModal(true);
-                                }}
+                                className="text-xs text-orange-600 hover:underline"
+                                onClick={() => handleReport(review.id)}
                               >
-                                Edit
+                                Report
                               </button>
-                              <button
-                                className="text-xs text-red-600 hover:underline"
-                                onClick={() => handleDelete(review.id)}
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
                       ))}
                     </>
@@ -1072,7 +1183,7 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                       setShowModal(true);
                     }}
                   >
-                    {myReview ? 'Edit Your Review' : 'Leave a Review'}
+                    {myReview ? (isAdmin ? 'Edit Review' : 'Edit Your Review') : 'Leave a Review'}
                   </button>
                 </div>
               )}
@@ -1093,7 +1204,9 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
               {deleteConfirmId !== null && (
                 <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
                   <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
-                    <div className="mb-4 text-center">Delete your review?</div>
+                    <div className="mb-4 text-center">
+                      {isAdmin ? 'Delete this review?' : 'Delete your review?'}
+                    </div>
                     <div className="flex gap-2 justify-center">
                       <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" onClick={confirmDelete}>Delete</button>
                       <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300" onClick={cancelDelete}>Cancel</button>
@@ -1108,6 +1221,65 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
                 isOpen={photoViewerOpen}
                 onClose={() => setPhotoViewerOpen(false)}
               />
+
+              {/* Report Modal */}
+              {reportModalOpen && (
+                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-60">
+                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-gray-200">
+                    <h3 className="text-lg font-semibold mb-4">Report Review</h3>
+
+                    {/* Message Display */}
+                    {reportMessage && (
+                      <div className={`mb-4 p-3 rounded-lg ${
+                        reportMessageType === 'success'
+                          ? 'bg-green-50 border border-green-200 text-green-800'
+                          : 'bg-red-50 border border-red-200 text-red-800'
+                      }`}
+                      >
+                        {reportMessage}
+                      </div>
+                    )}
+
+                    <div className="mb-4">
+                      <label htmlFor="report-reason" className="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for report:
+                      </label>
+                      <textarea
+                        id="report-reason"
+                        value={reportReason}
+                        onChange={e => setReportReason(e.target.value)}
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        rows={4}
+                        placeholder="Please explain why you're reporting this review..."
+                        maxLength={500}
+                        disabled={reportLoading}
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        {reportReason.length}
+                        /500 characters
+                      </div>
+                    </div>
+                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
+                      <button
+                        className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 border border-gray-400 shadow"
+                        onClick={cancelReport}
+                        disabled={reportLoading}
+                        style={{ minWidth: '80px' }}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-700 shadow-lg"
+                        onClick={submitReport}
+                        disabled={reportLoading || !reportReason.trim()}
+                        style={{ minWidth: '120px' }}
+                      >
+                        {reportLoading ? 'Submitting...' : 'Submit Report'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
     </div>

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server';
 import { Buffer } from 'node:buffer';
 import { NextResponse } from 'next/server';
-import { uploadImage } from '@/libs/Cloudinary';
+import { uploadImage } from '@/libs/DigitalOceanSpaces';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       // Convert file to buffer
       const buffer = Buffer.from(await file.arrayBuffer());
 
-      // Upload to Cloudinary
+      // Upload to DigitalOcean Spaces
       const url = await uploadImage(buffer);
       uploadedUrls.push(url);
     }

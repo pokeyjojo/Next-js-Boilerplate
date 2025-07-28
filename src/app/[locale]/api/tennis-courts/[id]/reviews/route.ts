@@ -2,9 +2,9 @@ import type { NextRequest } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-import { deletePhotosFromUrls } from '@/libs/Cloudinary';
 import { getDb } from '@/libs/DB';
-import { reviewSchema } from '@/models/Schema';
+import { deletePhotosFromUrls } from '@/libs/DigitalOceanSpaces';
+import { photoModerationSchema, reviewSchema } from '@/models/Schema';
 
 // GET: List all reviews for a court
 export async function GET(_req: NextRequest, context: { params: { id: string } }) {
@@ -13,7 +13,10 @@ export async function GET(_req: NextRequest, context: { params: { id: string } }
     return NextResponse.json({ error: 'Invalid court id' }, { status: 400 });
   }
   const db = await getDb();
-  const reviews = await db.select().from(reviewSchema).where(eq(reviewSchema.courtId, id));
+  const reviews = await db
+    .select()
+    .from(reviewSchema)
+    .where(eq(reviewSchema.courtId, id));
   return NextResponse.json(reviews);
 }
 
@@ -46,6 +49,25 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
     text,
     photos: photos ? JSON.stringify(photos) : null,
   }).returning();
+
+  // Track photos for admin management if photos are provided
+  if (photos && Array.isArray(photos) && photos.length > 0) {
+    try {
+      const photoEntries = photos.map((photoUrl: string) => ({
+        photoUrl,
+        reviewId: review[0].id,
+        courtId: id,
+        uploadedBy: userId,
+        isDeleted: false,
+      }));
+
+      await db.insert(photoModerationSchema).values(photoEntries);
+    } catch (error) {
+      console.error('Error tracking photos for moderation:', error);
+      // Continue even if photo tracking fails - photos will still be displayed
+    }
+  }
+
   return NextResponse.json(review[0]);
 }
 
@@ -71,7 +93,7 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  // Delete old photos from Cloudinary if they exist and are being replaced
+  // Handle photo changes for moderation
   if (review[0].photos && photos) {
     try {
       const oldPhotoUrls = JSON.parse(review[0].photos) as string[];
@@ -80,10 +102,44 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
       // Find photos that are no longer in the new list
       const photosToDelete = oldPhotoUrls.filter(oldUrl => !newPhotoUrls.includes(oldUrl));
 
+      // Delete removed photos from Cloudinary
       await deletePhotosFromUrls(photosToDelete);
+
+      // Remove deleted photos from tracking
+      if (photosToDelete.length > 0) {
+        try {
+          for (const photoUrl of photosToDelete) {
+            await db.delete(photoModerationSchema)
+              .where(eq(photoModerationSchema.reviewId, reviewId))
+              .where(eq(photoModerationSchema.photoUrl, photoUrl));
+          }
+        } catch (error) {
+          console.error('Error removing photos from tracking:', error);
+          // Continue even if photo tracking cleanup fails
+        }
+      }
+
+      // Add new photos to tracking
+      const newPhotos = newPhotoUrls.filter(newUrl => !oldPhotoUrls.includes(newUrl));
+      if (newPhotos.length > 0) {
+        try {
+          const photoEntries = newPhotos.map((photoUrl: string) => ({
+            photoUrl,
+            reviewId,
+            courtId: id,
+            uploadedBy: userId,
+            isDeleted: false,
+          }));
+
+          await db.insert(photoModerationSchema).values(photoEntries);
+        } catch (error) {
+          console.error('Error tracking new photos for moderation:', error);
+          // Continue even if photo tracking fails
+        }
+      }
     } catch (error) {
-      console.error('Error deleting old photos from Cloudinary:', error);
-      // Continue with review update even if photo deletion fails
+      console.error('Error handling photo changes:', error);
+      // Continue with review update even if photo handling fails
     }
   }
 

@@ -47,6 +47,44 @@ export const reviewSchema = pgTable('reviews', {
   rating: integer('rating').notNull(), // 1-5
   text: varchar('text', { length: 2000 }),
   photos: varchar('photos', { length: 2000 }), // JSON array of photo URLs
+  isDeleted: boolean('is_deleted').notNull().default(false), // true if admin deleted this review
+  deletedBy: varchar('deleted_by', { length: 255 }), // admin user ID who deleted
+  deletionReason: varchar('deletion_reason', { length: 500 }), // reason for deletion
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const photoModerationSchema = pgTable('photo_moderation', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  photoUrl: varchar('photo_url', { length: 500 }).notNull(),
+  reviewId: uuid('review_id').notNull(), // FK to reviews.id
+  courtId: uuid('court_id').notNull(), // FK to tennis_courts.id
+  uploadedBy: varchar('uploaded_by', { length: 255 }).notNull(), // user ID who uploaded
+  isDeleted: boolean('is_deleted').notNull().default(false), // true if admin deleted this photo
+  deletedBy: varchar('deleted_by', { length: 255 }), // admin user ID who deleted
+  deletionReason: varchar('deletion_reason', { length: 500 }), // reason for deletion
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const reportSchema = pgTable('reports', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  reviewId: uuid('review_id').notNull(), // FK to reviews.id
+  reportedBy: varchar('reported_by', { length: 255 }).notNull(), // user ID who reported
+  reportedByUserName: varchar('reported_by_user_name', { length: 255 }).notNull(), // user name who reported
+  reason: varchar('reason', { length: 500 }).notNull(), // reason for report
+  status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, resolved, dismissed
+  resolvedBy: varchar('resolved_by', { length: 255 }), // admin user ID who resolved
+  resolutionNote: varchar('resolution_note', { length: 500 }), // admin note on resolution
+  resolvedAt: timestamp('resolved_at', { mode: 'date' }),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()

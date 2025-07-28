@@ -2,6 +2,7 @@ import { SignOutButton } from '@clerk/nextjs';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { LocaleSwitcher } from '@/components/LocaleSwitcher';
+import { isAdmin } from '@/libs/AdminUtils';
 import { BaseTemplate } from '@/templates/BaseTemplate';
 
 export default async function DashboardLayout(props: {
@@ -14,6 +15,8 @@ export default async function DashboardLayout(props: {
     locale,
     namespace: 'DashboardLayout',
   });
+
+  const adminCheck = await isAdmin();
 
   return (
     <BaseTemplate
@@ -35,6 +38,26 @@ export default async function DashboardLayout(props: {
               {t('user_profile_link')}
             </Link>
           </li>
+          {adminCheck && (
+            <>
+              <li>
+                <Link
+                  href="/dashboard/admin/reports/"
+                  className="border-none text-red-600 hover:text-red-800 font-medium"
+                >
+                  Reported Reviews
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/admin/photos/"
+                  className="border-none text-orange-600 hover:text-orange-800 font-medium"
+                >
+                  Photo Management
+                </Link>
+              </li>
+            </>
+          )}
         </>
       )}
       rightNav={(
