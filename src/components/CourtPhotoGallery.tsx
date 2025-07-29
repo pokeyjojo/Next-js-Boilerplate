@@ -224,13 +224,13 @@ export default function CourtPhotoGallery({
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
         {photos.map((photo, index) => (
           <div key={photo.id} className="bg-white rounded-lg shadow-md overflow-hidden">
             <div className="relative group">
               <button
                 type="button"
-                className="w-full aspect-[3/2] overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full aspect-[4/3] overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
                 onClick={() => openPhotoViewer(photos.map(p => p.photoUrl), index)}
                 aria-label={`View photo ${index + 1}`}
               >

@@ -35,7 +35,7 @@ export async function GET() {
 
       // For each reported photo, get its details
       const photosWithReports = await Promise.all(
-        reports.map(async (report) => {
+        reports.map(async (report: any) => {
           const photo = await db
             .select({
               id: courtPhotoSchema.id,
@@ -48,9 +48,24 @@ export async function GET() {
             })
             .from(courtPhotoSchema)
             .where(eq(courtPhotoSchema.id, report.courtPhotoId))
-            .where(eq(courtPhotoSchema.isDeleted, false));
+            .limit(1);
 
-          if (photo[0]) {
+          if (photo.length === 0) {
+            return null; // Skip this report
+          }
+
+          if (photo.length > 1) {
+            return null; // Skip this report
+          }
+
+          const correctPhoto = photo[0];
+
+          // Double-check that the photo ID matches
+          if (correctPhoto.id !== report.courtPhotoId) {
+            return null; // Skip this report
+          }
+
+          if (correctPhoto) {
             // Try to get court info, but handle potential UUID/integer mismatch gracefully
             let courtName = 'Unknown Court';
             let courtAddress = 'Unknown Address';
@@ -62,38 +77,80 @@ export async function GET() {
                   address: courtsSchema.address,
                 })
                 .from(courtsSchema)
-                .where(eq(courtsSchema.id, photo[0].courtId));
+                .where(eq(courtsSchema.id, correctPhoto.courtId));
 
               if (court[0]) {
                 courtName = court[0].name;
                 courtAddress = court[0].address;
               }
             } catch (courtError) {
-              console.warn('Could not fetch court info for photo:', photo[0].id, courtError);
+              console.warn('Could not fetch court info for photo:', correctPhoto.id, courtError);
               // Continue with default values
             }
 
             return {
-              id: photo[0].id,
-              photoUrl: photo[0].photoUrl,
+              id: correctPhoto.id,
+              photoUrl: correctPhoto.photoUrl,
               reportId: report.id,
               reportReason: report.reason,
               reportedBy: report.reportedBy,
               reportedByUserName: report.reportedByUserName,
               reportCreatedAt: report.createdAt,
-              uploadedBy: photo[0].uploadedBy,
-              uploadedByUserName: photo[0].uploadedByUserName,
-              caption: photo[0].caption,
+              uploadedBy: correctPhoto.uploadedBy,
+              uploadedByUserName: correctPhoto.uploadedByUserName,
+              caption: correctPhoto.caption,
               courtName,
               courtAddress,
-              createdAt: photo[0].createdAt,
+              createdAt: correctPhoto.createdAt,
             };
           }
           return null;
         }),
       );
 
-      reportedPhotos = photosWithReports.filter(Boolean);
+      // Group by photo ID to get unique photos with all their reports
+      const photoMap = new Map();
+
+      photosWithReports.filter(Boolean).forEach((photoWithReport: any) => {
+        const photoId = photoWithReport.id;
+
+        if (!photoMap.has(photoId)) {
+          // First report for this photo
+          photoMap.set(photoId, {
+            ...photoWithReport,
+            reportCount: 1,
+            allReports: [{
+              reportId: photoWithReport.reportId,
+              reportReason: photoWithReport.reportReason,
+              reportedBy: photoWithReport.reportedBy,
+              reportedByUserName: photoWithReport.reportedByUserName,
+              reportCreatedAt: photoWithReport.reportCreatedAt,
+            }],
+          });
+        } else {
+          // Additional report for this photo
+          const existing = photoMap.get(photoId);
+          existing.reportCount += 1;
+          existing.allReports.push({
+            reportId: photoWithReport.reportId,
+            reportReason: photoWithReport.reportReason,
+            reportedBy: photoWithReport.reportedBy,
+            reportedByUserName: photoWithReport.reportedByUserName,
+            reportCreatedAt: photoWithReport.reportCreatedAt,
+          });
+
+          // Use the most recent report as the primary one
+          if (new Date(photoWithReport.reportCreatedAt) > new Date(existing.reportCreatedAt)) {
+            existing.reportId = photoWithReport.reportId;
+            existing.reportReason = photoWithReport.reportReason;
+            existing.reportedBy = photoWithReport.reportedBy;
+            existing.reportedByUserName = photoWithReport.reportedByUserName;
+            existing.reportCreatedAt = photoWithReport.reportCreatedAt;
+          }
+        }
+      });
+
+      reportedPhotos = Array.from(photoMap.values());
     } catch (error) {
       console.error('Error fetching reported court photos:', error);
     }

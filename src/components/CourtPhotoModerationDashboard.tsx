@@ -16,6 +16,14 @@ type ReportedCourtPhotoRecord = {
   courtName: string;
   courtAddress: string;
   createdAt: string;
+  reportCount?: number;
+  allReports?: Array<{
+    reportId: string;
+    reportReason: string;
+    reportedBy: string;
+    reportedByUserName: string;
+    reportCreatedAt: string;
+  }>;
 };
 
 export default function CourtPhotoModerationDashboard() {
@@ -249,7 +257,7 @@ export default function CourtPhotoModerationDashboard() {
         : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {filteredPhotos.map(photo => (
-                <div key={photo.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div key={photo.reportId} className="bg-white rounded-lg shadow-md overflow-hidden">
                   <div className="relative">
                     <img
                       src={photo.photoUrl}
@@ -273,6 +281,12 @@ export default function CourtPhotoModerationDashboard() {
                         <span className="text-sm font-medium text-gray-700">Reported by:</span>
                         <span className="text-sm text-gray-600">{photo.reportedByUserName}</span>
                       </div>
+                      {photo.reportCount && photo.reportCount > 1 && (
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium text-gray-700">Total Reports:</span>
+                          <span className="text-sm text-red-600 font-semibold">{photo.reportCount}</span>
+                        </div>
+                      )}
                     </div>
 
                     {photo.caption && (
