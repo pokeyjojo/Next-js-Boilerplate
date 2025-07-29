@@ -3,12 +3,37 @@
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { getI18nPath } from '@/utils/Helpers';
 
-export default function AuthNav() {
+type AuthNavProps = {
+  hideButtons?: boolean;
+};
+
+export default function AuthNav({ hideButtons = false }: AuthNavProps) {
   const { user, isLoaded, isSignedIn } = useUser();
   const params = useParams();
   const locale = params.locale as string;
+  const [isCourtDetailsOpen, setIsCourtDetailsOpen] = useState(false);
+
+  // Check if court details panel is open by looking for CSS class on body
+  useEffect(() => {
+    const checkCourtDetailsOpen = () => {
+      setIsCourtDetailsOpen(document.body.classList.contains('court-details-open'));
+    };
+
+    // Check initially
+    checkCourtDetailsOpen();
+
+    // Set up observer to watch for class changes
+    const observer = new MutationObserver(checkCourtDetailsOpen);
+    observer.observe(document.body, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {
@@ -32,6 +57,11 @@ export default function AuthNav() {
 
   // If user is signed in, show profile picture
   if (isSignedIn && user) {
+    // Hide profile picture when court details panel is open
+    if (isCourtDetailsOpen) {
+      return null;
+    }
+
     return (
       <>
         {/* Mobile: Profile picture at top right underneath search bar */}
@@ -82,6 +112,10 @@ export default function AuthNav() {
   }
 
   // If user is not signed in, show sign-in/sign-up buttons
+  if (hideButtons || isCourtDetailsOpen) {
+    return null;
+  }
+
   return (
     <>
       {/* Mobile: Bottom navigation */}

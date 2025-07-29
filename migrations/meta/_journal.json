@@ -113,6 +113,20 @@
       "when": 1753807150562,
       "tag": "0015_familiar_riptide",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1753819606646,
+      "tag": "0016_chief_thunderbolt_ross",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1753820561727,
+      "tag": "0017_tiresome_psylocke",
+      "breakpoints": true
     }
   ]
 }

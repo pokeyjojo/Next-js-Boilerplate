@@ -146,6 +146,33 @@ export const courtPhotoReportSchema = pgTable('court_photo_reports', {
     .notNull(),
 });
 
+export const courtEditSuggestionSchema = pgTable('court_edit_suggestions', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  courtId: uuid('court_id').notNull(), // FK to tennis_courts.id
+  suggestedBy: varchar('suggested_by', { length: 255 }).notNull(), // user ID who suggested the edit
+  suggestedByUserName: varchar('suggested_by_user_name', { length: 255 }).notNull(), // user name who suggested
+  reason: varchar('reason', { length: 500 }), // reason for the suggestion
+  status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, approved, rejected
+  reviewedBy: varchar('reviewed_by', { length: 255 }), // user ID who reviewed (must be different from suggestedBy)
+  reviewedByUserName: varchar('reviewed_by_user_name', { length: 255 }), // user name who reviewed
+  reviewNote: varchar('review_note', { length: 500 }), // note from reviewer
+  reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+  // Suggested changes
+  suggestedName: varchar('suggested_name', { length: 255 }),
+  suggestedAddress: varchar('suggested_address', { length: 255 }),
+  suggestedCity: varchar('suggested_city', { length: 100 }),
+  suggestedState: varchar('suggested_state', { length: 50 }),
+  suggestedZip: varchar('suggested_zip', { length: 20 }),
+  suggestedCourtType: varchar('suggested_court_type', { length: 50 }),
+  suggestedNumberOfCourts: integer('suggested_number_of_courts'),
+  suggestedSurface: varchar('suggested_surface', { length: 50 }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 // NOTE: If you need to reset the reviews table to use UUIDs, run the following SQL in a migration or manually:
 //
 // DROP TABLE IF EXISTS "reviews";

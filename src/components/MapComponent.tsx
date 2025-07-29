@@ -6,10 +6,15 @@ import L from 'leaflet';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import AdminCourtEdit from './AdminCourtEdit';
+import AllSuggestionsDisplay from './AllSuggestionsDisplay';
+import CourtEditSuggestion from './CourtEditSuggestion';
 import CourtPhotoGallery from './CourtPhotoGallery';
 import CourtPhotoUpload from './CourtPhotoUpload';
+import PendingSuggestionsReview from './PendingSuggestionsReview';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
+import UserSuggestionDisplay from './UserSuggestionDisplay';
 import 'leaflet/dist/leaflet.css';
 
 const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
@@ -1291,6 +1296,85 @@ function CourtDetailsPanel({
                 {' '}
                 {selectedCourt.hitting_wall ? 'Yes' : 'No'}
               </div>
+
+              {/* Sign-in prompt for suggestions */}
+              {!isSignedIn && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="text-center text-gray-600 py-4">
+                    <p className="text-sm">Sign in to make a suggestion</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Buttons */}
+              {isSignedIn && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <div className="flex items-center space-x-3">
+                    <CourtEditSuggestion
+                      court={{
+                        id: selectedCourt.id.toString(),
+                        name: selectedCourt.name,
+                        address: selectedCourt.address,
+                        city: selectedCourt.city,
+                        numberOfCourts: selectedCourt.number_of_courts,
+                        surfaceType: selectedCourt.surface || '',
+                      }}
+                      userId={userId}
+                      onSuggestionSubmitted={() => {}}
+                    />
+                    {isAdmin && (
+                      <AdminCourtEdit
+                        court={{
+                          id: selectedCourt.id.toString(),
+                          name: selectedCourt.name,
+                          address: selectedCourt.address,
+                          city: selectedCourt.city,
+                          numberOfCourts: selectedCourt.number_of_courts,
+                          surfaceType: selectedCourt.surface || '',
+                        }}
+                        onCourtUpdated={(updatedCourt) => {
+                          // Update the selected court with new data
+                          setSelectedCourt({
+                            ...selectedCourt,
+                            name: updatedCourt.name,
+                            address: updatedCourt.address,
+                            city: updatedCourt.city,
+                            number_of_courts: updatedCourt.numberOfCourts,
+                            surface: updatedCourt.surfaceType,
+                          });
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* User's Existing Suggestions */}
+                  <div className="mt-6">
+                    <UserSuggestionDisplay
+                      courtId={selectedCourt.id.toString()}
+                      currentUserId={userId || ''}
+                      onSuggestionUpdated={() => {}}
+                    />
+                  </div>
+
+                  {/* Pending Suggestions for Review */}
+                  <div className="mt-6">
+                    <PendingSuggestionsReview
+                      courtId={selectedCourt.id.toString()}
+                      currentUserId={userId || ''}
+                      onSuggestionReviewed={() => refreshCourtData()}
+                    />
+                  </div>
+
+                  {/* Suggestion History */}
+                  <div className="mt-6">
+                    <AllSuggestionsDisplay
+                      courtId={selectedCourt.id.toString()}
+                      currentUserId={userId || ''}
+                      onSuggestionUpdated={() => refreshCourtData()}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )
         : activeTab === 'photos'
@@ -1302,6 +1386,11 @@ function CourtDetailsPanel({
                     )
                   : (
                       <>
+                        {!isSignedIn && (
+                          <div className="mb-4 text-center text-gray-600 py-4">
+                            <p className="text-sm">Sign in to post photos</p>
+                          </div>
+                        )}
                         {isSignedIn && (
                           <div className="mb-4 flex justify-center">
                             <button
@@ -1399,6 +1488,11 @@ function CourtDetailsPanel({
                         ))}
                       </>
                     )}
+                {!isSignedIn && (
+                  <div className="mt-6 text-center text-gray-600 py-4">
+                    <p className="text-sm">Sign in to leave a review</p>
+                  </div>
+                )}
                 {isSignedIn && !myReview && (
                   <div className="mt-6 flex justify-center">
                     <button
@@ -1568,6 +1662,20 @@ export default function MapComponent() {
       checkAdminStatus();
     }
   }, [isSignedIn]);
+
+  // Add/remove CSS class to body when court details panel is open
+  useEffect(() => {
+    if (selectedCourt) {
+      document.body.classList.add('court-details-open');
+    } else {
+      document.body.classList.remove('court-details-open');
+    }
+
+    // Cleanup function to remove class when component unmounts
+    return () => {
+      document.body.classList.remove('court-details-open');
+    };
+  }, [selectedCourt]);
 
   // Function to refresh court data (for updating ratings and review counts)
   const refreshCourtData = useCallback(async () => {

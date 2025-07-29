@@ -38,6 +38,7 @@
     "@clerk/localizations": "^3.16.4",
     "@clerk/nextjs": "^6.21.0",
     "@electric-sql/pglite": "^0.3.3",
+    "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
     "@logtail/pino": "^0.5.5",
     "@sentry/nextjs": "^9.27.0",

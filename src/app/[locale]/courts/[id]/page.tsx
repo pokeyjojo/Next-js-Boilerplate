@@ -4,6 +4,9 @@ import { useUser } from '@clerk/nextjs';
 import { Building, Camera, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import AdminCourtEdit from '@/components/AdminCourtEdit';
+import CourtEditSuggestion from '@/components/CourtEditSuggestion';
+import CourtEditSuggestionReview from '@/components/CourtEditSuggestionReview';
 import CourtPhotoGallery from '@/components/CourtPhotoGallery';
 import CourtPhotoUpload from '@/components/CourtPhotoUpload';
 
@@ -284,6 +287,29 @@ export default function CourtDetailPage() {
                   {court.city}
                 </span>
               </div>
+              {isSignedIn && (
+                <div className="flex items-center space-x-3 mb-4">
+                  <CourtEditSuggestion court={court} onSuggestionSubmitted={() => {}} />
+                  {isAdmin && (
+                    <AdminCourtEdit
+                      court={court}
+                      onCourtUpdated={(updatedCourt) => {
+                        // Merge the updated fields with the existing court data
+                        setCourt(prev => prev
+                          ? {
+                              ...prev,
+                              name: updatedCourt.name,
+                              address: updatedCourt.address,
+                              city: updatedCourt.city,
+                              numberOfCourts: updatedCourt.numberOfCourts,
+                              surfaceType: updatedCourt.surfaceType,
+                            }
+                          : null);
+                      }}
+                    />
+                  )}
+                </div>
+              )}
               <div className="flex items-center space-x-4">
                 <div className="flex items-center">
                   <Star className="w-5 h-5 text-yellow-400 mr-1" />
@@ -471,6 +497,16 @@ export default function CourtDetailPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Edit Suggestions */}
+              {isSignedIn && (
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <CourtEditSuggestionReview
+                    courtId={courtId}
+                    currentUserId={user?.id || ''}
+                  />
+                </div>
+              )}
             </div>
           </div>
         ) : activeTab === 'photos' ? (
