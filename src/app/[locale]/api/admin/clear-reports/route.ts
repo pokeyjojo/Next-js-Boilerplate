@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { isAdmin } from '@/libs/AdminUtils';
 import { getDb } from '@/libs/DB';
-import { reportSchema } from '@/models/Schema';
+import { courtPhotoReportSchema, reportSchema } from '@/models/Schema';
 
 export async function DELETE() {
   try {
@@ -13,8 +13,11 @@ export async function DELETE() {
 
     const db = await getDb();
 
-    // Delete all reports
+    // Delete all review reports
     await db.delete(reportSchema);
+
+    // Delete all court photo reports
+    await db.delete(courtPhotoReportSchema);
 
     return NextResponse.json({
       success: true,

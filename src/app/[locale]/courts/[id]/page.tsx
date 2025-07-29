@@ -1,9 +1,11 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Building, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
+import { Building, Camera, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import CourtPhotoGallery from '@/components/CourtPhotoGallery';
+import CourtPhotoUpload from '@/components/CourtPhotoUpload';
 
 type TennisCourt = {
   id: string;
@@ -30,19 +32,53 @@ type Review = {
   createdAt: string;
 };
 
+type CourtPhoto = {
+  id: string;
+  photoUrl: string;
+  uploadedBy: string;
+  uploadedByUserName: string;
+  caption?: string;
+  createdAt: string;
+};
+
 export default function CourtDetailPage() {
   const params = useParams();
   const courtId = params.id as string;
   const [court, setCourt] = useState<TennisCourt | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
+  const [photos, setPhotos] = useState<CourtPhoto[]>([]);
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'photos'>('overview');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [reviewText, setReviewText] = useState('');
   const [reviewRating, setReviewRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const { isSignedIn } = useUser();
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [photoCaption, setPhotoCaption] = useState('');
+  const [isAdmin, setIsAdmin] = useState(false);
+  const { isSignedIn, user } = useUser();
+
+  // Check admin status
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (isSignedIn) {
+        try {
+          const response = await fetch('/api/admin/check');
+          if (response.ok) {
+            const data = await response.json();
+            setIsAdmin(data.isAdmin);
+          }
+        } catch (error) {
+          console.error('Error checking admin status:', error);
+        }
+      }
+    };
+
+    checkAdminStatus();
+  }, [isSignedIn]);
 
   useEffect(() => {
     const fetchCourtData = async () => {
@@ -92,6 +128,24 @@ export default function CourtDetailPage() {
       fetchReviews();
     }
   }, [courtId, submitting]);
+
+  useEffect(() => {
+    const fetchPhotos = async () => {
+      try {
+        const response = await fetch(`/api/tennis-courts/${courtId}/photos`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        const data = await response.json();
+        setPhotos(Array.isArray(data) ? data : []);
+      } catch {
+        setPhotos([]);
+      }
+    };
+    if (courtId) {
+      fetchPhotos();
+    }
+  }, [courtId]);
 
   let averageRating = 0;
   if (reviews.length > 0) {
@@ -147,6 +201,72 @@ export default function CourtDetailPage() {
     }
   };
 
+  const handleSubmitPhotos = async () => {
+    if (selectedPhotos.length === 0) {
+      return;
+    }
+    setUploadingPhotos(true);
+    try {
+      for (const photoUrl of selectedPhotos) {
+        const res = await fetch(`/api/tennis-courts/${courtId}/photos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl, caption: photoCaption }),
+        });
+        if (!res.ok) {
+          throw new Error('Failed to submit photo');
+        }
+      }
+      setShowPhotoUploadModal(false);
+      setSelectedPhotos([]);
+      setPhotoCaption('');
+      // Refresh photos
+      const response = await fetch(`/api/tennis-courts/${courtId}/photos`);
+      if (response.ok) {
+        const data = await response.json();
+        setPhotos(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Error submitting photos:', error);
+      // eslint-disable-next-line no-alert
+      alert('Failed to submit photos');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
+  const handlePhotoDelete = async (photoId: string) => {
+    try {
+      const res = await fetch(`/api/tennis-courts/${courtId}/photos`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId }),
+      });
+      if (res.ok) {
+        setPhotos(photos.filter(photo => photo.id !== photoId));
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+    }
+  };
+
+  const handlePhotoEdit = async (photoId: string, caption: string) => {
+    try {
+      const res = await fetch(`/api/tennis-courts/${courtId}/photos`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId, caption }),
+      });
+      if (res.ok) {
+        setPhotos(photos.map(photo =>
+          photo.id === photoId ? { ...photo, caption } : photo,
+        ));
+      }
+    } catch (error) {
+      console.error('Error editing photo:', error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -179,6 +299,14 @@ export default function CourtDetailPage() {
                   <Users className="w-4 h-4 text-gray-400 mr-1" />
                   <span className="text-gray-600">{court.isPublic ? 'Public' : 'Private'}</span>
                 </div>
+                <div className="flex items-center">
+                  <Camera className="w-4 h-4 text-gray-400 mr-1" />
+                  <span className="text-gray-600">
+                    {photos.length}
+                    {' '}
+                    photos
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -198,6 +326,18 @@ export default function CourtDetailPage() {
               }`}
             >
               Overview
+            </button>
+            <button
+              onClick={() => setActiveTab('photos')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'photos'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Photos (
+              {photos.length}
+              )
             </button>
             <button
               onClick={() => setActiveTab('reviews')}
@@ -228,14 +368,22 @@ export default function CourtDetailPage() {
                     <Building className="w-5 h-5 text-gray-400 mr-3 mt-0.5" />
                     <div>
                       <p className="font-medium">Facility Type</p>
-                      <p className="text-gray-600">{court.isIndoor ? 'Indoor Tennis Facility' : 'Outdoor Tennis Courts'}</p>
+                      <p className="text-gray-600">
+                        {court.isIndoor
+                          ? 'Indoor Tennis Facility'
+                          : 'Outdoor Tennis Courts'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start">
                     <Users className="w-5 h-5 text-gray-400 mr-3 mt-0.5" />
                     <div>
                       <p className="font-medium">Access</p>
-                      <p className="text-gray-600">{court.isPublic ? 'Public - Open to everyone' : 'Private - Membership required'}</p>
+                      <p className="text-gray-600">
+                        {court.isPublic
+                          ? 'Public - Open to everyone'
+                          : 'Private - Membership required'}
+                      </p>
                     </div>
                   </div>
                   <div className="flex items-start">
@@ -261,7 +409,11 @@ export default function CourtDetailPage() {
                     <Lightbulb className="w-5 h-5 text-gray-400 mr-3 mt-0.5" />
                     <div>
                       <p className="font-medium">Lighting</p>
-                      <p className="text-gray-600">{court.isLighted ? 'Available for evening play' : 'Daytime play only'}</p>
+                      <p className="text-gray-600">
+                        {court.isLighted
+                          ? 'Available for evening play'
+                          : 'Daytime play only'}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -294,6 +446,10 @@ export default function CourtDetailPage() {
                     <span className="font-medium">{reviews.length}</span>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-gray-600">Photos</span>
+                    <span className="font-medium">{photos.length}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-600">Courts</span>
                     <span className="font-medium">{court.numberOfCourts}</span>
                   </div>
@@ -316,6 +472,84 @@ export default function CourtDetailPage() {
                 </div>
               </div>
             </div>
+          </div>
+        ) : activeTab === 'photos' ? (
+          /* Photos Tab */
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Photos</h2>
+                {isSignedIn && (
+                  <button
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    onClick={() => setShowPhotoUploadModal(true)}
+                  >
+                    Add Photos
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="p-6">
+              <CourtPhotoGallery
+                photos={photos}
+                courtId={courtId}
+                onPhotoDelete={handlePhotoDelete}
+                onPhotoEdit={handlePhotoEdit}
+                isAdmin={isAdmin}
+                currentUserId={user?.id}
+              />
+            </div>
+            {/* Photo Upload Modal */}
+            {showPhotoUploadModal && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+                  <button
+                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+                    onClick={() => setShowPhotoUploadModal(false)}
+                  >
+                    &times;
+                  </button>
+                  <h3 className="text-lg font-bold mb-4">Add Photos</h3>
+
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Photo Caption (optional)
+                    </label>
+                    <textarea
+                      className="w-full border rounded-lg p-2"
+                      placeholder="Add a caption for your photos..."
+                      value={photoCaption}
+                      onChange={e => setPhotoCaption(e.target.value)}
+                      maxLength={500}
+                      rows={3}
+                    />
+                  </div>
+
+                  <CourtPhotoUpload
+                    onPhotosChange={setSelectedPhotos}
+                    maxPhotos={10}
+                    className="mb-4"
+                    courtId={courtId}
+                  />
+
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                      onClick={() => setShowPhotoUploadModal(false)}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-60"
+                      onClick={handleSubmitPhotos}
+                      disabled={uploadingPhotos || selectedPhotos.length === 0}
+                    >
+                      {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           /* Reviews Tab */

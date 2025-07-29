@@ -56,6 +56,14 @@ export default async function DashboardLayout(props: {
                   Photo Management
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/dashboard/admin/court-photos/"
+                  className="border-none text-purple-600 hover:text-purple-800 font-medium"
+                >
+                  Court Photo Management
+                </Link>
+              </li>
             </>
           )}
         </>

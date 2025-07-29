@@ -1,21 +1,25 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 
-type PhotoUploadProps = {
+type CourtPhotoUploadProps = {
   onPhotosChange: (photos: string[]) => void;
   maxPhotos?: number;
   className?: string;
   initialPhotos?: string[];
   onPhotoClick?: (photoUrl: string, index: number) => void;
+  courtId: string;
 };
 
-export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className = '', initialPhotos = [], onPhotoClick }: PhotoUploadProps) {
+export default function CourtPhotoUpload({
+  onPhotosChange,
+  maxPhotos = 10,
+  className = '',
+  initialPhotos = [],
+  onPhotoClick,
+  courtId: _courtId,
+}: CourtPhotoUploadProps) {
   const [uploadedPhotos, setUploadedPhotos] = useState<string[]>(initialPhotos);
   const [isUploading, setIsUploading] = useState(false);
-
-  useEffect(() => {
-    setUploadedPhotos(initialPhotos);
-  }, [initialPhotos]);
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     if (uploadedPhotos.length + acceptedFiles.length > maxPhotos) {
@@ -81,20 +85,18 @@ export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className =
         {isUploading
           ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
-                <span className="ml-2">Uploading...</span>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
+                <span className="text-gray-600">Uploading...</span>
               </div>
             )
           : (
               <div>
-                <svg className="mx-auto h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p className="text-sm text-gray-600">
+                <div className="text-gray-400 text-4xl mb-2">📸</div>
+                <p className="text-gray-600 mb-1">
                   {isDragActive ? 'Drop photos here' : 'Drag & drop photos here, or click to select'}
                 </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  Max
+                <p className="text-sm text-gray-500">
+                  Maximum
                   {' '}
                   {maxPhotos}
                   {' '}
@@ -105,28 +107,34 @@ export default function PhotoUpload({ onPhotosChange, maxPhotos = 5, className =
       </div>
 
       {uploadedPhotos.length > 0 && (
-        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {uploadedPhotos.map((photo, index) => (
-            <div key={index} className="relative group">
-              <button
-                onClick={() => onPhotoClick?.(photo, index)}
-                className="w-full aspect-square block focus:outline-none focus:ring-2 focus:ring-blue-500"
-                aria-label={`View photo ${index + 1}`}
-              >
-                <img
-                  src={photo}
-                  alt={`Upload ${index + 1}`}
-                  className="w-full h-full object-cover rounded-lg"
-                />
-              </button>
-              <button
-                onClick={() => removePhoto(index)}
-                className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                ×
-              </button>
-            </div>
-          ))}
+        <div className="mt-4">
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Photos:</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {uploadedPhotos.map((photo, index) => (
+              <div key={index} className="relative group">
+                <button
+                  type="button"
+                  className="w-full h-24 overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onClick={() => onPhotoClick?.(photo, index)}
+                  aria-label={`View photo ${index + 1}`}
+                >
+                  <img
+                    src={photo}
+                    alt={`${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => removePhoto(index)}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                  aria-label="Remove photo"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

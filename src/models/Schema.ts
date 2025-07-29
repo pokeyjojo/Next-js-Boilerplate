@@ -39,6 +39,25 @@ export const tennisCourtSchema = pgTable('tennis_courts', {
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
 });
 
+export const courtsSchema = pgTable('courts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  address: varchar('address', { length: 255 }).notNull(),
+  city: varchar('city', { length: 100 }),
+  state: varchar('state', { length: 50 }),
+  zip: varchar('zip', { length: 20 }),
+  latitude: decimal('latitude', { precision: 10, scale: 8 }),
+  longitude: decimal('longitude', { precision: 11, scale: 8 }),
+  lighted: boolean('lighted'),
+  membershipRequired: boolean('membership_required'),
+  courtType: varchar('court_type', { length: 50 }),
+  hittingWall: boolean('hitting_wall'),
+  courtCondition: varchar('court_condition', { length: 50 }),
+  numberOfCourts: integer('number_of_courts'),
+  surface: varchar('surface', { length: 50 }),
+  parking: boolean('parking'),
+});
+
 export const reviewSchema = pgTable('reviews', {
   id: uuid('id').primaryKey().defaultRandom().notNull(),
   courtId: uuid('court_id').notNull(), // FK to tennis_courts.id (uuid)
@@ -48,6 +67,24 @@ export const reviewSchema = pgTable('reviews', {
   text: varchar('text', { length: 2000 }),
   photos: varchar('photos', { length: 2000 }), // JSON array of photo URLs
   isDeleted: boolean('is_deleted').notNull().default(false), // true if admin deleted this review
+  deletedBy: varchar('deleted_by', { length: 255 }), // admin user ID who deleted
+  deletionReason: varchar('deletion_reason', { length: 500 }), // reason for deletion
+  deletedAt: timestamp('deleted_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const courtPhotoSchema = pgTable('court_photos', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  courtId: uuid('court_id').notNull(), // FK to tennis_courts.id
+  photoUrl: varchar('photo_url', { length: 500 }).notNull(),
+  uploadedBy: varchar('uploaded_by', { length: 255 }).notNull(), // user ID who uploaded
+  uploadedByUserName: varchar('uploaded_by_user_name', { length: 255 }).notNull(), // user name who uploaded
+  caption: varchar('caption', { length: 500 }), // optional caption for the photo
+  isDeleted: boolean('is_deleted').notNull().default(false), // true if admin deleted this photo
   deletedBy: varchar('deleted_by', { length: 255 }), // admin user ID who deleted
   deletionReason: varchar('deletion_reason', { length: 500 }), // reason for deletion
   deletedAt: timestamp('deleted_at', { mode: 'date' }),
@@ -78,6 +115,23 @@ export const photoModerationSchema = pgTable('photo_moderation', {
 export const reportSchema = pgTable('reports', {
   id: uuid('id').primaryKey().defaultRandom().notNull(),
   reviewId: uuid('review_id').notNull(), // FK to reviews.id
+  reportedBy: varchar('reported_by', { length: 255 }).notNull(), // user ID who reported
+  reportedByUserName: varchar('reported_by_user_name', { length: 255 }).notNull(), // user name who reported
+  reason: varchar('reason', { length: 500 }).notNull(), // reason for report
+  status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, resolved, dismissed
+  resolvedBy: varchar('resolved_by', { length: 255 }), // admin user ID who resolved
+  resolutionNote: varchar('resolution_note', { length: 500 }), // admin note on resolution
+  resolvedAt: timestamp('resolved_at', { mode: 'date' }),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
+export const courtPhotoReportSchema = pgTable('court_photo_reports', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  courtPhotoId: uuid('court_photo_id').notNull(), // FK to court_photos.id
   reportedBy: varchar('reported_by', { length: 255 }).notNull(), // user ID who reported
   reportedByUserName: varchar('reported_by_user_name', { length: 255 }).notNull(), // user name who reported
   reason: varchar('reason', { length: 500 }).notNull(), // reason for report

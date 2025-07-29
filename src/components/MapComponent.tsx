@@ -6,6 +6,8 @@ import L from 'leaflet';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import CourtPhotoGallery from './CourtPhotoGallery';
+import CourtPhotoUpload from './CourtPhotoUpload';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
 import 'leaflet/dist/leaflet.css';
@@ -938,16 +940,28 @@ function ReviewModal({
   );
 }
 
-function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId, isAdmin }: {
+function CourtDetailsPanel({
+  selectedCourt,
+  setSelectedCourt,
+  isSignedIn,
+  userId,
+  isAdmin,
+  refreshCourtData,
+  setShowPhotoUploadModal,
+}: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
   isSignedIn: boolean;
   userId?: string;
   isAdmin: boolean;
+  refreshCourtData: () => Promise<void>;
+  setShowPhotoUploadModal: (show: boolean) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'reviews'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'photos'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
+  const [photos, setPhotos] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [editReview, setEditReview] = useState<any | null>(null);
@@ -978,6 +992,23 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
       .finally(() => setLoadingReviews(false));
   }, [selectedCourt]);
 
+  useEffect(() => {
+    if (!selectedCourt) {
+      return;
+    }
+    setLoadingPhotos(true);
+    fetch(`/api/tennis-courts/${selectedCourt.id}/photos`)
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error('Failed to fetch photos');
+        }
+        return res.json();
+      })
+      .then(data => setPhotos(Array.isArray(data) ? data : []))
+      .catch(() => setPhotos([]))
+      .finally(() => setLoadingPhotos(false));
+  }, [selectedCourt]);
+
   const myReview = useMemo(
     () => Array.isArray(reviews) ? reviews.find(r => r.userId === userId) : undefined,
     [reviews, userId],
@@ -1003,12 +1034,16 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
       body: JSON.stringify(body),
     });
     if (res.ok) {
+      await refreshCourtData(); // Refresh court data (ratings and review counts)
+
+      // Refresh reviews for the current court
       let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
       if (!Array.isArray(updated)) {
         // Fallback to original endpoint if the new one fails
         updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`).then(r => r.json());
       }
       setReviews(updated);
+
       setShowModal(false);
       setEditReview(null);
     }
@@ -1031,6 +1066,9 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reviewId: deleteConfirmId }),
     });
+    await refreshCourtData(); // Refresh court data (ratings and review counts)
+
+    // Refresh reviews for the current court
     let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
     if (!Array.isArray(updated)) {
       // Fallback to original endpoint if the new one fails
@@ -1096,6 +1134,52 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
     setReportMessage(null);
   };
 
+  const handlePhotoDelete = async (photoId: string) => {
+    if (!selectedCourt) {
+      return;
+    }
+    try {
+      const response = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId }),
+      });
+      if (response.ok) {
+        // Refresh photos
+        const photosResponse = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`);
+        if (photosResponse.ok) {
+          const photosData = await photosResponse.json();
+          setPhotos(Array.isArray(photosData) ? photosData : []);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+    }
+  };
+
+  const handlePhotoEdit = async (photoId: string, caption: string) => {
+    if (!selectedCourt) {
+      return;
+    }
+    try {
+      const response = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoId, caption }),
+      });
+      if (response.ok) {
+        // Refresh photos
+        const photosResponse = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`);
+        if (photosResponse.ok) {
+          const photosData = await photosResponse.json();
+          setPhotos(Array.isArray(photosData) ? photosData : []);
+        }
+      }
+    } catch (error) {
+      console.error('Error editing photo:', error);
+    }
+  };
+
   if (!selectedCourt) {
     return null;
   }
@@ -1152,6 +1236,12 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
           Overview
         </button>
         <button
+          onClick={() => setActiveTab('photos')}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+        >
+          Photos
+        </button>
+        <button
           onClick={() => setActiveTab('reviews')}
           className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
         >
@@ -1203,197 +1293,225 @@ function CourtDetailsPanel({ selectedCourt, setSelectedCourt, isSignedIn, userId
               </div>
             </div>
           )
-        : (
-            <div>
-              {loadingReviews
-                ? (
-                    <div className="text-center text-gray-400">Loading reviews...</div>
-                  )
-                : (
-                    <>
-                      {reviews.length === 0 && (
-                        <div className="text-center text-gray-400">No reviews yet.</div>
-                      )}
-                      {reviews.map(review => (
-                        <div key={review.id} className="mb-4 border-b pb-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold">{review.userName}</span>
-                            {isAdmin && review.userId !== userId && (
-                              <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">Admin</span>
-                            )}
-                            <StarRating value={review.rating} />
-                            <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+        : activeTab === 'photos'
+          ? (
+              <div>
+                {loadingPhotos
+                  ? (
+                      <div className="text-center text-gray-400">Loading photos...</div>
+                    )
+                  : (
+                      <>
+                        {isSignedIn && (
+                          <div className="mb-4 flex justify-center">
+                            <button
+                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
+                              onClick={() => setShowPhotoUploadModal(true)}
+                            >
+                              Add Photos
+                            </button>
                           </div>
-                          <div className="text-gray-700 text-sm whitespace-pre-line">{review.text}</div>
-                          {review.photos && (
-                            <div className="mt-2 grid grid-cols-2 gap-2">
-                              {JSON.parse(review.photos).map((photo: string, index: number) => (
-                                <button
-                                  key={index}
-                                  className="w-full h-24 overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                  onClick={() => {
-                                    setPhotoViewerPhotos(JSON.parse(review.photos));
-                                    setPhotoViewerIndex(index);
-                                    setPhotoViewerOpen(true);
-                                  }}
-                                  aria-label={`View photo ${index + 1}`}
-                                  type="button"
-                                >
-                                  <img
-                                    src={photo}
-                                    alt={`${index + 1}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex gap-2 mt-2">
-                            {canEditReview(review) && (
-                              <>
-                                <button
-                                  className="text-xs text-blue-600 hover:underline"
-                                  onClick={() => {
-                                    setEditReview(review);
-                                    setShowModal(true);
-                                  }}
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  className="text-xs text-red-600 hover:underline"
-                                  onClick={() => handleDelete(review.id)}
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
-                            {isSignedIn && (
-                              <button
-                                className="text-xs text-orange-600 hover:underline"
-                                onClick={() => handleReport(review.id)}
-                              >
-                                Report
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </>
-                  )}
-              {isSignedIn && !myReview && (
-                <div className="mt-6 flex justify-center">
-                  <button
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
-                    onClick={() => {
-                      setEditReview(null);
-                      setShowModal(true);
-                    }}
-                  >
-                    Leave a Review
-                  </button>
-                </div>
-              )}
-              {isAdmin && (
-                <div className="mt-2 text-center">
-                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Admin Mode</span>
-                </div>
-              )}
-              <ReviewModal
-                open={showModal}
-                onClose={() => {
-                  setShowModal(false);
-                  setEditReview(null);
-                }}
-                onSubmit={handleSubmit}
-                initialRating={editReview ? editReview.rating : myReview ? myReview.rating : 0}
-                initialText={editReview ? editReview.text : myReview ? myReview.text : ''}
-                initialPhotos={editReview ? (editReview.photos ? JSON.parse(editReview.photos) : []) : myReview ? (myReview.photos ? JSON.parse(myReview.photos) : []) : []}
-                loading={modalLoading}
-                isEdit={!!editReview}
-              />
-              {/* Delete confirmation modal */}
-              {deleteConfirmId !== null && (
-                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
-                  <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
-                    <div className="mb-4 text-center">
-                      {isAdmin ? 'Delete this review?' : 'Delete your review?'}
-                    </div>
-                    <div className="flex gap-2 justify-center">
-                      <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" onClick={confirmDelete}>Delete</button>
-                      <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300" onClick={cancelDelete}>Cancel</button>
-                    </div>
-                  </div>
-                </div>
-              )}
-              {/* Photo Viewer */}
-              <PhotoViewer
-                photos={photoViewerPhotos}
-                initialIndex={photoViewerIndex}
-                isOpen={photoViewerOpen}
-                onClose={() => setPhotoViewerOpen(false)}
-              />
-
-              {/* Report Modal */}
-              {reportModalOpen && (
-                <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-60">
-                  <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-gray-200">
-                    <h3 className="text-lg font-semibold mb-4">Report Review</h3>
-
-                    {/* Message Display */}
-                    {reportMessage && (
-                      <div className={`mb-4 p-3 rounded-lg ${
-                        reportMessageType === 'success'
-                          ? 'bg-green-50 border border-green-200 text-green-800'
-                          : 'bg-red-50 border border-red-200 text-red-800'
-                      }`}
-                      >
-                        {reportMessage}
-                      </div>
+                        )}
+                        <CourtPhotoGallery
+                          photos={photos}
+                          courtId={selectedCourt?.id.toString() || ''}
+                          onPhotoDelete={handlePhotoDelete}
+                          onPhotoEdit={handlePhotoEdit}
+                          isAdmin={isAdmin}
+                          currentUserId={userId}
+                        />
+                      </>
                     )}
-
-                    <div className="mb-4">
-                      <label htmlFor="report-reason" className="block text-sm font-medium text-gray-700 mb-2">
-                        Reason for report:
-                      </label>
-                      <textarea
-                        id="report-reason"
-                        value={reportReason}
-                        onChange={e => setReportReason(e.target.value)}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={4}
-                        placeholder="Please explain why you're reporting this review..."
-                        maxLength={500}
-                        disabled={reportLoading}
-                      />
-                      <div className="text-xs text-gray-500 mt-1">
-                        {reportReason.length}
-                        /500 characters
+              </div>
+            )
+          : (
+              <div>
+                {loadingReviews
+                  ? (
+                      <div className="text-center text-gray-400">Loading reviews...</div>
+                    )
+                  : (
+                      <>
+                        {reviews.length === 0 && (
+                          <div className="text-center text-gray-400">No reviews yet.</div>
+                        )}
+                        {reviews.map(review => (
+                          <div key={review.id} className="mb-4 border-b pb-3">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold">{review.userName}</span>
+                              <StarRating value={review.rating} />
+                              <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                            </div>
+                            <div className="text-gray-700 text-sm whitespace-pre-line">{review.text}</div>
+                            {review.photos && (
+                              <div className="mt-2 grid grid-cols-2 gap-2">
+                                {JSON.parse(review.photos).map((photo: string, index: number) => (
+                                  <button
+                                    key={index}
+                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    onClick={() => {
+                                      setPhotoViewerPhotos(JSON.parse(review.photos));
+                                      setPhotoViewerIndex(index);
+                                      setPhotoViewerOpen(true);
+                                    }}
+                                    aria-label={`View photo ${index + 1}`}
+                                    type="button"
+                                  >
+                                    <img
+                                      src={photo}
+                                      alt={`${index + 1}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                            <div className="flex gap-2 mt-2">
+                              {canEditReview(review) && (
+                                <>
+                                  <button
+                                    className="text-xs text-blue-600 hover:underline"
+                                    onClick={() => {
+                                      setEditReview(review);
+                                      setShowModal(true);
+                                    }}
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    className="text-xs text-red-600 hover:underline"
+                                    onClick={() => handleDelete(review.id)}
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                              {isSignedIn && (
+                                <button
+                                  className="text-xs text-orange-600 hover:underline"
+                                  onClick={() => handleReport(review.id)}
+                                >
+                                  Report
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                {isSignedIn && !myReview && (
+                  <div className="mt-6 flex justify-center">
+                    <button
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
+                      onClick={() => {
+                        setEditReview(null);
+                        setShowModal(true);
+                      }}
+                    >
+                      Leave a Review
+                    </button>
+                  </div>
+                )}
+                {isAdmin && (
+                  <div className="mt-2 text-center">
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Admin Mode</span>
+                  </div>
+                )}
+                <ReviewModal
+                  open={showModal}
+                  onClose={() => {
+                    setShowModal(false);
+                    setEditReview(null);
+                  }}
+                  onSubmit={handleSubmit}
+                  initialRating={editReview ? editReview.rating : myReview ? myReview.rating : 0}
+                  initialText={editReview ? editReview.text : myReview ? myReview.text : ''}
+                  initialPhotos={editReview ? (editReview.photos ? JSON.parse(editReview.photos) : []) : myReview ? (myReview.photos ? JSON.parse(myReview.photos) : []) : []}
+                  loading={modalLoading}
+                  isEdit={!!editReview}
+                />
+                {/* Delete confirmation modal */}
+                {deleteConfirmId !== null && (
+                  <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
+                    <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-xs relative">
+                      <div className="mb-4 text-center">
+                        {isAdmin ? 'Delete this review?' : 'Delete your review?'}
+                      </div>
+                      <div className="flex gap-2 justify-center">
+                        <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" onClick={confirmDelete}>Delete</button>
+                        <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300" onClick={cancelDelete}>Cancel</button>
                       </div>
                     </div>
-                    <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
-                      <button
-                        className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 border border-gray-400 shadow"
-                        onClick={cancelReport}
-                        disabled={reportLoading}
-                        style={{ minWidth: '80px' }}
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-700 shadow-lg"
-                        onClick={submitReport}
-                        disabled={reportLoading || !reportReason.trim()}
-                        style={{ minWidth: '120px' }}
-                      >
-                        {reportLoading ? 'Submitting...' : 'Submit Report'}
-                      </button>
+                  </div>
+                )}
+                {/* Photo Viewer */}
+                <PhotoViewer
+                  photos={photoViewerPhotos}
+                  initialIndex={photoViewerIndex}
+                  isOpen={photoViewerOpen}
+                  onClose={() => setPhotoViewerOpen(false)}
+                />
+
+                {/* Report Modal */}
+                {reportModalOpen && (
+                  <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-60">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-gray-200">
+                      <h3 className="text-lg font-semibold mb-4">Report Review</h3>
+
+                      {/* Message Display */}
+                      {reportMessage && (
+                        <div className={`mb-4 p-3 rounded-lg ${
+                          reportMessageType === 'success'
+                            ? 'bg-green-50 border border-green-200 text-green-800'
+                            : 'bg-red-50 border border-red-200 text-red-800'
+                        }`}
+                        >
+                          {reportMessage}
+                        </div>
+                      )}
+
+                      <div className="mb-4">
+                        <label htmlFor="report-reason" className="block text-sm font-medium text-gray-700 mb-2">
+                          Reason for report:
+                        </label>
+                        <textarea
+                          id="report-reason"
+                          value={reportReason}
+                          onChange={e => setReportReason(e.target.value)}
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          rows={4}
+                          placeholder="Please explain why you're reporting this review..."
+                          maxLength={500}
+                          disabled={reportLoading}
+                        />
+                        <div className="text-xs text-gray-500 mt-1">
+                          {reportReason.length}
+                          /500 characters
+                        </div>
+                      </div>
+                      <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
+                        <button
+                          className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 border border-gray-400 shadow"
+                          onClick={cancelReport}
+                          disabled={reportLoading}
+                          style={{ minWidth: '80px' }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-700 shadow-lg"
+                          onClick={submitReport}
+                          disabled={reportLoading || !reportReason.trim()}
+                          style={{ minWidth: '120px' }}
+                        >
+                          {reportLoading ? 'Submitting...' : 'Submit Report'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
     </div>
   );
 }
@@ -1425,6 +1543,10 @@ export default function MapComponent() {
   const [dragCurrentY, setDragCurrentY] = useState(0);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+  const [photoCaption, setPhotoCaption] = useState('');
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
 
@@ -1446,6 +1568,20 @@ export default function MapComponent() {
       checkAdminStatus();
     }
   }, [isSignedIn]);
+
+  // Function to refresh court data (for updating ratings and review counts)
+  const refreshCourtData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/courts');
+      if (!response.ok) {
+        throw new Error('Failed to fetch tennis courts');
+      }
+      const data = await response.json();
+      setCourts(data);
+    } catch (err) {
+      console.error('Error refreshing court data:', err);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -1570,6 +1706,41 @@ export default function MapComponent() {
     }
   }, [selectedCourt]);
 
+  // Photo upload handler
+  const handleSubmitPhotos = async () => {
+    if (selectedPhotos.length === 0 || !selectedCourt) {
+      return;
+    }
+    setUploadingPhotos(true);
+    try {
+      for (const photoUrl of selectedPhotos) {
+        const res = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photoUrl, caption: photoCaption }),
+        });
+        if (!res.ok) {
+          throw new Error('Failed to submit photo');
+        }
+      }
+      setShowPhotoUploadModal(false);
+      setSelectedPhotos([]);
+      setPhotoCaption('');
+      // Refresh photos by temporarily changing selectedCourt to trigger re-fetch
+      if (selectedCourt) {
+        const currentCourt = selectedCourt;
+        setSelectedCourt(null);
+        setTimeout(() => setSelectedCourt(currentCourt), 100);
+      }
+    } catch (error) {
+      console.error('Error submitting photos:', error);
+      // eslint-disable-next-line no-alert
+      alert('Failed to submit photos');
+    } finally {
+      setUploadingPhotos(false);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-screen relative">
       {/* Mobile: Search bar at top (Google Maps style) */}
@@ -1662,6 +1833,8 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
+                refreshCourtData={refreshCourtData}
+                setShowPhotoUploadModal={setShowPhotoUploadModal}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -1671,6 +1844,8 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
+                refreshCourtData={refreshCourtData}
+                setShowPhotoUploadModal={setShowPhotoUploadModal}
               />
             </div>
             <div
@@ -1680,6 +1855,59 @@ export default function MapComponent() {
           </div>
         )}
       </div>
+
+      {/* Photo Upload Modal */}
+      {showPhotoUploadModal && (
+        <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              onClick={() => setShowPhotoUploadModal(false)}
+            >
+              &times;
+            </button>
+            <h3 className="text-lg font-bold mb-4">Add Photos</h3>
+
+            <div className="mb-4">
+              <label htmlFor="photo-caption" className="block text-sm font-medium text-gray-700 mb-2">
+                Photo Caption (optional)
+              </label>
+              <textarea
+                id="photo-caption"
+                className="w-full border rounded-lg p-2"
+                placeholder="Add a caption for your photos..."
+                value={photoCaption}
+                onChange={e => setPhotoCaption(e.target.value)}
+                maxLength={500}
+                rows={3}
+              />
+            </div>
+
+            <CourtPhotoUpload
+              onPhotosChange={setSelectedPhotos}
+              maxPhotos={10}
+              className="mb-4"
+              courtId={selectedCourt?.id.toString() || ''}
+            />
+
+            <div className="flex gap-2 justify-end">
+              <button
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                onClick={() => setShowPhotoUploadModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-60"
+                onClick={handleSubmitPhotos}
+                disabled={uploadingPhotos || selectedPhotos.length === 0}
+              >
+                {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
