@@ -2,6 +2,34 @@
 
 import { CheckCircle, Clock, User, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
+
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+}
 
 type Suggestion = {
   id: string;
@@ -14,6 +42,10 @@ type Suggestion = {
   suggestedCourtType?: string;
   suggestedNumberOfCourts?: number;
   suggestedSurface?: string;
+  suggestedCondition?: string;
+  suggestedType?: string;
+  suggestedHittingWall?: boolean;
+  suggestedLights?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -120,7 +152,7 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
           )
         : (
             filteredSuggestions.map(suggestion => (
-              <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4">
+              <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4 overflow-hidden">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(suggestion.status)}
@@ -135,11 +167,10 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
                 </div>
 
                 <div className="space-y-2">
-                  <p className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-600 w-full">
                     <strong>Reason:</strong>
-                    {' '}
-                    {suggestion.reason}
-                  </p>
+                    <TruncatableText text={suggestion.reason} />
+                  </div>
 
                   {suggestion.suggestedName && (
                     <p className="text-sm text-gray-600">
@@ -185,6 +216,38 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
                       <strong>Surface:</strong>
                       {' '}
                       {suggestion.suggestedSurface}
+                    </p>
+                  )}
+
+                  {suggestion.suggestedCondition && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Condition:</strong>
+                      {' '}
+                      {capitalizeFirstLetter(suggestion.suggestedCondition)}
+                    </p>
+                  )}
+
+                  {suggestion.suggestedType && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Type:</strong>
+                      {' '}
+                      {suggestion.suggestedType}
+                    </p>
+                  )}
+
+                  {suggestion.suggestedHittingWall !== undefined && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Hitting Wall:</strong>
+                      {' '}
+                      {suggestion.suggestedHittingWall ? 'Yes' : 'No'}
+                    </p>
+                  )}
+
+                  {suggestion.suggestedLights !== undefined && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Lights:</strong>
+                      {' '}
+                      {suggestion.suggestedLights ? 'Yes' : 'No'}
                     </p>
                   )}
 

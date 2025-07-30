@@ -6,12 +6,12 @@ import L from 'leaflet';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
 import AdminCourtEdit from './AdminCourtEdit';
 import AllSuggestionsDisplay from './AllSuggestionsDisplay';
 import CourtEditSuggestion from './CourtEditSuggestion';
 import CourtPhotoGallery from './CourtPhotoGallery';
 import CourtPhotoUpload from './CourtPhotoUpload';
-import PendingSuggestionsReview from './PendingSuggestionsReview';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
 import UserSuggestionDisplay from './UserSuggestionDisplay';
@@ -953,6 +953,8 @@ function CourtDetailsPanel({
   isAdmin,
   refreshCourtData,
   setShowPhotoUploadModal,
+  userSuggestionsRefreshKey,
+  setUserSuggestionsRefreshKey,
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -961,23 +963,29 @@ function CourtDetailsPanel({
   isAdmin: boolean;
   refreshCourtData: () => Promise<void>;
   setShowPhotoUploadModal: (show: boolean) => void;
+  userSuggestionsRefreshKey: number;
+  setUserSuggestionsRefreshKey: (value: number | ((prev: number) => number)) => void;
 }) {
-  const [activeTab, setActiveTab] = useState<'overview' | 'reviews' | 'photos'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState(false);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(true);
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editReview, setEditReview] = useState<any>(null);
   const [modalLoading, setModalLoading] = useState(false);
-  const [editReview, setEditReview] = useState<any | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [reportReviewId, setReportReviewId] = useState<string | null>(null);
+  const [reportReason, setReportReason] = useState('');
+  const [submittingReport, setSubmittingReport] = useState(false);
   const [photoViewerOpen, setPhotoViewerOpen] = useState(false);
   const [photoViewerPhotos, setPhotoViewerPhotos] = useState<string[]>([]);
   const [photoViewerIndex, setPhotoViewerIndex] = useState(0);
-  const [reportModalOpen, setReportModalOpen] = useState(false);
-  const [reportingReviewId, setReportingReviewId] = useState<string | null>(null);
-  const [reportReason, setReportReason] = useState('');
-  const [reportLoading, setReportLoading] = useState(false);
+
+  // Function to refresh user suggestions
+  const refreshUserSuggestions = useCallback(() => {
+    setUserSuggestionsRefreshKey(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
     if (!selectedCourt) {
@@ -1086,21 +1094,20 @@ function CourtDetailsPanel({
   const cancelDelete = () => setDeleteConfirmId(null);
 
   const handleReport = (reviewId: string) => {
-    setReportingReviewId(reviewId);
-    setReportModalOpen(true);
+    setReportReviewId(reviewId);
   };
 
   const [reportMessage, setReportMessage] = useState<string | null>(null);
   const [reportMessageType, setReportMessageType] = useState<'success' | 'error'>('success');
 
   const submitReport = async () => {
-    if (!reportingReviewId || !reportReason.trim()) {
+    if (!reportReviewId || !reportReason.trim()) {
       return;
     }
 
     try {
-      setReportLoading(true);
-      const response = await fetch(`/api/tennis-courts/${selectedCourt?.id}/reviews/${reportingReviewId}/report`, {
+      setSubmittingReport(true);
+      const response = await fetch(`/api/tennis-courts/${selectedCourt?.id}/reviews/${reportReviewId}/report`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1128,13 +1135,12 @@ function CourtDetailsPanel({
       setReportMessage('Failed to submit report. Please check your connection and try again.');
       setReportMessageType('error');
     } finally {
-      setReportLoading(false);
+      setSubmittingReport(false);
     }
   };
 
   const cancelReport = () => {
-    setReportModalOpen(false);
-    setReportingReviewId(null);
+    setReportReviewId(null);
     setReportReason('');
     setReportMessage(null);
   };
@@ -1219,12 +1225,18 @@ function CourtDetailsPanel({
       >
         ×
       </button>
-      <h2 className="text-2xl font-bold mb-2">{selectedCourt.name}</h2>
-      <div className="text-gray-600 mb-2">
-        {selectedCourt.address}
-        ,
-        {selectedCourt.city}
-      </div>
+      <CourtNameWithSuggestions
+        court={selectedCourt}
+        isSignedIn={isSignedIn}
+        userId={userId}
+        onSuggestionReviewed={() => refreshCourtData()}
+      />
+      <CourtAddressWithSuggestions
+        court={selectedCourt}
+        isSignedIn={isSignedIn}
+        userId={userId}
+        onSuggestionReviewed={() => refreshCourtData()}
+      />
       <div className="flex items-center space-x-4 mb-4">
         <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
           {selectedCourt.membership_required ? 'Private' : 'Public'}
@@ -1256,46 +1268,12 @@ function CourtDetailsPanel({
       {activeTab === 'overview'
         ? (
             <div>
-              {selectedCourt.court_type && (
-                <div className="mb-2">
-                  <strong>Type:</strong>
-                  {' '}
-                  {selectedCourt.court_type}
-                </div>
-              )}
-              {selectedCourt.surface && (
-                <div className="mb-2">
-                  <strong>Surface:</strong>
-                  {' '}
-                  {selectedCourt.surface}
-                </div>
-              )}
-              {selectedCourt.number_of_courts !== null && selectedCourt.number_of_courts !== undefined && selectedCourt.number_of_courts > 0 && (
-                <div className="mb-2">
-                  <strong>Number of Courts:</strong>
-                  {' '}
-                  {selectedCourt.number_of_courts}
-                </div>
-              )}
-              {selectedCourt.court_condition && (
-                <div className="mb-2">
-                  <strong>Condition:</strong>
-                  {' '}
-                  {selectedCourt.court_condition}
-                </div>
-              )}
-              {selectedCourt.parking && (
-                <div className="mb-2">
-                  <strong>Parking:</strong>
-                  {' '}
-                  {selectedCourt.parking}
-                </div>
-              )}
-              <div className="mb-2">
-                <strong>Hitting Wall:</strong>
-                {' '}
-                {selectedCourt.hitting_wall ? 'Yes' : 'No'}
-              </div>
+              <InlineCourtInfo
+                court={selectedCourt}
+                isSignedIn={isSignedIn}
+                userId={userId}
+                onSuggestionReviewed={() => refreshCourtData()}
+              />
 
               {/* Sign-in prompt for suggestions */}
               {!isSignedIn && (
@@ -1318,9 +1296,15 @@ function CourtDetailsPanel({
                         city: selectedCourt.city,
                         numberOfCourts: selectedCourt.number_of_courts,
                         surfaceType: selectedCourt.surface || '',
+                        courtCondition: selectedCourt.court_condition || '',
+                        courtType: selectedCourt.court_type || '',
+                        hittingWall: selectedCourt.hitting_wall || false,
+                        lighted: selectedCourt.lighted || false,
                       }}
                       userId={userId}
-                      onSuggestionSubmitted={() => {}}
+                      onSuggestionSubmitted={() => refreshCourtData()}
+                      onSuggestionCreated={() => refreshUserSuggestions()}
+                      refreshKey={userSuggestionsRefreshKey}
                     />
                     {isAdmin && (
                       <AdminCourtEdit
@@ -1331,6 +1315,10 @@ function CourtDetailsPanel({
                           city: selectedCourt.city,
                           numberOfCourts: selectedCourt.number_of_courts,
                           surfaceType: selectedCourt.surface || '',
+                          courtCondition: selectedCourt.court_condition || '',
+                          courtType: selectedCourt.court_type || '',
+                          hittingWall: selectedCourt.hitting_wall || false,
+                          lighted: selectedCourt.lighted || false,
                         }}
                         onCourtUpdated={(updatedCourt) => {
                           // Update the selected court with new data
@@ -1341,6 +1329,10 @@ function CourtDetailsPanel({
                             city: updatedCourt.city,
                             number_of_courts: updatedCourt.numberOfCourts,
                             surface: updatedCourt.surfaceType,
+                            court_condition: updatedCourt.courtCondition || '',
+                            court_type: updatedCourt.courtType || '',
+                            hitting_wall: updatedCourt.hittingWall || false,
+                            lighted: updatedCourt.lighted || false,
                           });
                         }}
                       />
@@ -1350,29 +1342,26 @@ function CourtDetailsPanel({
                   {/* User's Existing Suggestions */}
                   <div className="mt-6">
                     <UserSuggestionDisplay
+                      key={userSuggestionsRefreshKey}
                       courtId={selectedCourt.id.toString()}
                       currentUserId={userId || ''}
-                      onSuggestionUpdated={() => {}}
+                      onSuggestionUpdated={() => {
+                        refreshCourtData();
+                        refreshUserSuggestions();
+                      }}
                     />
                   </div>
 
-                  {/* Pending Suggestions for Review */}
-                  <div className="mt-6">
-                    <PendingSuggestionsReview
-                      courtId={selectedCourt.id.toString()}
-                      currentUserId={userId || ''}
-                      onSuggestionReviewed={() => refreshCourtData()}
-                    />
-                  </div>
-
-                  {/* Suggestion History */}
-                  <div className="mt-6">
-                    <AllSuggestionsDisplay
-                      courtId={selectedCourt.id.toString()}
-                      currentUserId={userId || ''}
-                      onSuggestionUpdated={() => refreshCourtData()}
-                    />
-                  </div>
+                  {/* Suggestion History - Admin Only */}
+                  {isAdmin && (
+                    <div className="mt-6">
+                      <AllSuggestionsDisplay
+                        courtId={selectedCourt.id.toString()}
+                        currentUserId={userId || ''}
+                        onSuggestionUpdated={() => refreshCourtData()}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1547,7 +1536,7 @@ function CourtDetailsPanel({
                 />
 
                 {/* Report Modal */}
-                {reportModalOpen && (
+                {reportReviewId && (
                   <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-60">
                     <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-gray-200">
                       <h3 className="text-lg font-semibold mb-4">Report Review</h3>
@@ -1575,19 +1564,19 @@ function CourtDetailsPanel({
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                           rows={4}
                           placeholder="Please explain why you're reporting this review..."
-                          maxLength={500}
-                          disabled={reportLoading}
+                          maxLength={100}
+                          disabled={submittingReport}
                         />
                         <div className="text-xs text-gray-500 mt-1">
                           {reportReason.length}
-                          /500 characters
+                          /100 characters
                         </div>
                       </div>
                       <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
                         <button
                           className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 border border-gray-400 shadow"
                           onClick={cancelReport}
-                          disabled={reportLoading}
+                          disabled={submittingReport}
                           style={{ minWidth: '80px' }}
                         >
                           Cancel
@@ -1595,10 +1584,10 @@ function CourtDetailsPanel({
                         <button
                           className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-700 shadow-lg"
                           onClick={submitReport}
-                          disabled={reportLoading || !reportReason.trim()}
+                          disabled={submittingReport || !reportReason.trim()}
                           style={{ minWidth: '120px' }}
                         >
-                          {reportLoading ? 'Submitting...' : 'Submit Report'}
+                          {submittingReport ? 'Submitting...' : 'Submit Report'}
                         </button>
                       </div>
                     </div>
@@ -1641,6 +1630,7 @@ export default function MapComponent() {
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
+  const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
 
@@ -1679,17 +1669,22 @@ export default function MapComponent() {
 
   // Function to refresh court data (for updating ratings and review counts)
   const refreshCourtData = useCallback(async () => {
-    try {
-      const response = await fetch('/api/courts');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tennis courts');
+    if (selectedCourt) {
+      try {
+        const response = await fetch(`/api/tennis-courts/${selectedCourt.id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch court data');
+        }
+        const updatedCourt = await response.json();
+        setSelectedCourt(updatedCourt);
+
+        // Also refresh user suggestions when court data is refreshed
+        setUserSuggestionsRefreshKey(prev => prev + 1);
+      } catch (error) {
+        console.error('Error refreshing court data:', error);
       }
-      const data = await response.json();
-      setCourts(data);
-    } catch (err) {
-      console.error('Error refreshing court data:', err);
     }
-  }, []);
+  }, [selectedCourt, setSelectedCourt]);
 
   useEffect(() => {
     const fetchCourts = async () => {
@@ -1943,6 +1938,8 @@ export default function MapComponent() {
                 isAdmin={isAdmin}
                 refreshCourtData={refreshCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
+                userSuggestionsRefreshKey={userSuggestionsRefreshKey}
+                setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -1954,6 +1951,8 @@ export default function MapComponent() {
                 isAdmin={isAdmin}
                 refreshCourtData={refreshCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
+                userSuggestionsRefreshKey={userSuggestionsRefreshKey}
+                setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
               />
             </div>
             <div
@@ -2016,6 +2015,804 @@ export default function MapComponent() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// InlineCourtInfo component for displaying court info with inline suggestions
+function InlineCourtInfo({
+  court,
+  isSignedIn,
+  userId,
+  onSuggestionReviewed,
+}: {
+  court: TennisCourt;
+  isSignedIn: boolean;
+  userId?: string;
+  onSuggestionReviewed: () => void;
+}) {
+  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewingField, setReviewingField] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+
+  const fetchPendingSuggestions = async () => {
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
+      }
+    } catch (error) {
+      console.error('Error fetching pending suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingSuggestions();
+  }, [court.id, userId]);
+
+  const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions/${suggestion.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status,
+          reviewNote: reviewNote || undefined,
+          field,
+        }),
+      });
+
+      if (response.ok) {
+        setReviewingField(null);
+        setReviewNote('');
+        await fetchPendingSuggestions();
+        onSuggestionReviewed();
+      } else {
+        console.error('Failed to review suggestion');
+      }
+    } catch (error) {
+      console.error('Error reviewing suggestion:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getFieldSuggestions = (field: string) => {
+    return pendingSuggestions.filter((suggestion) => {
+      const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}`;
+      const value = suggestion[suggestedField];
+
+      // For boolean fields, check if the value is not null and not undefined
+      if (field === 'hittingWall' || field === 'lights') {
+        return value !== null && value !== undefined;
+      }
+
+      // For other fields, check if the value exists
+      return value;
+    });
+  };
+
+  const renderFieldWithSuggestions = (field: string, currentValue: any, label: string) => {
+    const fieldSuggestions = getFieldSuggestions(field);
+
+    // Capitalize condition values for better display
+    const displayValue = field === 'condition' ? capitalizeFirstLetter(currentValue) : currentValue;
+
+    // Format boolean values for display
+    const formatValue = (value: any) => {
+      if (field === 'hittingWall' || field === 'lights') {
+        return value === true ? 'Yes' : value === false ? 'No' : value;
+      }
+      return field === 'condition' ? capitalizeFirstLetter(value) : value;
+    };
+
+    return (
+      <div className="mb-2">
+        <div className="text-sm text-gray-600">
+          <strong>
+            {label}
+            :
+          </strong>
+          {' '}
+          {formatValue(displayValue) || 'Not specified'}
+        </div>
+        {fieldSuggestions.map((suggestion) => {
+          const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof suggestion;
+          const suggestedValue = suggestion[suggestedField];
+
+          if (!suggestedValue) {
+            return null;
+          }
+
+          return (
+            <div key={suggestion.id} className="ml-4 mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-gray-700">
+                    <strong>Suggested:</strong>
+                    {' '}
+                    {formatValue(suggestedValue)}
+                  </p>
+                  <p className="text-gray-500 mt-1">
+                    by
+                    {' '}
+                    {suggestion.suggestedByUserName}
+                    {' '}
+                    on
+                    {' '}
+                    {new Date(suggestion.createdAt).toLocaleDateString()}
+                  </p>
+                  {suggestion.reason && (
+                    <div className="text-gray-600 mt-1 w-full">
+                      <strong>Reason:</strong>
+                      <TruncatableText text={suggestion.reason} />
+                    </div>
+                  )}
+                </div>
+                {isSignedIn && (
+                  <div className="flex gap-1 ml-2">
+                    <button
+                      onClick={() => setReviewingField(`${suggestion.id}-${field}`)}
+                      className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Review
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {reviewingField === `${suggestion.id}-${field}` && (
+                <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+                  <textarea
+                    value={reviewNote}
+                    onChange={e => setReviewNote(e.target.value)}
+                    placeholder="Add a review note (optional)..."
+                    className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                    rows={2}
+                    maxLength={500}
+                  />
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => handleFieldReview(suggestion, field, 'approved')}
+                      disabled={isSubmitting}
+                      className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleFieldReview(suggestion, field, 'rejected')}
+                      disabled={isSubmitting}
+                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Rejecting...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setReviewingField(null);
+                        setReviewNote('');
+                      }}
+                      className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  if (loading) {
+    return <div className="text-center text-gray-400">Loading...</div>;
+  }
+
+  return (
+    <div>
+      {(court.court_type || getFieldSuggestions('courtType').length > 0) && renderFieldWithSuggestions('courtType', court.court_type, 'Type')}
+      {(court.surface || getFieldSuggestions('surface').length > 0) && renderFieldWithSuggestions('surface', court.surface, 'Surface')}
+      {court.number_of_courts !== null && court.number_of_courts !== undefined && court.number_of_courts > 0
+        && renderFieldWithSuggestions('numberOfCourts', court.number_of_courts, 'Number of Courts')}
+      {(court.court_condition || getFieldSuggestions('condition').length > 0) && renderFieldWithSuggestions('condition', court.court_condition, 'Condition')}
+      {(court.parking || getFieldSuggestions('parking').length > 0) && renderFieldWithSuggestions('parking', court.parking, 'Parking')}
+      {renderFieldWithSuggestions('hittingWall', court.hitting_wall, 'Hitting Wall')}
+      {getFieldSuggestions('lights').length > 0 && renderFieldWithSuggestions('lights', court.lighted, 'Lights')}
+    </div>
+  );
+}
+
+// CourtNameWithSuggestions component for displaying court name with inline suggestions
+function CourtNameWithSuggestions({
+  court,
+  isSignedIn,
+  userId,
+  onSuggestionReviewed,
+}: {
+  court: TennisCourt;
+  isSignedIn: boolean;
+  userId?: string;
+  onSuggestionReviewed: () => void;
+}) {
+  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewingField, setReviewingField] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+
+  const fetchPendingSuggestions = async () => {
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
+      }
+    } catch (error) {
+      console.error('Error fetching pending suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingSuggestions();
+  }, [court.id, userId]);
+
+  const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions/${suggestion.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status,
+          reviewNote: reviewNote || undefined,
+          field,
+        }),
+      });
+
+      if (response.ok) {
+        setReviewingField(null);
+        setReviewNote('');
+        await fetchPendingSuggestions();
+        onSuggestionReviewed();
+      } else {
+        console.error('Failed to review suggestion');
+      }
+    } catch (error) {
+      console.error('Error reviewing suggestion:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const nameSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedName);
+
+  if (loading) {
+    return <h2 className="text-2xl font-bold mb-2">{court.name}</h2>;
+  }
+
+  return (
+    <div className="mb-2">
+      <h2 className="text-2xl font-bold">{court.name}</h2>
+      {nameSuggestions.map(suggestion => (
+        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-gray-700">
+                <strong>Suggested Name:</strong>
+                {' '}
+                {suggestion.suggestedName}
+              </p>
+              <p className="text-gray-500 mt-1">
+                by
+                {' '}
+                {suggestion.suggestedByUserName}
+                {' '}
+                on
+                {' '}
+                {new Date(suggestion.createdAt).toLocaleDateString()}
+              </p>
+              {suggestion.reason && (
+                <div className="text-gray-600 mt-1 w-full">
+                  <strong>Reason:</strong>
+                  <TruncatableText text={suggestion.reason} />
+                </div>
+              )}
+            </div>
+            {isSignedIn && (
+              <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => setReviewingField(`${suggestion.id}-name`)}
+                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviewingField === `${suggestion.id}-name` && (
+            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+              <textarea
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder="Add a review note (optional)..."
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                rows={2}
+                maxLength={500}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'name', 'approved')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Approving...' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'name', 'rejected')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => {
+                    setReviewingField(null);
+                    setReviewNote('');
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// CourtAddressWithSuggestions component for displaying court address with inline suggestions
+function CourtAddressWithSuggestions({
+  court,
+  isSignedIn,
+  userId,
+  onSuggestionReviewed,
+}: {
+  court: TennisCourt;
+  isSignedIn: boolean;
+  userId?: string;
+  onSuggestionReviewed: () => void;
+}) {
+  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [reviewingField, setReviewingField] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
+
+  const fetchPendingSuggestions = async () => {
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
+      if (response.ok) {
+        const data = await response.json();
+        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
+      }
+    } catch (error) {
+      console.error('Error fetching pending suggestions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingSuggestions();
+  }, [court.id, userId]);
+
+  const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
+    setIsSubmitting(true);
+    try {
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions/${suggestion.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status,
+          reviewNote: reviewNote || undefined,
+          field,
+        }),
+      });
+
+      if (response.ok) {
+        setReviewingField(null);
+        setReviewNote('');
+        await fetchPendingSuggestions();
+        onSuggestionReviewed();
+      } else {
+        console.error('Failed to review suggestion');
+      }
+    } catch (error) {
+      console.error('Error reviewing suggestion:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const addressSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedAddress);
+  const citySuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedCity);
+  const stateSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedState);
+  const zipSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedZip);
+
+  if (loading) {
+    return (
+      <div className="text-gray-600 mb-2">
+        {court.address}
+        ,
+        {court.city}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mb-2">
+      <div className="text-gray-600">
+        {court.address}
+        ,
+        {court.city}
+      </div>
+
+      {/* Address suggestions */}
+      {addressSuggestions.map(suggestion => (
+        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-gray-700">
+                <strong>Suggested Address:</strong>
+                {' '}
+                {suggestion.suggestedAddress}
+              </p>
+              <p className="text-gray-500 mt-1">
+                by
+                {' '}
+                {suggestion.suggestedByUserName}
+                {' '}
+                on
+                {' '}
+                {new Date(suggestion.createdAt).toLocaleDateString()}
+              </p>
+              {suggestion.reason && (
+                <div className="text-gray-600 mt-1 w-full">
+                  <strong>Reason:</strong>
+                  <TruncatableText text={suggestion.reason} />
+                </div>
+              )}
+            </div>
+            {isSignedIn && (
+              <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => setReviewingField(`${suggestion.id}-address`)}
+                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviewingField === `${suggestion.id}-address` && (
+            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+              <textarea
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder="Add a review note (optional)..."
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                rows={2}
+                maxLength={500}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'address', 'approved')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Approving...' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'address', 'rejected')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => {
+                    setReviewingField(null);
+                    setReviewNote('');
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* City suggestions */}
+      {citySuggestions.map(suggestion => (
+        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-gray-700">
+                <strong>Suggested City:</strong>
+                {' '}
+                {suggestion.suggestedCity}
+              </p>
+              <p className="text-gray-500 mt-1">
+                by
+                {' '}
+                {suggestion.suggestedByUserName}
+                {' '}
+                on
+                {' '}
+                {new Date(suggestion.createdAt).toLocaleDateString()}
+              </p>
+              {suggestion.reason && (
+                <div className="text-gray-600 mt-1 w-full">
+                  <strong>Reason:</strong>
+                  <TruncatableText text={suggestion.reason} />
+                </div>
+              )}
+            </div>
+            {isSignedIn && (
+              <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => setReviewingField(`${suggestion.id}-city`)}
+                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviewingField === `${suggestion.id}-city` && (
+            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+              <textarea
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder="Add a review note (optional)..."
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                rows={2}
+                maxLength={500}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'city', 'approved')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Approving...' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'city', 'rejected')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => {
+                    setReviewingField(null);
+                    setReviewNote('');
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* State suggestions */}
+      {stateSuggestions.map(suggestion => (
+        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-gray-700">
+                <strong>Suggested State:</strong>
+                {' '}
+                {capitalizeFirstLetter(suggestion.suggestedState)}
+              </p>
+              <p className="text-gray-500 mt-1">
+                by
+                {' '}
+                {suggestion.suggestedByUserName}
+                {' '}
+                on
+                {' '}
+                {new Date(suggestion.createdAt).toLocaleDateString()}
+              </p>
+              {suggestion.reason && (
+                <div className="text-gray-600 mt-1 w-full">
+                  <strong>Reason:</strong>
+                  <TruncatableText text={suggestion.reason} />
+                </div>
+              )}
+            </div>
+            {isSignedIn && (
+              <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => setReviewingField(`${suggestion.id}-state`)}
+                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviewingField === `${suggestion.id}-state` && (
+            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+              <textarea
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder="Add a review note (optional)..."
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                rows={2}
+                maxLength={500}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'state', 'approved')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Approving...' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'state', 'rejected')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => {
+                    setReviewingField(null);
+                    setReviewNote('');
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Zip suggestions */}
+      {zipSuggestions.map(suggestion => (
+        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <p className="text-gray-700">
+                <strong>Suggested Zip:</strong>
+                {' '}
+                {suggestion.suggestedZip}
+              </p>
+              <p className="text-gray-500 mt-1">
+                by
+                {' '}
+                {suggestion.suggestedByUserName}
+                {' '}
+                on
+                {' '}
+                {new Date(suggestion.createdAt).toLocaleDateString()}
+              </p>
+              {suggestion.reason && (
+                <div className="text-gray-600 mt-1 w-full">
+                  <strong>Reason:</strong>
+                  <TruncatableText text={suggestion.reason} />
+                </div>
+              )}
+            </div>
+            {isSignedIn && (
+              <div className="flex gap-1 ml-2">
+                <button
+                  onClick={() => setReviewingField(`${suggestion.id}-zip`)}
+                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Review
+                </button>
+              </div>
+            )}
+          </div>
+
+          {reviewingField === `${suggestion.id}-zip` && (
+            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+              <textarea
+                value={reviewNote}
+                onChange={e => setReviewNote(e.target.value)}
+                placeholder="Add a review note (optional)..."
+                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                rows={2}
+                maxLength={500}
+              />
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'zip', 'approved')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Approving...' : 'Approve'}
+                </button>
+                <button
+                  onClick={() => handleFieldReview(suggestion, 'zip', 'rejected')}
+                  disabled={isSubmitting}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                >
+                  {isSubmitting ? 'Rejecting...' : 'Reject'}
+                </button>
+                <button
+                  onClick={() => {
+                    setReviewingField(null);
+                    setReviewNote('');
+                  }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
     </div>
   );
 }

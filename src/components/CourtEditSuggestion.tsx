@@ -1,7 +1,35 @@
 'use client';
 
-import { CheckCircle, CheckCircle as CheckCircleIcon, Clock, Edit, Trash2, X, XCircle } from 'lucide-react';
-import { useState } from 'react';
+import { CheckCircleIcon, Edit, X, XCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
+
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+}
 
 type Suggestion = {
   id: string;
@@ -14,6 +42,10 @@ type Suggestion = {
   suggestedCourtType?: string;
   suggestedNumberOfCourts?: number;
   suggestedSurface?: string;
+  suggestedCondition?: string;
+  suggestedType?: string;
+  suggestedHittingWall?: boolean;
+  suggestedLights?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -30,51 +62,96 @@ type CourtEditSuggestionProps = {
     city: string;
     numberOfCourts: number;
     surfaceType: string;
+    courtCondition?: string;
+    courtType?: string;
+    hittingWall?: boolean;
+    lighted?: boolean;
   };
   userId?: string;
   onSuggestionSubmitted?: () => void;
+  onSuggestionCreated?: () => void;
+  refreshKey?: number;
 };
 
-export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitted }: CourtEditSuggestionProps) {
+export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitted, onSuggestionCreated, refreshKey }: CourtEditSuggestionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showExistingSuggestion, setShowExistingSuggestion] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const [existingSuggestion, setExistingSuggestion] = useState<Suggestion | null>(null);
+  const [showExistingSuggestion, setShowExistingSuggestion] = useState(false);
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
+  const [hasPendingSuggestion, setHasPendingSuggestion] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
   const [formData, setFormData] = useState({
     reason: '',
     suggestedName: court.name,
     suggestedAddress: court.address,
     suggestedCity: court.city,
-    suggestedNumberOfCourts: '', // Start with blank value instead of court.numberOfCourts
+    suggestedNumberOfCourts: '',
     suggestedSurface: court.surfaceType,
+    suggestedCondition: court.courtCondition || '',
+    suggestedType: court.courtType || '',
+    suggestedHittingWall: court.hittingWall || false,
+    suggestedLights: court.lighted || false,
   });
 
-  const checkExistingSuggestion = async () => {
+  const checkExistingSuggestion = useCallback(async () => {
     try {
-      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
+      setIsLoadingSuggestions(true);
+      // Fetch all suggestions without filtering to find the user's suggestion
+      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?includeAll=true`);
       if (response.ok) {
         const suggestions = await response.json();
-        // Find current user's pending suggestion specifically
-        const userPendingSuggestion = suggestions.find((suggestion: Suggestion) =>
-          suggestion.status === 'pending' && suggestion.suggestedBy === userId,
-        );
-        return userPendingSuggestion || null;
+
+        // Find all suggestions for the current user
+        const userSuggestions = suggestions.filter((suggestion: Suggestion) => suggestion.suggestedBy === userId);
+        // Sort by createdAt descending (most recent first)
+        userSuggestions.sort((a: Suggestion, b: Suggestion) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        const mostRecentSuggestion = userSuggestions[0] || null;
+
+        if (mostRecentSuggestion) {
+          setExistingSuggestion(mostRecentSuggestion);
+          const isPending = mostRecentSuggestion.status === 'pending';
+          setHasPendingSuggestion(isPending);
+        } else {
+          setExistingSuggestion(null);
+          setHasPendingSuggestion(false);
+        }
+
+        return mostRecentSuggestion || null;
+      } else {
+        console.error('Failed to fetch suggestions:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error checking existing suggestions:', error);
+    } finally {
+      setIsLoadingSuggestions(false);
     }
     return null;
-  };
+  }, [court.id, userId]);
+
+  // Check for existing suggestions on component mount and when court changes
+  useEffect(() => {
+    if (userId) {
+      checkExistingSuggestion();
+    }
+  }, [userId, court.id, checkExistingSuggestion, refreshKey]);
 
   const handleOpenModal = async () => {
-    const existing = await checkExistingSuggestion();
-    if (existing) {
-      setExistingSuggestion(existing);
+    // If there's already a pending suggestion, show it
+    if (hasPendingSuggestion && existingSuggestion) {
       setShowExistingSuggestion(true);
     } else {
-      setIsOpen(true);
+      // Double-check for any existing suggestions before opening the form
+      const existing = await checkExistingSuggestion();
+      if (existing && existing.status === 'pending') {
+        setExistingSuggestion(existing);
+        setShowExistingSuggestion(true);
+      } else {
+        setIsOpen(true);
+      }
     }
   };
 
@@ -84,12 +161,6 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
   };
 
   const handleDelete = async (suggestionId: string) => {
-    // Use a simple prompt instead of confirm
-    const userConfirmed = window.prompt('Type "DELETE" to confirm deletion of this suggestion:') === 'DELETE';
-    if (!userConfirmed) {
-      return;
-    }
-
     try {
       const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions/${suggestionId}`, {
         method: 'DELETE',
@@ -98,6 +169,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       if (response.ok) {
         setShowExistingSuggestion(false);
         setExistingSuggestion(null);
+        setHasPendingSuggestion(false);
         onSuggestionSubmitted?.();
       } else {
         const error = await response.json();
@@ -127,6 +199,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         suggestedCourtType: formData.get('suggestedCourtType') as string,
         suggestedNumberOfCourts: Number.parseInt(formData.get('suggestedNumberOfCourts') as string) || undefined,
         suggestedSurface: formData.get('suggestedSurface') as string,
+        suggestedCondition: formData.get('suggestedCondition') as string,
       };
 
       const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions/${editingSuggestion.id}`, {
@@ -141,7 +214,10 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         setEditingSuggestion(null);
         setShowExistingSuggestion(false);
         setExistingSuggestion(null);
+        setHasPendingSuggestion(false);
         onSuggestionSubmitted?.();
+        // Refresh the suggestion state
+        await checkExistingSuggestion();
       } else {
         const error = await response.json();
         console.error('Failed to update suggestion:', error.error || 'Unknown error');
@@ -179,6 +255,9 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         throw new Error(error.error || 'Failed to submit suggestion');
       }
 
+      // Get the submitted suggestion data
+      const submittedSuggestion = await response.json();
+
       // Show success notification
       setShowSuccess(true);
       setIsOpen(false);
@@ -191,24 +270,28 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         suggestedCity: court.city,
         suggestedNumberOfCourts: '',
         suggestedSurface: court.surfaceType,
+        suggestedCondition: court.courtCondition || '',
+        suggestedType: court.courtType || '',
+        suggestedHittingWall: court.hittingWall || false,
+        suggestedLights: court.lighted || false,
       });
 
-      onSuggestionSubmitted?.();
+      // Update the component state immediately with the new suggestion
+      setExistingSuggestion(submittedSuggestion);
+      setHasPendingSuggestion(true);
 
-      // Hide success notification after 3 seconds
-      setTimeout(() => {
-        setShowSuccess(false);
-      }, 3000);
+      onSuggestionCreated?.();
     } catch (error) {
       console.error('Error submitting suggestion:', error);
-      // Show error in console instead of alert
-      console.error('Error:', error instanceof Error ? error.message : 'Failed to submit suggestion');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit suggestion';
+      setErrorMessage(errorMessage);
+      setShowError(true);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -218,7 +301,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <CheckCircleIcon className="w-4 h-4 text-yellow-500" />;
       case 'approved':
         return <CheckCircleIcon className="w-4 h-4 text-green-500" />;
       case 'rejected':
@@ -243,13 +326,16 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
 
   return (
     <>
-      <button
-        onClick={handleOpenModal}
-        className="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
-      >
-        <Edit className="w-4 h-4 mr-2" />
-        Suggest Edit
-      </button>
+      {!isLoadingSuggestions && !hasPendingSuggestion && (
+        <button
+          onClick={handleOpenModal}
+          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          <Edit className="w-4 h-4 mr-2" />
+          {' '}
+          Suggest Edit
+        </button>
+      )}
 
       {/* Existing Suggestion Modal */}
       {showExistingSuggestion && existingSuggestion && (
@@ -274,11 +360,10 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 w-full">
                   <strong>Reason:</strong>
-                  {' '}
-                  {existingSuggestion.reason}
-                </p>
+                  <TruncatableText text={existingSuggestion.reason} />
+                </div>
 
                 {existingSuggestion.suggestedName && (
                   <p className="text-sm text-gray-600">
@@ -327,6 +412,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   </p>
                 )}
 
+                {existingSuggestion.suggestedCondition && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Condition:</strong>
+                    {' '}
+                    {capitalizeFirstLetter(existingSuggestion.suggestedCondition)}
+                  </p>
+                )}
+
                 {existingSuggestion.reviewNote && (
                   <p className="text-sm text-gray-600">
                     <strong>Review Note:</strong>
@@ -363,7 +456,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     onClick={() => handleDelete(existingSuggestion.id)}
                     className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
-                    <Trash2 className="w-4 h-4 inline mr-2" />
+                    <X className="w-4 h-4 inline mr-2" />
                     Delete Suggestion
                   </button>
                 </div>
@@ -373,23 +466,55 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         </div>
       )}
 
-      {/* Success Notification */}
+      {/* Success notification */}
       {showSuccess && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="w-8 h-8 text-green-500" />
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Success!</h3>
-                <p className="text-gray-600">Your edit suggestion has been submitted successfully. It will be reviewed by the community.</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="text-center">
+              <h3 className="text-sm font-medium text-gray-900">
+                Suggestion submitted successfully!
+              </h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Your suggestion has been submitted and is pending review.
+              </p>
+            </div>
+            <div className="mt-4">
+              <button
+                onClick={() => setShowSuccess(false)}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Error notification */}
+      {showError && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <XCircle className="h-6 w-6 text-red-400" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Error submitting suggestion
+                </h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  {errorMessage}
+                </p>
               </div>
             </div>
-            <button
-              onClick={() => setShowSuccess(false)}
-              className="mt-4 w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              Close
-            </button>
+            <div className="mt-4">
+              <button
+                onClick={() => setShowError(false)}
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -421,8 +546,12 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Explain why you're suggesting these changes..."
                   rows={3}
-                  maxLength={500}
+                  maxLength={100}
                 />
+                <div className="text-xs text-gray-500 mt-1 text-right">
+                  {editingSuggestion.reason.length}
+                  /100 characters
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -476,7 +605,8 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     id="editNumberOfCourts"
                     name="suggestedNumberOfCourts"
                     type="number"
-                    min="1"
+                    min="0"
+                    max="1000"
                     defaultValue={editingSuggestion.suggestedNumberOfCourts || ''}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Number of courts"
@@ -501,6 +631,46 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="Artificial Grass">Artificial Grass</option>
                     <option value="Concrete">Concrete</option>
                     <option value="Asphalt">Asphalt</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="editCondition" className="block text-sm font-medium text-gray-700 mb-2">
+                    Court Condition
+                  </label>
+                  <select
+                    id="editCondition"
+                    name="suggestedCondition"
+                    defaultValue={editingSuggestion.suggestedCondition || ''}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select condition</option>
+                    <option value="unknown">Unknown</option>
+                    <option value="new">
+                      {capitalizeFirstLetter('new')}
+                      {' '}
+                      (resurfaced in the last year)
+                    </option>
+                    <option value="like new">
+                      {capitalizeFirstLetter('like new')}
+                      {' '}
+                      (resurfaced in the last 2-3 years)
+                    </option>
+                    <option value="showing signs of wear">
+                      {capitalizeFirstLetter('showing signs of wear')}
+                      {' '}
+                      (some courts have minor cracks)
+                    </option>
+                    <option value="rough shape">
+                      {capitalizeFirstLetter('rough shape')}
+                      {' '}
+                      (some courts are unplayable)
+                    </option>
+                    <option value="terrible">
+                      {capitalizeFirstLetter('terrible')}
+                      {' '}
+                      (all courts are unplayable)
+                    </option>
                   </select>
                 </div>
               </div>
@@ -553,8 +723,12 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Explain why you're suggesting these changes..."
                   rows={3}
-                  maxLength={500}
+                  maxLength={100}
                 />
+                <div className="text-xs text-gray-500 mt-1 text-right">
+                  {formData.reason.length}
+                  /100 characters
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -608,6 +782,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     id="suggestedNumberOfCourts"
                     type="number"
                     min="0"
+                    max="1000"
                     value={formData.suggestedNumberOfCourts}
                     onChange={(e) => {
                       const value = e.target.value;
@@ -616,7 +791,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                         handleInputChange('suggestedNumberOfCourts', '');
                       } else {
                         const numValue = Number.parseInt(value);
-                        if (!Number.isNaN(numValue) && numValue >= 0) {
+                        if (!Number.isNaN(numValue) && numValue >= 0 && numValue <= 1000) {
                           handleInputChange('suggestedNumberOfCourts', numValue);
                         }
                       }
@@ -644,6 +819,94 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="Artificial Grass">Artificial Grass</option>
                     <option value="Concrete">Concrete</option>
                     <option value="Asphalt">Asphalt</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedCondition" className="block text-sm font-medium text-gray-700 mb-2">
+                    Court Condition
+                  </label>
+                  <select
+                    id="suggestedCondition"
+                    value={formData.suggestedCondition || ''}
+                    onChange={e => handleInputChange('suggestedCondition', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select condition</option>
+                    <option value="unknown">Unknown</option>
+                    <option value="new">
+                      {capitalizeFirstLetter('new')}
+                      {' '}
+                      (resurfaced in the last year)
+                    </option>
+                    <option value="like new">
+                      {capitalizeFirstLetter('like new')}
+                      {' '}
+                      (resurfaced in the last 2-3 years)
+                    </option>
+                    <option value="showing signs of wear">
+                      {capitalizeFirstLetter('showing signs of wear')}
+                      {' '}
+                      (some courts have minor cracks)
+                    </option>
+                    <option value="rough shape">
+                      {capitalizeFirstLetter('rough shape')}
+                      {' '}
+                      (some courts are unplayable)
+                    </option>
+                    <option value="terrible">
+                      {capitalizeFirstLetter('terrible')}
+                      {' '}
+                      (all courts are unplayable)
+                    </option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedType" className="block text-sm font-medium text-gray-700 mb-2">
+                    Type
+                  </label>
+                  <select
+                    id="suggestedType"
+                    value={formData.suggestedType || ''}
+                    onChange={e => handleInputChange('suggestedType', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select type</option>
+                    <option value="Indoor">Indoor</option>
+                    <option value="Outdoor">Outdoor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedHittingWall" className="block text-sm font-medium text-gray-700 mb-2">
+                    Hitting Wall
+                  </label>
+                  <select
+                    id="suggestedHittingWall"
+                    value={formData.suggestedHittingWall ? 'true' : 'false'}
+                    onChange={e => handleInputChange('suggestedHittingWall', e.target.value === 'true')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedLights" className="block text-sm font-medium text-gray-700 mb-2">
+                    Lights
+                  </label>
+                  <select
+                    id="suggestedLights"
+                    value={formData.suggestedLights ? 'true' : 'false'}
+                    onChange={e => handleInputChange('suggestedLights', e.target.value === 'true')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
                   </select>
                 </div>
               </div>

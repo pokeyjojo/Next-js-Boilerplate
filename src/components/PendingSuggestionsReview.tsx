@@ -1,7 +1,34 @@
 'use client';
 
-import { Clock, User } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
+
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+}
 
 type Suggestion = {
   id: string;
@@ -14,6 +41,10 @@ type Suggestion = {
   suggestedCourtType?: string;
   suggestedNumberOfCourts?: number;
   suggestedSurface?: string;
+  suggestedCondition?: string;
+  suggestedType?: string;
+  suggestedHittingWall?: boolean;
+  suggestedLights?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -23,26 +54,46 @@ type Suggestion = {
   updatedAt: string;
 };
 
+type Court = {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  court_type: string;
+  number_of_courts: number;
+  surface: string;
+  court_condition?: string;
+  hitting_wall?: boolean;
+  lighted?: boolean;
+};
+
 type PendingSuggestionsReviewProps = {
   courtId: string;
   currentUserId: string;
+  currentCourt: Court;
   onSuggestionReviewed?: () => void;
 };
 
-export default function PendingSuggestionsReview({ courtId, currentUserId, onSuggestionReviewed }: PendingSuggestionsReviewProps) {
+export default function PendingSuggestionsReview({
+  courtId,
+  currentUserId,
+  currentCourt,
+  onSuggestionReviewed,
+}: PendingSuggestionsReviewProps) {
   const [pendingSuggestions, setPendingSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewingSuggestion, setReviewingSuggestion] = useState<Suggestion | null>(null);
-  const [reviewNote, setReviewNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOwnSuggestions, setShowOwnSuggestions] = useState(false);
+  const [reviewingField, setReviewingField] = useState<string | null>(null);
+  const [reviewNote, setReviewNote] = useState('');
 
   const fetchPendingSuggestions = async () => {
     try {
       const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions?status=pending`);
       if (response.ok) {
-        const suggestions = await response.json();
-        setPendingSuggestions(suggestions);
+        const data = await response.json();
+        setPendingSuggestions(data.filter((suggestion: Suggestion) => suggestion.suggestedBy !== currentUserId));
       }
     } catch (error) {
       console.error('Error fetching pending suggestions:', error);
@@ -53,16 +104,9 @@ export default function PendingSuggestionsReview({ courtId, currentUserId, onSug
 
   useEffect(() => {
     fetchPendingSuggestions();
-  }, [courtId]);
+  }, [courtId, currentUserId]);
 
-  // Filter suggestions based on checkbox state
-  const filteredSuggestions = showOwnSuggestions
-    ? pendingSuggestions
-    : pendingSuggestions.filter((suggestion: Suggestion) =>
-        suggestion.suggestedBy !== currentUserId,
-      );
-
-  const handleReview = async (suggestion: Suggestion, status: 'approved' | 'rejected') => {
+  const handleFieldReview = async (suggestion: Suggestion, field: string, status: 'approved' | 'rejected') => {
     setIsSubmitting(true);
     try {
       const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions/${suggestion.id}`, {
@@ -72,18 +116,18 @@ export default function PendingSuggestionsReview({ courtId, currentUserId, onSug
         },
         body: JSON.stringify({
           status,
-          reviewNote: reviewNote.trim() || undefined,
+          reviewNote: reviewNote || undefined,
+          field, // Only approve/reject the specific field
         }),
       });
 
       if (response.ok) {
-        setReviewingSuggestion(null);
+        setReviewingField(null);
         setReviewNote('');
         await fetchPendingSuggestions();
         onSuggestionReviewed?.();
       } else {
-        const error = await response.json();
-        console.error('Failed to review suggestion:', error.error || 'Unknown error');
+        console.error('Failed to review suggestion');
       }
     } catch (error) {
       console.error('Error reviewing suggestion:', error);
@@ -92,203 +136,175 @@ export default function PendingSuggestionsReview({ courtId, currentUserId, onSug
     }
   };
 
+  const getFieldSuggestions = (field: string) => {
+    return pendingSuggestions.filter((suggestion) => {
+      const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}`;
+      const value = suggestion[suggestedField as keyof Suggestion];
+
+      // For boolean fields, check if the value is not null and not undefined
+      if (field === 'hittingWall' || field === 'lights') {
+        return value !== null && value !== undefined;
+      }
+
+      // For other fields, check if the value exists
+      return value;
+    });
+  };
+
+  const renderFieldWithSuggestions = (field: string, currentValue: any, label: string) => {
+    const fieldSuggestions = getFieldSuggestions(field);
+
+    // Capitalize condition values for better display
+    const displayValue = field === 'condition' ? capitalizeFirstLetter(currentValue) : currentValue;
+
+    if (fieldSuggestions.length === 0) {
+      return (
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">
+            <strong>
+              {label}
+              :
+            </strong>
+            {' '}
+            {displayValue || 'Not specified'}
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mb-4">
+        <p className="text-sm text-gray-600">
+          <strong>
+            {label}
+            :
+          </strong>
+          {' '}
+          {displayValue || 'Not specified'}
+        </p>
+        {fieldSuggestions.map((suggestion) => {
+          const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof Suggestion;
+          const suggestedValue = suggestion[suggestedField];
+
+          if (!suggestedValue) {
+            return null;
+          }
+
+          return (
+            <div key={suggestion.id} className="ml-4 mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg overflow-hidden">
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm text-gray-700">
+                    <strong>
+                      Suggested
+                      {label}
+                      :
+                    </strong>
+                    {' '}
+                    {field === 'condition' ? capitalizeFirstLetter(String(suggestedValue)) : suggestedValue}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Suggested by
+                    {' '}
+                    {suggestion.suggestedByUserName}
+                    {' '}
+                    on
+                    {' '}
+                    {new Date(suggestion.createdAt).toLocaleDateString()}
+                  </p>
+                  {suggestion.reason && (
+                    <div className="text-xs text-gray-600 mt-1 w-full">
+                      <strong>Reason:</strong>
+                      <TruncatableText text={suggestion.reason} />
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <button
+                    onClick={() => setReviewingField(`${suggestion.id}-${field}`)}
+                    className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  >
+                    Review
+                  </button>
+                </div>
+              </div>
+
+              {reviewingField === `${suggestion.id}-${field}` && (
+                <div className="mt-3 p-3 bg-white border border-gray-200 rounded">
+                  <textarea
+                    value={reviewNote}
+                    onChange={e => setReviewNote(e.target.value)}
+                    placeholder="Add a review note (optional)..."
+                    className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                    rows={2}
+                    maxLength={100}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleFieldReview(suggestion, field, 'approved')}
+                      disabled={isSubmitting}
+                      className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Approving...' : 'Approve'}
+                    </button>
+                    <button
+                      onClick={() => handleFieldReview(suggestion, field, 'rejected')}
+                      disabled={isSubmitting}
+                      className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                    >
+                      {isSubmitting ? 'Rejecting...' : 'Reject'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setReviewingField(null);
+                        setReviewNote('');
+                      }}
+                      className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   if (loading) {
-    return <div className="text-gray-500">Loading pending suggestions...</div>;
+    return <div className="text-center text-gray-400">Loading suggestions...</div>;
   }
 
-  if (filteredSuggestions.length === 0) {
+  const hasPendingSuggestions = pendingSuggestions.some(suggestion =>
+    suggestion.suggestedName || suggestion.suggestedAddress || suggestion.suggestedCity
+    || suggestion.suggestedState || suggestion.suggestedZip || suggestion.suggestedCourtType
+    || suggestion.suggestedNumberOfCourts || suggestion.suggestedSurface || suggestion.suggestedCondition
+    || suggestion.suggestedType || (suggestion.suggestedHittingWall !== null && suggestion.suggestedHittingWall !== undefined) || (suggestion.suggestedLights !== null && suggestion.suggestedLights !== undefined),
+  );
+
+  if (!hasPendingSuggestions) {
     return null;
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Pending Suggestions to Review</h3>
-        {currentUserId && (
-          <label className="flex items-center space-x-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={showOwnSuggestions}
-              onChange={e => setShowOwnSuggestions(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span>Show my suggestions</span>
-          </label>
-        )}
+    <div className="mt-6">
+      <h3 className="text-lg font-semibold mb-4">Pending Suggestions to Review</h3>
+      <div className="space-y-4">
+        {renderFieldWithSuggestions('name', currentCourt.name, 'Name')}
+        {renderFieldWithSuggestions('address', currentCourt.address, 'Address')}
+        {renderFieldWithSuggestions('city', currentCourt.city, 'City')}
+        {renderFieldWithSuggestions('state', currentCourt.state, 'State')}
+        {renderFieldWithSuggestions('zip', currentCourt.zip, 'Zip Code')}
+        {renderFieldWithSuggestions('courtType', currentCourt.court_type, 'Court Type')}
+        {renderFieldWithSuggestions('numberOfCourts', currentCourt.number_of_courts, 'Number of Courts')}
+        {renderFieldWithSuggestions('surface', currentCourt.surface, 'Surface')}
+        {renderFieldWithSuggestions('condition', currentCourt.court_condition, 'Condition')}
+        {renderFieldWithSuggestions('type', currentCourt.court_type, 'Type')}
+        {renderFieldWithSuggestions('hittingWall', currentCourt.hitting_wall, 'Hitting Wall')}
+        {renderFieldWithSuggestions('lights', currentCourt.lighted, 'Lights')}
       </div>
-
-      {showOwnSuggestions && (
-        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            💡
-            {' '}
-            <strong>Note:</strong>
-            {' '}
-            You cannot review your own suggestions. Your suggestions are shown for reference only.
-          </p>
-        </div>
-      )}
-
-      {filteredSuggestions.map(suggestion => (
-        <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <Clock className="w-4 h-4 text-yellow-500" />
-              <span className="font-medium text-gray-900">Pending Review</span>
-              {suggestion.suggestedBy === currentUserId && (
-                <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                  Your suggestion
-                </span>
-              )}
-            </div>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <User className="w-4 h-4" />
-              <span>{suggestion.suggestedByUserName || 'Unknown User'}</span>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              <strong>Reason:</strong>
-              {' '}
-              {suggestion.reason}
-            </p>
-
-            {suggestion.suggestedName && (
-              <p className="text-sm text-gray-600">
-                <strong>Name:</strong>
-                {' '}
-                {suggestion.suggestedName}
-              </p>
-            )}
-
-            {suggestion.suggestedAddress && (
-              <p className="text-sm text-gray-600">
-                <strong>Address:</strong>
-                {' '}
-                {suggestion.suggestedAddress}
-              </p>
-            )}
-
-            {suggestion.suggestedCity && (
-              <p className="text-sm text-gray-600">
-                <strong>City:</strong>
-                {' '}
-                {suggestion.suggestedCity}
-              </p>
-            )}
-
-            {suggestion.suggestedNumberOfCourts && suggestion.suggestedNumberOfCourts > 0 && (
-              <p className="text-sm text-gray-600">
-                <strong>Number of Courts:</strong>
-                {' '}
-                {suggestion.suggestedNumberOfCourts}
-              </p>
-            )}
-            {(!suggestion.suggestedNumberOfCourts || suggestion.suggestedNumberOfCourts === 0) && (
-              <p className="text-sm text-gray-600">
-                <strong>Number of Courts:</strong>
-                {' '}
-                Unknown
-              </p>
-            )}
-
-            {suggestion.suggestedSurface && (
-              <p className="text-sm text-gray-600">
-                <strong>Surface:</strong>
-                {' '}
-                {suggestion.suggestedSurface}
-              </p>
-            )}
-          </div>
-
-          <p className="text-xs text-gray-400 mt-3">
-            Submitted on
-            {' '}
-            {new Date(suggestion.createdAt).toLocaleDateString()}
-          </p>
-
-          <div className="mt-4 flex space-x-3">
-            {suggestion.suggestedBy === currentUserId
-              ? (
-                  <div className="flex-1 px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
-                    Your suggestion - cannot review
-                  </div>
-                )
-              : (
-                  <button
-                    onClick={() => setReviewingSuggestion(suggestion)}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Review Suggestion
-                  </button>
-                )}
-          </div>
-        </div>
-      ))}
-
-      {/* Review Modal */}
-      {reviewingSuggestion && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Review Suggestion</h2>
-              <button
-                onClick={() => {
-                  setReviewingSuggestion(null);
-                  setReviewNote('');
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="reviewNote" className="block text-sm font-medium text-gray-700 mb-2">
-                  Review Note (Optional)
-                </label>
-                <textarea
-                  id="reviewNote"
-                  value={reviewNote}
-                  onChange={e => setReviewNote(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Add a note about your decision..."
-                  rows={3}
-                  maxLength={500}
-                />
-              </div>
-
-              <div className="flex space-x-3 pt-4">
-                <button
-                  onClick={() => {
-                    setReviewingSuggestion(null);
-                    setReviewNote('');
-                  }}
-                  className="flex-1 px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => handleReview(reviewingSuggestion, 'rejected')}
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSubmitting ? 'Rejecting...' : 'Reject'}
-                </button>
-                <button
-                  onClick={() => handleReview(reviewingSuggestion, 'approved')}
-                  disabled={isSubmitting}
-                  className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isSubmitting ? 'Approving...' : 'Approve'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

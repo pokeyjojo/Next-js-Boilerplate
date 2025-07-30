@@ -1,0 +1,1 @@
+ALTER TABLE "court_edit_suggestions" ALTER COLUMN "reason" SET DATA TYPE varchar(100);

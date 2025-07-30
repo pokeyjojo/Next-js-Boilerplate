@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clock, Edit, Trash2, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 type Suggestion = {
   id: string;
@@ -14,9 +15,15 @@ type Suggestion = {
   suggestedCourtType?: string;
   suggestedNumberOfCourts?: number;
   suggestedSurface?: string;
+  suggestedCondition?: string;
+  suggestedType?: string;
+  suggestedHittingWall?: boolean;
+  suggestedLights?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
+  suggestedBy?: string;
+  suggestedByUserName?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -27,16 +34,40 @@ type UserSuggestionDisplayProps = {
   onSuggestionUpdated?: () => void;
 };
 
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+}
+
 export default function UserSuggestionDisplay({ courtId, currentUserId, onSuggestionUpdated }: UserSuggestionDisplayProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchSuggestions();
-  }, [courtId]);
 
   const fetchSuggestions = async () => {
     try {
@@ -47,7 +78,11 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
         const userSuggestions = data.filter((suggestion: Suggestion) =>
           suggestion.suggestedBy === currentUserId,
         );
-        setSuggestions(userSuggestions);
+        // Sort by creation date and take only the most recent suggestion
+        const sortedSuggestions = userSuggestions.sort((a: Suggestion, b: Suggestion) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        );
+        setSuggestions(sortedSuggestions.slice(0, 1)); // Only keep the most recent one
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -56,31 +91,87 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
     }
   };
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (!isMounted) {
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions`);
+        if (!isMounted) {
+          return;
+        }
+
+        if (response.ok) {
+          const data = await response.json();
+          // Filter to only show current user's suggestions
+          const userSuggestions = data.filter((suggestion: Suggestion) =>
+            suggestion.suggestedBy === currentUserId,
+          );
+          // Sort by creation date and take only the most recent suggestion
+          const sortedSuggestions = userSuggestions.sort((a: Suggestion, b: Suggestion) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          );
+          setSuggestions(sortedSuggestions.slice(0, 1)); // Only keep the most recent one
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+        console.error('Error fetching suggestions:', error);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchData();
+
+    // Cleanup function to prevent setting state on unmounted component
+    return () => {
+      isMounted = false;
+    };
+  }, [courtId, currentUserId]);
+
   const handleEdit = (suggestion: Suggestion) => {
     setEditingSuggestion(suggestion);
   };
 
   const handleDelete = async (suggestionId: string) => {
-    if (!confirm('Are you sure you want to delete this suggestion?')) {
+    setShowDeleteConfirm(suggestionId);
+  };
+
+  const confirmDelete = async () => {
+    if (!showDeleteConfirm) {
       return;
     }
 
     try {
-      const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions/${suggestionId}`, {
+      const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions/${showDeleteConfirm}`, {
         method: 'DELETE',
       });
 
       if (response.ok) {
         await fetchSuggestions();
         onSuggestionUpdated?.();
+        setShowDeleteConfirm(null);
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to delete suggestion');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to delete suggestion');
       }
     } catch (error) {
       console.error('Error deleting suggestion:', error);
-      alert('Failed to delete suggestion');
+      setError('Failed to delete suggestion');
     }
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirm(null);
   };
 
   const handleUpdate = async (e: React.FormEvent) => {
@@ -102,6 +193,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
         suggestedCourtType: formData.get('suggestedCourtType') as string,
         suggestedNumberOfCourts: Number.parseInt(formData.get('suggestedNumberOfCourts') as string) || undefined,
         suggestedSurface: formData.get('suggestedSurface') as string,
+        suggestedCondition: formData.get('suggestedCondition') as string,
       };
 
       const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions/${editingSuggestion.id}`, {
@@ -117,12 +209,12 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
         await fetchSuggestions();
         onSuggestionUpdated?.();
       } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to update suggestion');
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update suggestion');
       }
     } catch (error) {
       console.error('Error updating suggestion:', error);
-      alert('Failed to update suggestion');
+      setError('Failed to update suggestion');
     } finally {
       setIsSubmitting(false);
     }
@@ -164,10 +256,47 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold text-gray-900">Your Suggestions</h3>
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3">
+          <p className="text-red-800 text-sm">{error}</p>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-600 hover:text-red-800 text-xs mt-1"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
+      {showDeleteConfirm && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+          <p className="text-yellow-800 text-sm">Are you sure you want to delete this suggestion?</p>
+          <div className="flex space-x-2 mt-2">
+            <button
+              onClick={confirmDelete}
+              className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+            >
+              Delete
+            </button>
+            <button
+              onClick={cancelDelete}
+              className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900">Your Suggestion</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Your most recent suggestion for this court
+        </p>
+      </div>
 
       {suggestions.map(suggestion => (
-        <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4">
+        <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4 overflow-hidden w-full">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               {getStatusIcon(suggestion.status)}
@@ -196,11 +325,10 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 w-full">
               <strong>Reason:</strong>
-              {' '}
-              {suggestion.reason}
-            </p>
+              <TruncatableText text={suggestion.reason} />
+            </div>
 
             {suggestion.suggestedName && (
               <p className="text-sm text-gray-600">
@@ -246,6 +374,14 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                 <strong>Surface:</strong>
                 {' '}
                 {suggestion.suggestedSurface}
+              </p>
+            )}
+
+            {suggestion.suggestedCondition && (
+              <p className="text-sm text-gray-600">
+                <strong>Condition:</strong>
+                {' '}
+                {capitalizeFirstLetter(suggestion.suggestedCondition)}
               </p>
             )}
 
@@ -301,7 +437,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Explain why you're suggesting these changes..."
                   rows={3}
-                  maxLength={500}
+                  maxLength={100}
                 />
               </div>
 
@@ -381,6 +517,74 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                     <option value="Artificial Grass">Artificial Grass</option>
                     <option value="Concrete">Concrete</option>
                     <option value="Asphalt">Asphalt</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="editCondition" className="block text-sm font-medium text-gray-700 mb-2">
+                    Court Condition
+                  </label>
+                  <select
+                    id="editCondition"
+                    name="suggestedCondition"
+                    defaultValue={editingSuggestion.suggestedCondition || ''}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select condition</option>
+                    <option value="unknown">Unknown</option>
+                    <option value="new">New (resurfaced in the last year)</option>
+                    <option value="like new">Like new (resurfaced in the last 2-3 years)</option>
+                    <option value="showing signs of wear">Showing signs of wear (some courts have minor cracks)</option>
+                    <option value="rough shape">Rough shape (some courts are unplayable)</option>
+                    <option value="terrible">Terrible (all courts are unplayable)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="editType" className="block text-sm font-medium text-gray-700 mb-2">
+                    Type
+                  </label>
+                  <select
+                    id="editType"
+                    name="suggestedType"
+                    defaultValue={editingSuggestion.suggestedType || ''}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select type</option>
+                    <option value="Indoor">Indoor</option>
+                    <option value="Outdoor">Outdoor</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="editHittingWall" className="block text-sm font-medium text-gray-700 mb-2">
+                    Hitting Wall
+                  </label>
+                  <select
+                    id="editHittingWall"
+                    name="suggestedHittingWall"
+                    defaultValue={editingSuggestion.suggestedHittingWall ? 'true' : 'false'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="editLights" className="block text-sm font-medium text-gray-700 mb-2">
+                    Lights
+                  </label>
+                  <select
+                    id="editLights"
+                    name="suggestedLights"
+                    defaultValue={editingSuggestion.suggestedLights ? 'true' : 'false'}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select</option>
+                    <option value="true">Yes</option>
+                    <option value="false">No</option>
                   </select>
                 </div>
               </div>

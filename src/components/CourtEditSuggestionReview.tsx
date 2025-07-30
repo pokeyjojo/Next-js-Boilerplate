@@ -2,20 +2,57 @@
 
 import { AlertCircle, Check, Clock, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { capitalizeFirstLetter } from '@/utils/Helpers';
+
+// TruncatableText component for handling long text with expand/collapse functionality
+function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (text.length <= maxLength) {
+    return (
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+        {text}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-1 w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+        {isExpanded ? text : `${text.substring(0, maxLength)}...`}
+      </div>
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+      >
+        {isExpanded ? 'Show less' : 'Show more'}
+      </button>
+    </div>
+  );
+}
 
 type CourtEditSuggestion = {
   id: string;
-  courtId: string;
-  suggestedBy: string;
-  suggestedByUserName: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected';
   suggestedName?: string;
   suggestedAddress?: string;
   suggestedCity?: string;
+  suggestedState?: string;
+  suggestedZip?: string;
+  suggestedCourtType?: string;
   suggestedNumberOfCourts?: number;
   suggestedSurface?: string;
+  suggestedCondition?: string;
+  suggestedType?: string;
+  suggestedHittingWall?: boolean;
+  suggestedLights?: boolean;
+  status: 'pending' | 'approved' | 'rejected';
+  reviewNote?: string;
+  reviewedByUserName?: string;
+  suggestedBy?: string;
+  suggestedByUserName?: string;
   createdAt: string;
+  updatedAt: string;
 };
 
 type CourtEditSuggestionReviewProps = {
@@ -115,7 +152,7 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
     <div className="space-y-4">
       <h3 className="text-lg font-semibold mb-4">Pending Edit Suggestions</h3>
       {suggestions.map(suggestion => (
-        <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4">
+        <div key={suggestion.id} className="border border-gray-200 rounded-lg p-4 overflow-hidden">
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center space-x-2">
               {getStatusIcon(suggestion.status)}
@@ -134,11 +171,10 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
               {' '}
               {suggestion.suggestedByUserName}
             </p>
-            <p className="text-sm text-gray-600">
+            <div className="text-sm text-gray-600 w-full">
               <strong>Reason:</strong>
-              {' '}
-              {suggestion.reason}
-            </p>
+              <TruncatableText text={suggestion.reason} />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -170,6 +206,30 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
               <div>
                 <p className="text-sm font-medium text-gray-700">Surface Type</p>
                 <p className="text-sm text-gray-600">{suggestion.suggestedSurface}</p>
+              </div>
+            )}
+            {suggestion.suggestedCondition && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Condition</p>
+                <p className="text-sm text-gray-600">{capitalizeFirstLetter(suggestion.suggestedCondition)}</p>
+              </div>
+            )}
+            {suggestion.suggestedType && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Type</p>
+                <p className="text-sm text-gray-600">{suggestion.suggestedType}</p>
+              </div>
+            )}
+            {suggestion.suggestedHittingWall !== undefined && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Hitting Wall</p>
+                <p className="text-sm text-gray-600">{suggestion.suggestedHittingWall ? 'Yes' : 'No'}</p>
+              </div>
+            )}
+            {suggestion.suggestedLights !== undefined && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Lights</p>
+                <p className="text-sm text-gray-600">{suggestion.suggestedLights ? 'Yes' : 'No'}</p>
               </div>
             )}
           </div>

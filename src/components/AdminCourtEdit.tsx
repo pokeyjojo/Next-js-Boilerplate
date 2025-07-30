@@ -10,6 +10,10 @@ type Court = {
   city: string;
   numberOfCourts: number;
   surfaceType: string;
+  courtCondition?: string;
+  courtType?: string;
+  hittingWall?: boolean;
+  lighted?: boolean;
 };
 
 type AdminCourtEditProps = {
@@ -27,6 +31,10 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
     city: court.city,
     numberOfCourts: court.numberOfCourts,
     surfaceType: court.surfaceType,
+    courtCondition: court.courtCondition || '',
+    courtType: court.courtType || '',
+    hittingWall: court.hittingWall || false,
+    lighted: court.lighted || false,
   });
 
   const handleSave = async () => {
@@ -72,11 +80,15 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
       city: court.city,
       numberOfCourts: court.numberOfCourts,
       surfaceType: court.surfaceType,
+      courtCondition: court.courtCondition || '',
+      courtType: court.courtType || '',
+      hittingWall: court.hittingWall || false,
+      lighted: court.lighted || false,
     });
     setIsEditing(false);
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
@@ -202,6 +214,74 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
             <option value="Artificial Grass">Artificial Grass</option>
             <option value="Concrete">Concrete</option>
             <option value="Asphalt">Asphalt</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="adminCourtCondition" className="block text-sm font-medium text-gray-700 mb-2">
+            Court Condition
+          </label>
+          <select
+            id="adminCourtCondition"
+            value={formData.courtCondition || ''}
+            onChange={e => handleInputChange('courtCondition', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select condition</option>
+            <option value="unknown">Unknown</option>
+            <option value="new">New (resurfaced in the last year)</option>
+            <option value="like new">Like new (resurfaced in the last 2-3 years)</option>
+            <option value="showing signs of wear">Showing signs of wear (some courts have minor cracks)</option>
+            <option value="rough shape">Rough shape (some courts are unplayable)</option>
+            <option value="terrible">Terrible (all courts are unplayable)</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="adminCourtType" className="block text-sm font-medium text-gray-700 mb-2">
+            Type
+          </label>
+          <select
+            id="adminCourtType"
+            value={formData.courtType || ''}
+            onChange={e => handleInputChange('courtType', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select type</option>
+            <option value="Indoor">Indoor</option>
+            <option value="Outdoor">Outdoor</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="adminHittingWall" className="block text-sm font-medium text-gray-700 mb-2">
+            Hitting Wall
+          </label>
+          <select
+            id="adminHittingWall"
+            value={formData.hittingWall ? 'true' : 'false'}
+            onChange={e => handleInputChange('hittingWall', e.target.value === 'true')}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="adminLights" className="block text-sm font-medium text-gray-700 mb-2">
+            Lights
+          </label>
+          <select
+            id="adminLights"
+            value={formData.lighted ? 'true' : 'false'}
+            onChange={e => handleInputChange('lighted', e.target.value === 'true')}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">Select</option>
+            <option value="true">Yes</option>
+            <option value="false">No</option>
           </select>
         </div>
       </div>

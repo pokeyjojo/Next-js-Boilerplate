@@ -3,7 +3,7 @@
 import { useUser } from '@clerk/nextjs';
 import { Building, Camera, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
 import { useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AdminCourtEdit from '@/components/AdminCourtEdit';
 import CourtEditSuggestion from '@/components/CourtEditSuggestion';
 import CourtEditSuggestionReview from '@/components/CourtEditSuggestionReview';
@@ -19,6 +19,7 @@ type TennisCourt = {
   longitude: number;
   numberOfCourts: number;
   surfaceType: string;
+  courtCondition?: string;
   isIndoor: boolean;
   isLighted: boolean;
   isPublic: boolean;
@@ -62,6 +63,7 @@ export default function CourtDetailPage() {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
   const { isSignedIn, user } = useUser();
 
   // Check admin status
@@ -82,6 +84,25 @@ export default function CourtDetailPage() {
 
     checkAdminStatus();
   }, [isSignedIn]);
+
+  // Function to refresh court data
+  const refreshCourtData = useCallback(async () => {
+    try {
+      const response = await fetch(`/en/api/tennis-courts/${courtId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch court data');
+      }
+      const data = await response.json();
+      setCourt(data);
+    } catch (err) {
+      console.error('Error refreshing court data:', err);
+    }
+  }, [courtId]);
+
+  // Function to refresh user suggestions
+  const refreshUserSuggestions = useCallback(() => {
+    setUserSuggestionsRefreshKey(prev => prev + 1);
+  }, []);
 
   useEffect(() => {
     const fetchCourtData = async () => {
@@ -289,7 +310,13 @@ export default function CourtDetailPage() {
               </div>
               {isSignedIn && (
                 <div className="flex items-center space-x-3 mb-4">
-                  <CourtEditSuggestion court={court} onSuggestionSubmitted={() => {}} />
+                  <CourtEditSuggestion
+                    court={court}
+                    userId={user?.id}
+                    onSuggestionSubmitted={refreshCourtData}
+                    onSuggestionCreated={refreshUserSuggestions}
+                    refreshKey={userSuggestionsRefreshKey}
+                  />
                   {isAdmin && (
                     <AdminCourtEdit
                       court={court}

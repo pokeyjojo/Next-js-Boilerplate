@@ -151,7 +151,7 @@ export const courtEditSuggestionSchema = pgTable('court_edit_suggestions', {
   courtId: uuid('court_id').notNull(), // FK to tennis_courts.id
   suggestedBy: varchar('suggested_by', { length: 255 }).notNull(), // user ID who suggested the edit
   suggestedByUserName: varchar('suggested_by_user_name', { length: 255 }).notNull(), // user name who suggested
-  reason: varchar('reason', { length: 500 }), // reason for the suggestion
+  reason: varchar('reason', { length: 100 }), // reason for the suggestion
   status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, approved, rejected
   reviewedBy: varchar('reviewed_by', { length: 255 }), // user ID who reviewed (must be different from suggestedBy)
   reviewedByUserName: varchar('reviewed_by_user_name', { length: 255 }), // user name who reviewed
@@ -166,6 +166,10 @@ export const courtEditSuggestionSchema = pgTable('court_edit_suggestions', {
   suggestedCourtType: varchar('suggested_court_type', { length: 50 }),
   suggestedNumberOfCourts: integer('suggested_number_of_courts'),
   suggestedSurface: varchar('suggested_surface', { length: 50 }),
+  suggestedCondition: varchar('suggested_condition', { length: 50 }),
+  suggestedType: varchar('suggested_type', { length: 50 }),
+  suggestedHittingWall: boolean('suggested_hitting_wall'),
+  suggestedLights: boolean('suggested_lights'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()

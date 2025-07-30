@@ -31,6 +31,10 @@ export async function PUT(
       city,
       numberOfCourts,
       surface,
+      courtCondition,
+      courtType,
+      hittingWall,
+      lighted,
     } = body;
 
     // Check if court exists
@@ -55,6 +59,18 @@ export async function PUT(
     }
     if (surface !== undefined) {
       updateData.surface = surface;
+    }
+    if (courtCondition !== undefined) {
+      updateData.courtCondition = courtCondition;
+    }
+    if (courtType !== undefined) {
+      updateData.courtType = courtType;
+    }
+    if (hittingWall !== undefined) {
+      updateData.hittingWall = hittingWall;
+    }
+    if (lighted !== undefined) {
+      updateData.lighted = lighted;
     }
 
     // Update the court using Drizzle

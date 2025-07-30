@@ -1,0 +1,1 @@
+ALTER TABLE "court_edit_suggestions" ADD COLUMN "suggested_condition" varchar(50);
