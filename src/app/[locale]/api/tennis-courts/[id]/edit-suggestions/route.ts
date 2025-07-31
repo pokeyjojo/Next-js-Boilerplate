@@ -33,6 +33,7 @@ export async function POST(
       suggestedType,
       suggestedHittingWall,
       suggestedLights,
+      suggestedIsPublic,
     } = body;
 
     // Check if court exists using the courts schema (UUID)
@@ -41,12 +42,9 @@ export async function POST(
       return NextResponse.json({ error: 'Court not found' }, { status: 404 });
     }
 
-    // Validate reason field length
-    if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
-      return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
-    }
-    if (reason.trim().length > 100) {
-      return NextResponse.json({ error: 'Reason must be 100 characters or less' }, { status: 400 });
+    // Make reason field optional (Additional Notes)
+    if (reason && typeof reason === 'string' && reason.trim().length > 100) {
+      return NextResponse.json({ error: 'Additional notes must be 100 characters or less' }, { status: 400 });
     }
 
     // Check if any suggested values are different from current values
@@ -63,6 +61,7 @@ export async function POST(
       || (suggestedType && suggestedType !== court.courtType)
       || (suggestedHittingWall !== null && suggestedHittingWall !== undefined && suggestedHittingWall !== court.hittingWall)
       || (suggestedLights !== null && suggestedLights !== undefined && suggestedLights !== court.lighted)
+      || (suggestedIsPublic !== null && suggestedIsPublic !== undefined && suggestedIsPublic !== court.isPublic)
     );
 
     // Validate suggestedNumberOfCourts to prevent extremely large numbers
@@ -147,6 +146,9 @@ export async function POST(
     }
     if (suggestedLights !== null && suggestedLights !== undefined && suggestedLights !== court.lighted) {
       suggestionData.suggestedLights = suggestedLights;
+    }
+    if (suggestedIsPublic !== null && suggestedIsPublic !== undefined && suggestedIsPublic !== court.isPublic) {
+      suggestionData.suggestedIsPublic = suggestedIsPublic;
     }
 
     const [suggestion] = await db
@@ -241,8 +243,9 @@ export async function GET(
       const typeHasChanges = !!(suggestion.suggestedType && normalizeString(suggestion.suggestedType) !== normalizeString(court.courtType));
       const hittingWallHasChanges = !!(suggestion.suggestedHittingWall !== null && suggestion.suggestedHittingWall !== undefined && suggestion.suggestedHittingWall !== court.hittingWall);
       const lightsHasChanges = !!(suggestion.suggestedLights !== null && suggestion.suggestedLights !== undefined && suggestion.suggestedLights !== court.lighted);
+      const isPublicHasChanges = !!(suggestion.suggestedIsPublic !== null && suggestion.suggestedIsPublic !== undefined && suggestion.suggestedIsPublic !== court.isPublic);
 
-      const hasAnyChanges = nameHasChanges || addressHasChanges || cityHasChanges || stateHasChanges || zipHasChanges || courtTypeHasChanges || numberOfCourtsHasChanges || surfaceHasChanges || conditionHasChanges || typeHasChanges || hittingWallHasChanges || lightsHasChanges;
+      const hasAnyChanges = nameHasChanges || addressHasChanges || cityHasChanges || stateHasChanges || zipHasChanges || courtTypeHasChanges || numberOfCourtsHasChanges || surfaceHasChanges || conditionHasChanges || typeHasChanges || hittingWallHasChanges || lightsHasChanges || isPublicHasChanges;
 
       // If there are changes, create a new suggestion object with only the fields that have changes
       if (hasAnyChanges) {
@@ -284,6 +287,9 @@ export async function GET(
         }
         if (!lightsHasChanges) {
           filteredSuggestion.suggestedLights = null;
+        }
+        if (!isPublicHasChanges) {
+          filteredSuggestion.suggestedIsPublic = null;
         }
 
         // Replace the original suggestion with the filtered one

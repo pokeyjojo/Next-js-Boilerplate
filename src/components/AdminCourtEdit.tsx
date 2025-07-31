@@ -8,12 +8,14 @@ type Court = {
   name: string;
   address: string;
   city: string;
+  zip?: string;
   numberOfCourts: number;
   surfaceType: string;
   courtCondition?: string;
   courtType?: string;
   hittingWall?: boolean;
   lighted?: boolean;
+  isPublic?: boolean;
 };
 
 type AdminCourtEditProps = {
@@ -29,12 +31,14 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
     name: court.name,
     address: court.address,
     city: court.city,
+    zip: court.zip || '',
     numberOfCourts: court.numberOfCourts,
     surfaceType: court.surfaceType,
     courtCondition: court.courtCondition || '',
     courtType: court.courtType || '',
     hittingWall: court.hittingWall || false,
     lighted: court.lighted || false,
+    isPublic: court.isPublic !== undefined ? court.isPublic : true,
   });
 
   const handleSave = async () => {
@@ -78,12 +82,14 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
       name: court.name,
       address: court.address,
       city: court.city,
+      zip: court.zip || '',
       numberOfCourts: court.numberOfCourts,
       surfaceType: court.surfaceType,
       courtCondition: court.courtCondition || '',
       courtType: court.courtType || '',
       hittingWall: court.hittingWall || false,
       lighted: court.lighted || false,
+      isPublic: court.isPublic !== undefined ? court.isPublic : true,
     });
     setIsEditing(false);
   };
@@ -183,6 +189,19 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
         </div>
 
         <div>
+          <label htmlFor="adminZip" className="block text-sm font-medium text-gray-700 mb-2">
+            Zip Code
+          </label>
+          <input
+            id="adminZip"
+            type="text"
+            value={formData.zip}
+            onChange={e => handleInputChange('zip', e.target.value)}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+
+        <div>
           <label htmlFor="adminNumberOfCourts" className="block text-sm font-medium text-gray-700 mb-2">
             Number of Courts
           </label>
@@ -211,9 +230,6 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
             <option value="Clay">Clay</option>
             <option value="Grass">Grass</option>
             <option value="Carpet">Carpet</option>
-            <option value="Artificial Grass">Artificial Grass</option>
-            <option value="Concrete">Concrete</option>
-            <option value="Asphalt">Asphalt</option>
           </select>
         </div>
 
@@ -283,6 +299,21 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
             <option value="">Select</option>
             <option value="true">Yes</option>
             <option value="false">No</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="adminIsPublic" className="block text-sm font-medium text-gray-700 mb-2">
+            Court Access
+          </label>
+          <select
+            id="adminIsPublic"
+            value={formData.isPublic ? 'true' : 'false'}
+            onChange={e => handleInputChange('isPublic', e.target.value === 'true')}
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="true">Public</option>
+            <option value="false">Private</option>
           </select>
         </div>
       </div>

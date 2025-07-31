@@ -45,6 +45,7 @@ type Suggestion = {
   suggestedType?: string;
   suggestedHittingWall?: boolean;
   suggestedLights?: boolean;
+  suggestedIsPublic?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -67,6 +68,7 @@ type Court = {
   court_condition?: string;
   hitting_wall?: boolean;
   lighted?: boolean;
+  is_public?: boolean;
 };
 
 type PendingSuggestionsReviewProps = {
@@ -142,7 +144,7 @@ export default function PendingSuggestionsReview({
       const value = suggestion[suggestedField as keyof Suggestion];
 
       // For boolean fields, check if the value is not null and not undefined
-      if (field === 'hittingWall' || field === 'lights') {
+      if (field === 'hittingWall' || field === 'lights' || field === 'isPublic') {
         return value !== null && value !== undefined;
       }
 
@@ -186,8 +188,16 @@ export default function PendingSuggestionsReview({
           const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof Suggestion;
           const suggestedValue = suggestion[suggestedField];
 
-          if (!suggestedValue) {
-            return null;
+          // For boolean fields, check for null/undefined specifically
+          if (field === 'hittingWall' || field === 'lights' || field === 'isPublic') {
+            if (suggestedValue === null || suggestedValue === undefined) {
+              return null;
+            }
+          } else {
+            // For non-boolean fields, use the original truthy check
+            if (!suggestedValue) {
+              return null;
+            }
           }
 
           return (
@@ -201,7 +211,13 @@ export default function PendingSuggestionsReview({
                       :
                     </strong>
                     {' '}
-                    {field === 'condition' ? capitalizeFirstLetter(String(suggestedValue)) : suggestedValue}
+                    {field === 'condition'
+                      ? capitalizeFirstLetter(String(suggestedValue))
+                      : field === 'hittingWall' || field === 'lights'
+                        ? (suggestedValue ? 'Yes' : 'No')
+                        : field === 'isPublic'
+                          ? (suggestedValue ? 'Public' : 'Private')
+                          : suggestedValue}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Suggested by
@@ -212,9 +228,9 @@ export default function PendingSuggestionsReview({
                     {' '}
                     {new Date(suggestion.createdAt).toLocaleDateString()}
                   </p>
-                  {suggestion.reason && (
+                  {suggestion.reason && suggestion.reason.trim() && (
                     <div className="text-xs text-gray-600 mt-1 w-full">
-                      <strong>Reason:</strong>
+                      <strong>Additional Notes:</strong>
                       <TruncatableText text={suggestion.reason} />
                     </div>
                   )}
@@ -281,7 +297,7 @@ export default function PendingSuggestionsReview({
     suggestion.suggestedName || suggestion.suggestedAddress || suggestion.suggestedCity
     || suggestion.suggestedState || suggestion.suggestedZip || suggestion.suggestedCourtType
     || suggestion.suggestedNumberOfCourts || suggestion.suggestedSurface || suggestion.suggestedCondition
-    || suggestion.suggestedType || (suggestion.suggestedHittingWall !== null && suggestion.suggestedHittingWall !== undefined) || (suggestion.suggestedLights !== null && suggestion.suggestedLights !== undefined),
+    || suggestion.suggestedType || (suggestion.suggestedHittingWall !== null && suggestion.suggestedHittingWall !== undefined) || (suggestion.suggestedLights !== null && suggestion.suggestedLights !== undefined) || (suggestion.suggestedIsPublic !== null && suggestion.suggestedIsPublic !== undefined),
   );
 
   if (!hasPendingSuggestions) {
@@ -294,16 +310,16 @@ export default function PendingSuggestionsReview({
       <div className="space-y-4">
         {renderFieldWithSuggestions('name', currentCourt.name, 'Name')}
         {renderFieldWithSuggestions('address', currentCourt.address, 'Address')}
+        {renderFieldWithSuggestions('zip', currentCourt.zip, 'Zip Code')}
         {renderFieldWithSuggestions('city', currentCourt.city, 'City')}
         {renderFieldWithSuggestions('state', currentCourt.state, 'State')}
-        {renderFieldWithSuggestions('zip', currentCourt.zip, 'Zip Code')}
         {renderFieldWithSuggestions('courtType', currentCourt.court_type, 'Court Type')}
         {renderFieldWithSuggestions('numberOfCourts', currentCourt.number_of_courts, 'Number of Courts')}
         {renderFieldWithSuggestions('surface', currentCourt.surface, 'Surface')}
         {renderFieldWithSuggestions('condition', currentCourt.court_condition, 'Condition')}
-        {renderFieldWithSuggestions('type', currentCourt.court_type, 'Type')}
         {renderFieldWithSuggestions('hittingWall', currentCourt.hitting_wall, 'Hitting Wall')}
         {renderFieldWithSuggestions('lights', currentCourt.lighted, 'Lights')}
+        {renderFieldWithSuggestions('isPublic', currentCourt.is_public, 'Court Access')}
       </div>
     </div>
   );

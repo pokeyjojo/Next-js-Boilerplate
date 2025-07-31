@@ -19,6 +19,7 @@ type Suggestion = {
   suggestedType?: string;
   suggestedHittingWall?: boolean;
   suggestedLights?: boolean;
+  suggestedIsPublic?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -317,11 +318,6 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm text-gray-600 w-full">
-              <strong>Reason:</strong>
-              <TruncatableText text={suggestion.reason} />
-            </div>
-
             {suggestion.suggestedName && (
               <p className="text-sm text-gray-600">
                 <strong>Name:</strong>
@@ -343,6 +339,14 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                 <strong>City:</strong>
                 {' '}
                 {suggestion.suggestedCity}
+              </p>
+            )}
+
+            {suggestion.suggestedZip && suggestion.suggestedZip !== '00000' && (
+              <p className="text-sm text-gray-600">
+                <strong>Zip Code:</strong>
+                {' '}
+                {suggestion.suggestedZip}
               </p>
             )}
 
@@ -377,6 +381,38 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
               </p>
             )}
 
+            {suggestion.suggestedType && (
+              <p className="text-sm text-gray-600">
+                <strong>Type:</strong>
+                {' '}
+                {suggestion.suggestedType}
+              </p>
+            )}
+
+            {suggestion.suggestedHittingWall !== undefined && (
+              <p className="text-sm text-gray-600">
+                <strong>Hitting Wall:</strong>
+                {' '}
+                {suggestion.suggestedHittingWall ? 'Yes' : 'No'}
+              </p>
+            )}
+
+            {suggestion.suggestedLights !== undefined && (
+              <p className="text-sm text-gray-600">
+                <strong>Lights:</strong>
+                {' '}
+                {suggestion.suggestedLights ? 'Yes' : 'No'}
+              </p>
+            )}
+
+            {suggestion.suggestedIsPublic !== undefined && (
+              <p className="text-sm text-gray-600">
+                <strong>Court Access:</strong>
+                {' '}
+                {suggestion.suggestedIsPublic ? 'Public' : 'Private'}
+              </p>
+            )}
+
             {suggestion.reviewNote && (
               <p className="text-sm text-gray-600">
                 <strong>Review Note:</strong>
@@ -393,6 +429,15 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
               </p>
             )}
           </div>
+
+          {suggestion.reason && suggestion.reason.trim() && (
+            <div className="text-sm text-gray-600 w-full mt-3 pt-2 border-t border-gray-100">
+              <strong>Additional Notes:</strong>
+              <div className="mt-1">
+                <TruncatableText text={suggestion.reason} />
+              </div>
+            </div>
+          )}
 
           <p className="text-xs text-gray-400 mt-3">
             Submitted on

@@ -41,6 +41,7 @@ type TennisCourt = {
   reviewCount?: number;
   average_rating?: number;
   review_count?: number;
+  is_public?: boolean;
 };
 
 // Custom marker icons for public and private courts
@@ -571,10 +572,12 @@ const CourtList = ({
                 }}
               >
                 <h3 className={`font-semibold ${isMobile ? 'text-sm' : 'text-base sm:text-lg'}`}>{court.name}</h3>
-                <p className="text-gray-600 text-sm">{court.address}</p>
                 <p className="text-gray-600 text-sm">
-                  {court.city}
-                  {', '}
+                  {court.address}
+                  {court.city && `, ${court.city}`}
+                  {court.zip && court.zip !== '00000' && `, ${court.zip}`}
+                </p>
+                <p className="text-gray-600 text-sm">
                   {court.state}
                 </p>
                 <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
@@ -1303,12 +1306,14 @@ function CourtDetailsPanel({
                         name: selectedCourt.name,
                         address: selectedCourt.address,
                         city: selectedCourt.city,
+                        zip: selectedCourt.zip,
                         numberOfCourts: selectedCourt.number_of_courts,
                         surfaceType: selectedCourt.surface || '',
                         courtCondition: selectedCourt.court_condition || '',
                         courtType: selectedCourt.court_type || '',
                         hittingWall: selectedCourt.hitting_wall || false,
                         lighted: selectedCourt.lighted || false,
+                        isPublic: selectedCourt.is_public !== false,
                       }}
                       userId={userId}
                       onSuggestionSubmitted={() => refreshCourtData()}
@@ -1322,12 +1327,14 @@ function CourtDetailsPanel({
                           name: selectedCourt.name,
                           address: selectedCourt.address,
                           city: selectedCourt.city,
+                          zip: selectedCourt.zip,
                           numberOfCourts: selectedCourt.number_of_courts,
                           surfaceType: selectedCourt.surface || '',
                           courtCondition: selectedCourt.court_condition || '',
                           courtType: selectedCourt.court_type || '',
                           hittingWall: selectedCourt.hitting_wall || false,
                           lighted: selectedCourt.lighted || false,
+                          isPublic: selectedCourt.is_public !== false,
                         }}
                         onCourtUpdated={(updatedCourt) => {
                           // Update the selected court with new data
@@ -1336,12 +1343,14 @@ function CourtDetailsPanel({
                             name: updatedCourt.name,
                             address: updatedCourt.address,
                             city: updatedCourt.city,
+                            zip: updatedCourt.zip || '',
                             number_of_courts: updatedCourt.numberOfCourts,
                             surface: updatedCourt.surfaceType,
                             court_condition: updatedCourt.courtCondition || '',
                             court_type: updatedCourt.courtType || '',
                             hitting_wall: updatedCourt.hittingWall || false,
                             lighted: updatedCourt.lighted || false,
+                            is_public: updatedCourt.isPublic !== false,
                           });
                         }}
                       />
@@ -1657,6 +1666,22 @@ export default function MapComponent() {
   const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+
+    return () => {
+      window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
 
   // Check admin status once on page load
   useEffect(() => {
@@ -2232,7 +2257,7 @@ function InlineCourtInfo({
       const value = suggestion[suggestedField];
 
       // For boolean fields, check if the value is not null and not undefined
-      if (field === 'hittingWall' || field === 'lights') {
+      if (field === 'hittingWall' || field === 'lights' || field === 'isPublic') {
         return value !== null && value !== undefined;
       }
 
@@ -2252,6 +2277,9 @@ function InlineCourtInfo({
       if (field === 'hittingWall' || field === 'lights') {
         return value === true ? 'Yes' : value === false ? 'No' : value;
       }
+      if (field === 'isPublic') {
+        return value === true ? 'Public' : value === false ? 'Private' : value;
+      }
       return field === 'condition' ? capitalizeFirstLetter(value) : value;
     };
 
@@ -2269,8 +2297,16 @@ function InlineCourtInfo({
           const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof suggestion;
           const suggestedValue = suggestion[suggestedField];
 
-          if (!suggestedValue) {
-            return null;
+          // For boolean fields, check for null/undefined specifically
+          if (field === 'hittingWall' || field === 'lights' || field === 'isPublic') {
+            if (suggestedValue === null || suggestedValue === undefined) {
+              return null;
+            }
+          } else {
+            // For non-boolean fields, use the original truthy check
+            if (!suggestedValue) {
+              return null;
+            }
           }
 
           return (
@@ -2291,9 +2327,9 @@ function InlineCourtInfo({
                     {' '}
                     {new Date(suggestion.createdAt).toLocaleDateString()}
                   </p>
-                  {suggestion.reason && (
+                  {suggestion.reason && suggestion.reason.trim() && (
                     <div className="text-gray-600 mt-1 w-full">
-                      <strong>Reason:</strong>
+                      <strong>Additional Notes:</strong>
                       <TruncatableText text={suggestion.reason} />
                     </div>
                   )}
@@ -2368,6 +2404,7 @@ function InlineCourtInfo({
       {(court.parking || getFieldSuggestions('parking').length > 0) && renderFieldWithSuggestions('parking', court.parking, 'Parking')}
       {renderFieldWithSuggestions('hittingWall', court.hitting_wall, 'Hitting Wall')}
       {getFieldSuggestions('lights').length > 0 && renderFieldWithSuggestions('lights', court.lighted, 'Lights')}
+      {(court.is_public !== undefined || getFieldSuggestions('isPublic').length > 0) && renderFieldWithSuggestions('isPublic', court.is_public, 'Court Access')}
     </div>
   );
 }
@@ -2465,9 +2502,9 @@ function CourtNameWithSuggestions({
                 {' '}
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
-              {suggestion.reason && (
+              {suggestion.reason && suggestion.reason.trim() && (
                 <div className="text-gray-600 mt-1 w-full">
-                  <strong>Reason:</strong>
+                  <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
               )}
@@ -2596,14 +2633,14 @@ function CourtAddressWithSuggestions({
   const addressSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedAddress);
   const citySuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedCity);
   const stateSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedState);
-  const zipSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedZip);
+  const zipSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedZip && suggestion.suggestedZip !== '00000');
 
   if (loading) {
     return (
       <div className="text-gray-600 mb-2">
         {court.address}
-        ,
-        {court.city}
+        {court.city && `, ${court.city}`}
+        {court.zip && court.zip !== '00000' && `, ${court.zip}`}
       </div>
     );
   }
@@ -2612,8 +2649,8 @@ function CourtAddressWithSuggestions({
     <div className="mb-2">
       <div className="text-gray-600">
         {court.address}
-        ,
-        {court.city}
+        {court.city && `, ${court.city}`}
+        {court.zip && court.zip !== '00000' && `, ${court.zip}`}
       </div>
 
       {/* Address suggestions */}
@@ -2635,9 +2672,9 @@ function CourtAddressWithSuggestions({
                 {' '}
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
-              {suggestion.reason && (
+              {suggestion.reason && suggestion.reason.trim() && (
                 <div className="text-gray-600 mt-1 w-full">
-                  <strong>Reason:</strong>
+                  <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
               )}
@@ -2713,9 +2750,9 @@ function CourtAddressWithSuggestions({
                 {' '}
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
-              {suggestion.reason && (
+              {suggestion.reason && suggestion.reason.trim() && (
                 <div className="text-gray-600 mt-1 w-full">
-                  <strong>Reason:</strong>
+                  <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
               )}
@@ -2791,9 +2828,9 @@ function CourtAddressWithSuggestions({
                 {' '}
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
-              {suggestion.reason && (
+              {suggestion.reason && suggestion.reason.trim() && (
                 <div className="text-gray-600 mt-1 w-full">
-                  <strong>Reason:</strong>
+                  <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
               )}
@@ -2869,9 +2906,9 @@ function CourtAddressWithSuggestions({
                 {' '}
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
-              {suggestion.reason && (
+              {suggestion.reason && suggestion.reason.trim() && (
                 <div className="text-gray-600 mt-1 w-full">
-                  <strong>Reason:</strong>
+                  <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
               )}

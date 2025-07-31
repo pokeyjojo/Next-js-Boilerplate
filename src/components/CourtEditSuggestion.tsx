@@ -1,7 +1,9 @@
 'use client';
 
+import type { AddressSuggestion } from '@/libs/GeocodingService';
 import { CheckCircleIcon, Edit, X, XCircle } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { searchAddresses } from '@/libs/GeocodingService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 // TruncatableText component for handling long text with expand/collapse functionality
@@ -46,6 +48,7 @@ type Suggestion = {
   suggestedType?: string;
   suggestedHittingWall?: boolean;
   suggestedLights?: boolean;
+  suggestedIsPublic?: boolean;
   status: 'pending' | 'approved' | 'rejected';
   reviewNote?: string;
   reviewedByUserName?: string;
@@ -60,12 +63,14 @@ type CourtEditSuggestionProps = {
     name: string;
     address: string;
     city: string;
+    zip?: string;
     numberOfCourts: number;
     surfaceType: string;
     courtCondition?: string;
     courtType?: string;
     hittingWall?: boolean;
     lighted?: boolean;
+    isPublic?: boolean;
   };
   userId?: string;
   onSuggestionSubmitted?: () => void;
@@ -84,18 +89,81 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
   const [hasPendingSuggestion, setHasPendingSuggestion] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
+
+  // Address autocomplete state
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const addressInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const [formData, setFormData] = useState({
     reason: '',
     suggestedName: court.name,
     suggestedAddress: court.address,
     suggestedCity: court.city,
+    suggestedZip: court.zip || '',
     suggestedNumberOfCourts: '',
     suggestedSurface: court.surfaceType,
     suggestedCondition: court.courtCondition || '',
     suggestedType: court.courtType || '',
     suggestedHittingWall: court.hittingWall || false,
     suggestedLights: court.lighted || false,
+    suggestedIsPublic: court.isPublic !== false, // Default to true (public) if not specified
   });
+
+  // Debounced address search
+  const debouncedAddressSearch = useCallback(
+    async (query: string) => {
+      if (query.length < 3) {
+        setAddressSuggestions([]);
+        setShowSuggestions(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const suggestions = await searchAddresses(query);
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(suggestions.length > 0);
+      } catch (error) {
+        console.error('Address search failed:', error);
+        setAddressSuggestions([]);
+        setShowSuggestions(false);
+      } finally {
+        setIsSearching(false);
+      }
+    },
+    [],
+  );
+
+  // Handle address input change with debouncing
+  const handleAddressChange = (value: string) => {
+    setFormData(prev => ({ ...prev, suggestedAddress: value }));
+
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout for search
+    searchTimeoutRef.current = setTimeout(() => {
+      debouncedAddressSearch(value);
+    }, 300);
+  };
+
+  // Handle address suggestion selection
+  const handleAddressSelect = (suggestion: AddressSuggestion) => {
+    setFormData(prev => ({
+      ...prev,
+      suggestedAddress: suggestion.address,
+      suggestedCity: suggestion.city,
+      suggestedZip: suggestion.zip,
+    }));
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  };
 
   const checkExistingSuggestion = useCallback(async () => {
     try {
@@ -138,6 +206,29 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       checkExistingSuggestion();
     }
   }, [userId, court.id, checkExistingSuggestion, refreshKey]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        suggestionsRef.current
+        && !suggestionsRef.current.contains(event.target as Node)
+        && addressInputRef.current
+        && !addressInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      // Cleanup search timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleOpenModal = async () => {
     // If there's already a pending suggestion, show it
@@ -268,12 +359,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         suggestedName: court.name,
         suggestedAddress: court.address,
         suggestedCity: court.city,
+        suggestedZip: court.zip || '',
         suggestedNumberOfCourts: '',
         suggestedSurface: court.surfaceType,
         suggestedCondition: court.courtCondition || '',
         suggestedType: court.courtType || '',
         suggestedHittingWall: court.hittingWall || false,
         suggestedLights: court.lighted || false,
+        suggestedIsPublic: court.isPublic !== false,
       });
 
       // Update the component state immediately with the new suggestion
@@ -360,11 +453,6 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
               </div>
 
               <div className="space-y-2">
-                <div className="text-sm text-gray-600 w-full">
-                  <strong>Reason:</strong>
-                  <TruncatableText text={existingSuggestion.reason} />
-                </div>
-
                 {existingSuggestion.suggestedName && (
                   <p className="text-sm text-gray-600">
                     <strong>Name:</strong>
@@ -386,6 +474,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <strong>City:</strong>
                     {' '}
                     {existingSuggestion.suggestedCity}
+                  </p>
+                )}
+
+                {existingSuggestion.suggestedZip && existingSuggestion.suggestedZip !== '00000' && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Zip Code:</strong>
+                    {' '}
+                    {existingSuggestion.suggestedZip}
                   </p>
                 )}
 
@@ -420,6 +516,38 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   </p>
                 )}
 
+                {existingSuggestion.suggestedType && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Type:</strong>
+                    {' '}
+                    {existingSuggestion.suggestedType}
+                  </p>
+                )}
+
+                {existingSuggestion.suggestedHittingWall !== undefined && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Hitting Wall:</strong>
+                    {' '}
+                    {existingSuggestion.suggestedHittingWall ? 'Yes' : 'No'}
+                  </p>
+                )}
+
+                {existingSuggestion.suggestedLights !== undefined && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Lights:</strong>
+                    {' '}
+                    {existingSuggestion.suggestedLights ? 'Yes' : 'No'}
+                  </p>
+                )}
+
+                {existingSuggestion.suggestedIsPublic !== undefined && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Court Access:</strong>
+                    {' '}
+                    {existingSuggestion.suggestedIsPublic ? 'Public' : 'Private'}
+                  </p>
+                )}
+
                 {existingSuggestion.reviewNote && (
                   <p className="text-sm text-gray-600">
                     <strong>Review Note:</strong>
@@ -436,6 +564,15 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   </p>
                 )}
               </div>
+
+              {existingSuggestion.reason && existingSuggestion.reason.trim() && (
+                <div className="text-sm text-gray-600 w-full mt-3 pt-2 border-t border-gray-100">
+                  <strong>Additional Notes:</strong>
+                  <div className="mt-1">
+                    <TruncatableText text={existingSuggestion.reason} />
+                  </div>
+                </div>
+              )}
 
               <p className="text-xs text-gray-400">
                 Submitted on
@@ -628,9 +765,6 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="Clay">Clay</option>
                     <option value="Grass">Grass</option>
                     <option value="Carpet">Carpet</option>
-                    <option value="Artificial Grass">Artificial Grass</option>
-                    <option value="Concrete">Concrete</option>
-                    <option value="Asphalt">Asphalt</option>
                   </select>
                 </div>
 
@@ -711,26 +845,6 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
-                  Reason for Changes *
-                </label>
-                <textarea
-                  id="reason"
-                  required
-                  value={formData.reason}
-                  onChange={e => handleInputChange('reason', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Explain why you're suggesting these changes..."
-                  rows={3}
-                  maxLength={100}
-                />
-                <div className="text-xs text-gray-500 mt-1 text-right">
-                  {formData.reason.length}
-                  /100 characters
-                </div>
-              </div>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label htmlFor="suggestedName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -746,7 +860,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   />
                 </div>
 
-                <div>
+                <div className="relative">
                   <label htmlFor="suggestedAddress" className="block text-sm font-medium text-gray-700 mb-2">
                     Address
                   </label>
@@ -754,10 +868,52 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     id="suggestedAddress"
                     type="text"
                     value={formData.suggestedAddress}
-                    onChange={e => handleInputChange('suggestedAddress', e.target.value)}
+                    onChange={e => handleAddressChange(e.target.value)}
+                    onBlur={() => debouncedAddressSearch(formData.suggestedAddress)}
+                    ref={addressInputRef}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Court address"
                   />
+
+                  {showSuggestions && (
+                    <div
+                      ref={suggestionsRef}
+                      className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    >
+                      {isSearching
+                        ? (
+                            <div className="p-2 text-gray-500 text-sm">Searching...</div>
+                          )
+                        : addressSuggestions.length === 0
+                          ? (
+                              <div className="p-2 text-gray-500 text-sm">No suggestions found.</div>
+                            )
+                          : (
+                              addressSuggestions.map((suggestion, index) => (
+                                <button
+                                  key={index}
+                                  type="button"
+                                  className="w-full p-2 text-left cursor-pointer hover:bg-blue-100 text-sm focus:bg-blue-100 focus:outline-none"
+                                  onClick={() => handleAddressSelect(suggestion)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault();
+                                      handleAddressSelect(suggestion);
+                                    }
+                                  }}
+                                >
+                                  {suggestion.address}
+                                  ,
+                                  {suggestion.city}
+                                  ,
+                                  {suggestion.state}
+                                  {' '}
+                                  {suggestion.zip}
+                                </button>
+                              ))
+                            )}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -771,6 +927,20 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     onChange={e => handleInputChange('suggestedCity', e.target.value)}
                     className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="City"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedZip" className="block text-sm font-medium text-gray-700 mb-2">
+                    Zip Code
+                  </label>
+                  <input
+                    id="suggestedZip"
+                    type="text"
+                    value={formData.suggestedZip}
+                    onChange={e => handleInputChange('suggestedZip', e.target.value)}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Zip code"
                   />
                 </div>
 
@@ -816,9 +986,6 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="Clay">Clay</option>
                     <option value="Grass">Grass</option>
                     <option value="Carpet">Carpet</option>
-                    <option value="Artificial Grass">Artificial Grass</option>
-                    <option value="Concrete">Concrete</option>
-                    <option value="Asphalt">Asphalt</option>
                   </select>
                 </div>
 
@@ -909,6 +1076,40 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="true">Yes</option>
                     <option value="false">No</option>
                   </select>
+                </div>
+
+                <div>
+                  <label htmlFor="suggestedIsPublic" className="block text-sm font-medium text-gray-700 mb-2">
+                    Court Access
+                  </label>
+                  <select
+                    id="suggestedIsPublic"
+                    value={formData.suggestedIsPublic ? 'true' : 'false'}
+                    onChange={e => handleInputChange('suggestedIsPublic', e.target.value === 'true')}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="true">Public</option>
+                    <option value="false">Private</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Notes
+                </label>
+                <textarea
+                  id="reason"
+                  value={formData.reason}
+                  onChange={e => handleInputChange('reason', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Any additional notes or explanations for these changes (optional)..."
+                  rows={3}
+                  maxLength={100}
+                />
+                <div className="text-xs text-gray-500 mt-1 text-right">
+                  {formData.reason.length}
+                  /100 characters
                 </div>
               </div>
 

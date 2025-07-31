@@ -53,6 +53,7 @@ type CourtEditSuggestion = {
   suggestedByUserName?: string;
   createdAt: string;
   updatedAt: string;
+  suggestedIsPublic?: boolean;
 };
 
 type CourtEditSuggestionReviewProps = {
@@ -171,10 +172,6 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
               {' '}
               {suggestion.suggestedByUserName}
             </p>
-            <div className="text-sm text-gray-600 w-full">
-              <strong>Reason:</strong>
-              <TruncatableText text={suggestion.reason} />
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -196,15 +193,23 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
                 <p className="text-sm text-gray-600">{suggestion.suggestedCity}</p>
               </div>
             )}
-            {suggestion.suggestedNumberOfCourts && (
+            {suggestion.suggestedZip && suggestion.suggestedZip !== '00000' && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Zip Code</p>
+                <p className="text-sm text-gray-600">{suggestion.suggestedZip}</p>
+              </div>
+            )}
+            {suggestion.suggestedNumberOfCourts !== null && suggestion.suggestedNumberOfCourts !== undefined && (
               <div>
                 <p className="text-sm font-medium text-gray-700">Number of Courts</p>
-                <p className="text-sm text-gray-600">{suggestion.suggestedNumberOfCourts}</p>
+                <p className="text-sm text-gray-600">
+                  {suggestion.suggestedNumberOfCourts > 0 ? suggestion.suggestedNumberOfCourts : 'Unknown'}
+                </p>
               </div>
             )}
             {suggestion.suggestedSurface && (
               <div>
-                <p className="text-sm font-medium text-gray-700">Surface Type</p>
+                <p className="text-sm font-medium text-gray-700">Surface</p>
                 <p className="text-sm text-gray-600">{suggestion.suggestedSurface}</p>
               </div>
             )}
@@ -232,7 +237,22 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
                 <p className="text-sm text-gray-600">{suggestion.suggestedLights ? 'Yes' : 'No'}</p>
               </div>
             )}
+            {suggestion.suggestedIsPublic !== undefined && (
+              <div>
+                <p className="text-sm font-medium text-gray-700">Court Access</p>
+                <p className="text-sm text-gray-600">{suggestion.suggestedIsPublic ? 'Public' : 'Private'}</p>
+              </div>
+            )}
           </div>
+
+          {suggestion.reason && suggestion.reason.trim() && (
+            <div className="text-sm text-gray-600 w-full mb-4 pt-2 border-t border-gray-100">
+              <strong>Additional Notes:</strong>
+              <div className="mt-1">
+                <TruncatableText text={suggestion.reason} />
+              </div>
+            </div>
+          )}
 
           {suggestion.suggestedBy !== currentUserId && suggestion.status === 'pending' && (
             <div className="flex gap-2">

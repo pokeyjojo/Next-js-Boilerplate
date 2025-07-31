@@ -56,6 +56,7 @@ export const courtsSchema = pgTable('courts', {
   numberOfCourts: integer('number_of_courts'),
   surface: varchar('surface', { length: 50 }),
   parking: boolean('parking'),
+  isPublic: boolean('is_public').default(true),
 });
 
 export const reviewSchema = pgTable('reviews', {
@@ -170,6 +171,7 @@ export const courtEditSuggestionSchema = pgTable('court_edit_suggestions', {
   suggestedType: varchar('suggested_type', { length: 50 }),
   suggestedHittingWall: boolean('suggested_hitting_wall'),
   suggestedLights: boolean('suggested_lights'),
+  suggestedIsPublic: boolean('suggested_is_public'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' })
     .defaultNow()

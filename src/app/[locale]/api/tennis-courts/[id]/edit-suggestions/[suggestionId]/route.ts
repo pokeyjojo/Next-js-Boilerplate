@@ -33,6 +33,7 @@ export async function PATCH(
       suggestedType,
       suggestedHittingWall,
       suggestedLights,
+      suggestedIsPublic,
     } = body;
 
     // Get the suggestion
@@ -62,12 +63,9 @@ export async function PATCH(
       );
     }
 
-    // Validate reason field length
-    if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
-      return NextResponse.json({ error: 'Reason is required' }, { status: 400 });
-    }
-    if (reason.trim().length > 100) {
-      return NextResponse.json({ error: 'Reason must be 100 characters or less' }, { status: 400 });
+    // Make reason field optional (Additional Notes)
+    if (reason && typeof reason === 'string' && reason.trim().length > 100) {
+      return NextResponse.json({ error: 'Additional notes must be 100 characters or less' }, { status: 400 });
     }
 
     // Update the suggestion
@@ -87,6 +85,7 @@ export async function PATCH(
         suggestedType,
         suggestedHittingWall,
         suggestedLights,
+        suggestedIsPublic,
         updatedAt: new Date(),
       })
       .where(eq(courtEditSuggestionSchema.id, suggestionId))
