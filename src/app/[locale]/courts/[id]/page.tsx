@@ -1,8 +1,8 @@
 'use client';
 
 import { useUser } from '@clerk/nextjs';
-import { Building, Camera, Clock, Globe, Lightbulb, MapPin, Star, Users } from 'lucide-react';
-import { useParams } from 'next/navigation';
+import { Building, Camera, Clock, Globe, Lightbulb, MapPin, Star, Trash2, Users } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import AdminCourtEdit from '@/components/AdminCourtEdit';
 import CourtEditSuggestion from '@/components/CourtEditSuggestion';
@@ -47,6 +47,7 @@ type CourtPhoto = {
 
 export default function CourtDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const courtId = params.id as string;
   const [court, setCourt] = useState<TennisCourt | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -318,22 +319,31 @@ export default function CourtDetailPage() {
                     refreshKey={userSuggestionsRefreshKey}
                   />
                   {isAdmin && (
-                    <AdminCourtEdit
-                      court={court}
-                      onCourtUpdated={(updatedCourt) => {
-                        // Merge the updated fields with the existing court data
-                        setCourt(prev => prev
-                          ? {
-                              ...prev,
-                              name: updatedCourt.name,
-                              address: updatedCourt.address,
-                              city: updatedCourt.city,
-                              numberOfCourts: updatedCourt.numberOfCourts,
-                              surfaceType: updatedCourt.surfaceType,
-                            }
-                          : null);
-                      }}
-                    />
+                    <>
+                      <AdminCourtEdit
+                        court={court}
+                        onCourtUpdated={(updatedCourt) => {
+                          // Merge the updated fields with the existing court data
+                          setCourt(prev => prev
+                            ? {
+                                ...prev,
+                                name: updatedCourt.name,
+                                address: updatedCourt.address,
+                                city: updatedCourt.city,
+                                numberOfCourts: updatedCourt.numberOfCourts,
+                                surfaceType: updatedCourt.surfaceType,
+                              }
+                            : null);
+                        }}
+                      />
+                      <button
+                        onClick={() => setShowDeleteModal(true)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>Delete Court</span>
+                      </button>
+                    </>
                   )}
                 </div>
               )}

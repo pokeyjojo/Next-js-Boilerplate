@@ -875,6 +875,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     <option value="">Select type</option>
                     <option value="Indoor">Indoor</option>
                     <option value="Outdoor">Outdoor</option>
+                    <option value="Both">Both</option>
                   </select>
                 </div>
 

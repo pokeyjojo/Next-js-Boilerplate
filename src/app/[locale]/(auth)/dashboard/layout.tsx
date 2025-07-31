@@ -38,8 +38,24 @@ export default async function DashboardLayout(props: {
               {t('user_profile_link')}
             </Link>
           </li>
+          <li>
+            <Link
+              href="/dashboard/my-court-suggestions/"
+              className="border-none text-blue-600 hover:text-blue-800 font-medium"
+            >
+              My Court Suggestions
+            </Link>
+          </li>
           {adminCheck && (
             <>
+              <li>
+                <Link
+                  href="/dashboard/admin/court-suggestions/"
+                  className="border-none text-green-600 hover:text-green-800 font-medium"
+                >
+                  Review Court Suggestions
+                </Link>
+              </li>
               <li>
                 <Link
                   href="/dashboard/admin/reports/"

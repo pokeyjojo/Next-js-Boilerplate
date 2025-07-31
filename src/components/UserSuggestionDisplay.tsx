@@ -71,18 +71,10 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
 
   const fetchSuggestions = async () => {
     try {
-      const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions`);
+      const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions?userId=${currentUserId}&limit=1`);
       if (response.ok) {
         const data = await response.json();
-        // Filter to only show current user's suggestions
-        const userSuggestions = data.filter((suggestion: Suggestion) =>
-          suggestion.suggestedBy === currentUserId,
-        );
-        // Sort by creation date and take only the most recent suggestion
-        const sortedSuggestions = userSuggestions.sort((a: Suggestion, b: Suggestion) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        );
-        setSuggestions(sortedSuggestions.slice(0, 1)); // Only keep the most recent one
+        setSuggestions(data);
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error);
@@ -553,6 +545,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                     <option value="">Select type</option>
                     <option value="Indoor">Indoor</option>
                     <option value="Outdoor">Outdoor</option>
+                    <option value="Both">Both</option>
                   </select>
                 </div>
 

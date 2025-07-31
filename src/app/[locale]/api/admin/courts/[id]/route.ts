@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
-
+import { isAdmin } from '@/libs/AdminUtils';
 import { getDb } from '@/libs/DB';
 import { courtsSchema } from '@/models/Schema';
 
@@ -85,6 +85,52 @@ export async function PUT(
     console.error('Error updating court:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
+      { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const adminCheck = await isAdmin();
+    if (!adminCheck) {
+      return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
+    }
+
+    const { id } = await params;
+    const db = await getDb();
+
+    // Check if court exists
+    const existingCourt = await db
+      .select()
+      .from(courtsSchema)
+      .where(eq(courtsSchema.id, id))
+      .limit(1);
+
+    if (existingCourt.length === 0) {
+      return NextResponse.json({ error: 'Court not found' }, { status: 404 });
+    }
+
+    // Delete the court
+    await db.delete(courtsSchema).where(eq(courtsSchema.id, id));
+
+    return NextResponse.json({
+      success: true,
+      message: 'Court deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting court:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete court' },
       { status: 500 },
     );
   }

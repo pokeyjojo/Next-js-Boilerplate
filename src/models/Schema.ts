@@ -177,6 +177,40 @@ export const courtEditSuggestionSchema = pgTable('court_edit_suggestions', {
     .notNull(),
 });
 
+export const newCourtSuggestionSchema = pgTable('new_court_suggestions', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  suggestedBy: varchar('suggested_by', { length: 255 }).notNull(), // user ID who suggested the court
+  suggestedByUserName: varchar('suggested_by_user_name', { length: 255 }).notNull(), // user name who suggested
+  status: varchar('status', { length: 50 }).notNull().default('pending'), // pending, approved, rejected
+  reviewedBy: varchar('reviewed_by', { length: 255 }), // admin user ID who reviewed
+  reviewedByUserName: varchar('reviewed_by_user_name', { length: 255 }), // admin user name who reviewed
+  reviewNote: varchar('review_note', { length: 500 }), // note from reviewer
+  reviewedAt: timestamp('reviewed_at', { mode: 'date' }),
+  // Required fields
+  name: varchar('name', { length: 255 }).notNull(),
+  address: varchar('address', { length: 255 }).notNull(),
+  city: varchar('city', { length: 100 }).notNull(),
+  state: varchar('state', { length: 50 }).notNull(),
+  zip: varchar('zip', { length: 20 }).notNull(),
+  // Calculated coordinates
+  latitude: decimal('latitude', { precision: 10, scale: 8 }),
+  longitude: decimal('longitude', { precision: 11, scale: 8 }),
+  // Optional fields
+  courtType: varchar('court_type', { length: 50 }),
+  numberOfCourts: integer('number_of_courts'),
+  surface: varchar('surface', { length: 50 }),
+  courtCondition: varchar('court_condition', { length: 50 }),
+  hittingWall: boolean('hitting_wall'),
+  lighted: boolean('lighted'),
+  membershipRequired: boolean('membership_required'),
+  parking: boolean('parking'),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 // NOTE: If you need to reset the reviews table to use UUIDs, run the following SQL in a migration or manually:
 //
 // DROP TABLE IF EXISTS "reviews";

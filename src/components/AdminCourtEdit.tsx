@@ -250,6 +250,7 @@ export default function AdminCourtEdit({ court, onCourtUpdated }: AdminCourtEdit
             <option value="">Select type</option>
             <option value="Indoor">Indoor</option>
             <option value="Outdoor">Outdoor</option>
+            <option value="Both">Both</option>
           </select>
         </div>
 

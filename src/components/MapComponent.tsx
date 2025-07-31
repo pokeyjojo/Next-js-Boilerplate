@@ -12,6 +12,7 @@ import AllSuggestionsDisplay from './AllSuggestionsDisplay';
 import CourtEditSuggestion from './CourtEditSuggestion';
 import CourtPhotoGallery from './CourtPhotoGallery';
 import CourtPhotoUpload from './CourtPhotoUpload';
+import NewCourtSuggestionForm from './NewCourtSuggestionForm';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
 import UserSuggestionDisplay from './UserSuggestionDisplay';
@@ -955,6 +956,10 @@ function CourtDetailsPanel({
   setShowPhotoUploadModal,
   userSuggestionsRefreshKey,
   setUserSuggestionsRefreshKey,
+  showDeleteCourtModal,
+  setShowDeleteCourtModal,
+  deletingCourt,
+  setDeletingCourt,
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -965,6 +970,10 @@ function CourtDetailsPanel({
   setShowPhotoUploadModal: (show: boolean) => void;
   userSuggestionsRefreshKey: number;
   setUserSuggestionsRefreshKey: (value: number | ((prev: number) => number)) => void;
+  showDeleteCourtModal: boolean;
+  setShowDeleteCourtModal: (show: boolean) => void;
+  deletingCourt: boolean;
+  setDeletingCourt: (deleting: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
@@ -1337,6 +1346,17 @@ function CourtDetailsPanel({
                         }}
                       />
                     )}
+                    {isAdmin && (
+                      <button
+                        onClick={() => setShowDeleteCourtModal(true)}
+                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        <span>Delete Court</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* User's Existing Suggestions */}
@@ -1631,6 +1651,10 @@ export default function MapComponent() {
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
   const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
+  const [showNewCourtSuggestionForm, setShowNewCourtSuggestionForm] = useState(false);
+  const [showDeleteCourtModal, setShowDeleteCourtModal] = useState(false);
+  const [deletingCourt, setDeletingCourt] = useState(false);
+  const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
 
@@ -1926,6 +1950,20 @@ export default function MapComponent() {
           <MapController />
           <TennisCourtMarkersMapComponent courts={courts} handleMarkerClick={handleMarkerClick} />
         </MapContainer>
+
+        {/* Floating "Suggest a Court" Button */}
+        {isSignedIn && (
+          <button
+            onClick={() => setShowNewCourtSuggestionForm(true)}
+            className="absolute bottom-6 left-6 z-40 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-full shadow-lg transition-colors duration-200 flex items-center space-x-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span className="hidden sm:inline">Suggest a Court</span>
+          </button>
+        )}
+
         {/* Details panel: right for desktop, bottom for mobile */}
         {selectedCourt && (
           <div>
@@ -1940,6 +1978,10 @@ export default function MapComponent() {
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
+                showDeleteCourtModal={showDeleteCourtModal}
+                setShowDeleteCourtModal={setShowDeleteCourtModal}
+                deletingCourt={deletingCourt}
+                setDeletingCourt={setDeletingCourt}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -1953,6 +1995,10 @@ export default function MapComponent() {
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
+                showDeleteCourtModal={showDeleteCourtModal}
+                setShowDeleteCourtModal={setShowDeleteCourtModal}
+                deletingCourt={deletingCourt}
+                setDeletingCourt={setDeletingCourt}
               />
             </div>
             <div
@@ -2010,6 +2056,101 @@ export default function MapComponent() {
                 disabled={uploadingPhotos || selectedPhotos.length === 0}
               >
                 {uploadingPhotos ? 'Uploading...' : 'Upload Photos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success message for court suggestion */}
+      {showCourtSuggestionSuccess && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border-2 border-green-300 rounded-lg shadow-lg p-6 max-w-md mx-auto">
+          <div className="flex items-center mb-2">
+            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-green-800 font-semibold text-lg">Success!</p>
+          </div>
+          <p className="text-green-700 font-medium mb-1">Your court suggestion has been submitted successfully!</p>
+          <p className="text-green-600 text-sm">
+            Thank you for contributing to our tennis court database. An admin will review your suggestion and you'll be notified of the decision.
+          </p>
+        </div>
+      )}
+
+      {/* New Court Suggestion Form Modal */}
+      <NewCourtSuggestionForm
+        isOpen={showNewCourtSuggestionForm}
+        onClose={() => setShowNewCourtSuggestionForm(false)}
+        onSuggestionSubmitted={() => {
+          setShowCourtSuggestionSuccess(true);
+          setShowNewCourtSuggestionForm(false);
+          // Auto-hide success message after 5 seconds
+          setTimeout(() => {
+            setShowCourtSuggestionSuccess(false);
+          }, 5000);
+        }}
+      />
+
+      {/* Delete Court Confirmation Modal */}
+      {showDeleteCourtModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button
+              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              onClick={() => setShowDeleteCourtModal(false)}
+            >
+              &times;
+            </button>
+            <div className="flex items-center mb-4">
+              <svg className="w-6 h-6 text-red-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <h3 className="text-lg font-bold text-gray-900">Delete Court</h3>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete "
+              {selectedCourt?.name}
+              "? This action cannot be undone and will remove all associated reviews and photos.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteCourtModal(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                disabled={deletingCourt}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!selectedCourt || !isAdmin) {
+                    return;
+                  }
+                  setDeletingCourt(true);
+                  try {
+                    const response = await fetch(`/api/admin/courts/${selectedCourt.id}`, {
+                      method: 'DELETE',
+                    });
+                    if (response.ok) {
+                      setShowDeleteCourtModal(false);
+                      setSelectedCourt(null);
+                      await refreshCourtData();
+                    } else {
+                      throw new Error('Failed to delete court');
+                    }
+                  } catch (error) {
+                    console.error('Error deleting court:', error);
+                    console.error('Failed to delete court. Please try again.');
+                  } finally {
+                    setDeletingCourt(false);
+                  }
+                }}
+                disabled={deletingCourt}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {deletingCourt ? 'Deleting...' : 'Delete Court'}
               </button>
             </div>
           </div>

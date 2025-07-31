@@ -179,6 +179,8 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const includeAll = searchParams.get('includeAll') === 'true';
+    const filterUserId = searchParams.get('userId');
+    const limit = searchParams.get('limit');
 
     // Get current court data
     const [court] = await db.select().from(courtsSchema).where(eq(courtsSchema.id, courtId)).limit(1);
@@ -192,11 +194,23 @@ export async function GET(
       whereConditions.push(eq(courtEditSuggestionSchema.status, status));
     }
 
-    const suggestions = await db
+    // Add user filter if filterUserId is provided
+    if (filterUserId) {
+      whereConditions.push(eq(courtEditSuggestionSchema.suggestedBy, filterUserId));
+    }
+
+    let query = db
       .select()
       .from(courtEditSuggestionSchema)
       .where(and(...whereConditions))
       .orderBy(courtEditSuggestionSchema.createdAt);
+
+    // Add limit if specified
+    if (limit) {
+      query = query.limit(Number.parseInt(limit));
+    }
+
+    const suggestions = await query;
 
     // Skip filtering if includeAll is true (for checking user's own suggestions)
     if (includeAll) {
