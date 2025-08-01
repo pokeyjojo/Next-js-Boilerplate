@@ -4,6 +4,7 @@ import type { AddressSuggestion } from '@/libs/GeocodingService';
 import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { invalidateCourtCache } from '@/hooks/useCourtData';
 import { searchAddresses } from '@/libs/GeocodingService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
@@ -199,6 +200,8 @@ export default function AdminAddCourt({
       if (response.ok) {
         setShowError(false);
         resetForm();
+        // Invalidate cache so new court appears immediately
+        invalidateCourtCache();
         onCourtAdded?.();
         onClose();
       } else {

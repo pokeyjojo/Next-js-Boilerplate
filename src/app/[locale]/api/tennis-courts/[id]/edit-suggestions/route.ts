@@ -301,9 +301,9 @@ export async function GET(
 
     const response = NextResponse.json(filteredSuggestions);
 
-    // Add caching headers for better performance
-    response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
-    response.headers.set('CDN-Cache-Control', 'public, max-age=60');
+    // Add caching headers for better performance (reduced for real-time updates)
+    response.headers.set('Cache-Control', 'public, max-age=10, stale-while-revalidate=20');
+    response.headers.set('CDN-Cache-Control', 'public, max-age=10');
     response.headers.set('Vary', 'Accept-Encoding');
 
     return response;

@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { invalidateCourtCache } from '@/hooks/useCourtData';
 import AdminAddCourt from './AdminAddCourt';
 
 export default function AdminAddCourtPage() {
@@ -10,6 +11,8 @@ export default function AdminAddCourtPage() {
   const router = useRouter();
 
   const handleCourtAdded = () => {
+    // Invalidate cache so new court appears immediately
+    invalidateCourtCache();
     setShowSuccess(true);
     setTimeout(() => {
       setShowSuccess(false);

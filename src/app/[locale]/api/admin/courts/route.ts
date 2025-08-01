@@ -71,15 +71,15 @@ export async function POST(req: NextRequest) {
         zip,
         latitude: latitude.toString(), // Convert to string as the schema expects decimal as string
         longitude: longitude.toString(), // Convert to string as the schema expects decimal as string
-        courtType,
-        numberOfCourts,
-        surface,
-        courtCondition,
-        hittingWall,
-        lighted,
-        isPublic,
-        membershipRequired,
-        parking,
+        courtType: courtType || null,
+        numberOfCourts: numberOfCourts || null,
+        surface: surface || null,
+        courtCondition: courtCondition || null,
+        hittingWall: hittingWall || false,
+        lighted: lighted || false,
+        isPublic: isPublic !== false, // Default to true
+        membershipRequired: membershipRequired || false,
+        parking: parking || false,
       })
       .returning();
 

@@ -1,6 +1,6 @@
-import type { TennisCourt } from '../hooks/useCourtData';
-import { ExternalLink, MapPin, Star } from 'lucide-react';
+import { ExternalLink, MapPin, RefreshCw, Star } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { invalidateCourtCache, type TennisCourt, useCourtData } from '../hooks/useCourtData';
 
 type OptimizedCourtListProps = {
   courts: TennisCourt[];
@@ -58,15 +58,15 @@ const CourtListItem = React.memo(({
           </p>
 
           <div className="flex items-center gap-2 mt-2 flex-wrap">
-            {court.average_rating && court.average_rating > 0 && (
+            {Number(court.average_rating) > 0 && Number(court.review_count) > 0 && (
               <div className="flex items-center gap-1">
                 <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
                 <span className="text-xs sm:text-sm text-gray-700">
-                  {Number(court.average_rating || 0).toFixed(1)}
+                  {Number(court.average_rating).toFixed(1)}
                 </span>
                 <span className="text-xs text-gray-500">
                   (
-                  {court.review_count || 0}
+                  {Number(court.review_count)}
                   )
                 </span>
               </div>
@@ -80,7 +80,7 @@ const CourtListItem = React.memo(({
 
             {court.court_type && (
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                {court.court_type}
+                {court.court_type.charAt(0).toUpperCase() + court.court_type.slice(1)}
               </span>
             )}
 
@@ -118,11 +118,13 @@ const OptimizedCourtList = React.memo(({
   externalSearchQuery = '',
   onExternalSearchChange,
 }: OptimizedCourtListProps) => {
+  const { refreshCourtData } = useCourtData();
   const [searchQuery, setSearchQuery] = useState('');
   const [showLightedOnly, setShowLightedOnly] = useState(false);
   const [activeFilters, setActiveFilters] = useState<string[]>(['all']);
   const [sortType, setSortType] = useState<'default' | 'az' | 'distance'>('default');
   const [userLocation, _setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const effectiveSearchQuery = isMobile ? externalSearchQuery : searchQuery;
@@ -279,17 +281,40 @@ const OptimizedCourtList = React.memo(({
             ))}
           </div>
 
-          {/* Sort options */}
-          <div className="mt-2">
+          {/* Sort options and refresh button */}
+          <div className="mt-2 flex items-center gap-2">
             <select
               value={sortType}
               onChange={e => setSortType(e.target.value as 'default' | 'az' | 'distance')}
-              className="text-xs border border-gray-300 rounded px-2 py-1"
+              className="text-xs border border-gray-300 rounded px-2 py-1 flex-1"
             >
               <option value="default">Default Order</option>
               <option value="az">A-Z</option>
               <option value="distance">Distance (if location enabled)</option>
             </select>
+
+            <button
+              onClick={async () => {
+                setIsRefreshing(true);
+                try {
+                  invalidateCourtCache();
+                  await refreshCourtData();
+                } catch (error) {
+                  console.error('Error refreshing courts:', error);
+                } finally {
+                  setIsRefreshing(false);
+                }
+              }}
+              disabled={isRefreshing}
+              className={`px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 ${
+                isRefreshing ? 'bg-gray-50' : 'bg-white'
+              }`}
+              title="Refresh court data"
+              aria-label="Refresh court data"
+            >
+              <RefreshCw className={`w-3 h-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
           </div>
         </div>
       )}

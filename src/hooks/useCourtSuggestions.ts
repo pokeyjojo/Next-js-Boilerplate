@@ -77,10 +77,11 @@ export function useCourtSuggestions(courtId: number, userId?: string) {
       return ongoingRequest;
     }
 
-    // Make new request
+    // Make new request with cache-busting if forced
+    const cacheBust = force ? `&t=${Date.now()}` : '';
     const endpoint = type === 'all'
-      ? `/api/tennis-courts/${courtId}/edit-suggestions?includeAll=true`
-      : `/api/tennis-courts/${courtId}/edit-suggestions?status=pending`;
+      ? `/api/tennis-courts/${courtId}/edit-suggestions?includeAll=true${cacheBust}`
+      : `/api/tennis-courts/${courtId}/edit-suggestions?status=pending${cacheBust}`;
 
     const requestPromise = (async () => {
       try {

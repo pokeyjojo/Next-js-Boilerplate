@@ -3,12 +3,13 @@
 import type { LatLngTuple } from 'leaflet';
 import { useUser } from '@clerk/nextjs';
 import L from 'leaflet';
+import { Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
-import { type TennisCourt, useCourtData } from '../hooks/useCourtData';
+import { invalidateCourtCache, type TennisCourt, useCourtData } from '../hooks/useCourtData';
 import AdminCourtEdit from './AdminCourtEdit';
 import AllSuggestionsDisplay from './AllSuggestionsDisplay';
 import CourtEditSuggestion from './CourtEditSuggestion';
@@ -558,30 +559,16 @@ const CourtList = ({
                       Lights
                     </span>
                   )}
-                  {court.average_rating && Number(court.average_rating) > 0 && (
+                  {Number(court.average_rating) > 0 && Number(court.review_count) > 0 && (
                     <div className="flex items-center gap-1">
-                      <div className="flex items-center">
-                        {[...Array.from({ length: 5 })].map((_, i) => (
-                          <svg
-                            key={i}
-                            className={`w-3 h-3 ${i < Math.round(Number(court.average_rating)) ? 'text-yellow-400' : 'text-gray-300'}`}
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <span className="text-xs text-gray-600 font-medium">
-                        {(court.average_rating || 0).toFixed(1)}
-                        {court.review_count && Number(court.review_count) > 0 && (
-                          <span className="text-gray-500">
-                            {' '}
-                            (
-                            {court.review_count}
-                            )
-                          </span>
-                        )}
+                      <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-400 fill-current" />
+                      <span className="text-xs sm:text-sm text-gray-700">
+                        {Number(court.average_rating).toFixed(1)}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        (
+                        {Number(court.review_count)}
+                        )
                       </span>
                     </div>
                   )}
@@ -1631,7 +1618,7 @@ function CourtDetailsPanel({
 }
 
 // Place this at the top level, outside MapComponent
-function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts: TennisCourt[]; handleMarkerClick: (courtId: number) => void }) {
+function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts: TennisCourt[]; handleMarkerClick: (courtId: string) => void }) {
   return (
     <>
       {courts.map(court => (
@@ -1649,7 +1636,7 @@ function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts:
 }
 
 export default function MapComponent() {
-  const { courts } = useCourtData();
+  const { courts, refreshCourtData: refreshGlobalCourtData } = useCourtData();
   const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
   const [showCourtList, setShowCourtList] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -1718,8 +1705,8 @@ export default function MapComponent() {
     };
   }, [selectedCourt]);
 
-  // Function to refresh court data (for updating ratings and review counts)
-  const refreshCourtData = useCallback(async () => {
+  // Function to refresh individual court data (for updating ratings and review counts)
+  const refreshSelectedCourtData = useCallback(async () => {
     if (selectedCourt) {
       try {
         const response = await fetch(`/api/tennis-courts/${selectedCourt.id}`);
@@ -1738,7 +1725,7 @@ export default function MapComponent() {
   }, [selectedCourt, setSelectedCourt]);
 
   // Marker click handler
-  const handleMarkerClick = useCallback((courtId: number) => {
+  const handleMarkerClick = useCallback((courtId: string) => {
     const court = courts.find(c => c.id === courtId) || null;
     setSelectedCourt(court);
     // On mobile, show the details panel as a bottom sheet
@@ -1985,7 +1972,7 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
-                refreshCourtData={refreshCourtData}
+                refreshCourtData={refreshSelectedCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
@@ -2002,7 +1989,7 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
-                refreshCourtData={refreshCourtData}
+                refreshCourtData={refreshSelectedCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
@@ -2147,7 +2134,9 @@ export default function MapComponent() {
                     if (response.ok) {
                       setShowDeleteCourtModal(false);
                       setSelectedCourt(null);
-                      await refreshCourtData();
+                      // Force cache invalidation and refresh the entire courts list
+                      invalidateCourtCache();
+                      await refreshGlobalCourtData();
                     } else {
                       throw new Error('Failed to delete court');
                     }
@@ -2206,7 +2195,7 @@ function InlineCourtInfo({
       if (response.ok) {
         setReviewingField(null);
         setReviewNote('');
-        await fetchPendingSuggestions();
+        await refreshSuggestions();
         onSuggestionReviewed();
       } else {
         console.error('Failed to review suggestion');
@@ -2431,7 +2420,7 @@ function CourtNameWithSuggestions({
       if (response.ok) {
         setReviewingField(null);
         setReviewNote('');
-        await fetchPendingSuggestions();
+        await refreshSuggestions();
         onSuggestionReviewed();
       } else {
         console.error('Failed to review suggestion');
@@ -2567,7 +2556,7 @@ function CourtAddressWithSuggestions({
       if (response.ok) {
         setReviewingField(null);
         setReviewNote('');
-        await fetchPendingSuggestions();
+        await refreshSuggestions();
         onSuggestionReviewed();
       } else {
         console.error('Failed to review suggestion');

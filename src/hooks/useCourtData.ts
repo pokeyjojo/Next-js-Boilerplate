@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export type TennisCourt = {
-  id: number;
+  id: string; // Changed from number to string (UUIDs)
   name: string;
   address: string;
   city: string;
@@ -26,6 +26,7 @@ let cachedCourts: TennisCourt[] | null = null;
 let cacheTimestamp = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const subscribers = new Set<() => void>();
+const fetchFunctions = new Set<(force?: boolean) => Promise<TennisCourt[] | null>>();
 
 export function useCourtData() {
   const [courts, setCourts] = useState<TennisCourt[]>(cachedCourts || []);
@@ -49,7 +50,9 @@ export function useCourtData() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('/api/courts');
+      // Add cache-busting parameter when forcing refresh
+      const url = force ? `/api/courts?t=${now}` : '/api/courts';
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch tennis courts');
       }
@@ -75,6 +78,9 @@ export function useCourtData() {
     return fetchCourts(true);
   }, [fetchCourts]);
 
+  // Alias for backward compatibility
+  const refreshCourtData = refreshCourts;
+
   useEffect(() => {
     const updateCourts = () => {
       if (cachedCourts) {
@@ -84,6 +90,7 @@ export function useCourtData() {
     };
 
     subscribers.add(updateCourts);
+    fetchFunctions.add(fetchCourts);
 
     if (!cachedCourts) {
       fetchCourts();
@@ -91,6 +98,7 @@ export function useCourtData() {
 
     return () => {
       subscribers.delete(updateCourts);
+      fetchFunctions.delete(fetchCourts);
     };
   }, [fetchCourts]);
 
@@ -99,6 +107,17 @@ export function useCourtData() {
     loading,
     error,
     refreshCourts,
+    refreshCourtData, // Backward compatibility alias
     fetchCourts,
   };
+}
+
+// Helper function to invalidate court cache completely (for deletions, etc.)
+export function invalidateCourtCache() {
+  cachedCourts = null;
+  cacheTimestamp = 0;
+  // Force all hook instances to refetch fresh data with cache-busting
+  fetchFunctions.forEach((fetchFn) => {
+    fetchFn(true); // Force refresh with cache-busting
+  });
 }

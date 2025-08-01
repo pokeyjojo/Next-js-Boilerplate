@@ -4,7 +4,7 @@ import postgres from 'postgres';
 export async function GET() {
   try {
     const sql = postgres(process.env.DATABASE_URL || 'postgres://postgres:tennis@localhost:5432/tennis_courts');
-    const courts = await sql`
+    const courtsRaw = await sql`
       SELECT 
         c.id,
         c.name,
@@ -49,11 +49,20 @@ export async function GET() {
       ORDER BY c.name ASC
     `;
 
+    // Convert data types to match frontend expectations
+    const courts = courtsRaw.map(court => ({
+      ...court,
+      latitude: Number.parseFloat(court.latitude),
+      longitude: Number.parseFloat(court.longitude),
+      average_rating: Number.parseFloat(court.average_rating),
+      review_count: Number.parseInt(court.review_count, 10),
+    }));
+
     const response = NextResponse.json(courts);
 
-    // Add caching headers for better performance
-    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
-    response.headers.set('CDN-Cache-Control', 'public, max-age=300');
+    // Add caching headers for better performance (reduced for real-time updates)
+    response.headers.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+    response.headers.set('CDN-Cache-Control', 'public, max-age=30');
     response.headers.set('Vary', 'Accept-Encoding');
 
     return response;
