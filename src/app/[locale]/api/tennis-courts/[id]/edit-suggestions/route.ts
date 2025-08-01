@@ -299,7 +299,14 @@ export async function GET(
       return hasAnyChanges;
     });
 
-    return NextResponse.json(filteredSuggestions);
+    const response = NextResponse.json(filteredSuggestions);
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
+    response.headers.set('CDN-Cache-Control', 'public, max-age=60');
+    response.headers.set('Vary', 'Accept-Encoding');
+
+    return response;
   } catch (error) {
     console.error('Error fetching court edit suggestions:', error);
     return NextResponse.json(

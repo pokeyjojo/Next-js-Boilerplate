@@ -7,17 +7,17 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { searchAddresses } from '@/libs/GeocodingService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
-type NewCourtSuggestionFormProps = {
+type AdminAddCourtProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSuggestionSubmitted?: () => void;
+  onCourtAdded?: () => void;
 };
 
-export default function NewCourtSuggestionForm({
+export default function AdminAddCourt({
   isOpen,
   onClose,
-  onSuggestionSubmitted,
-}: NewCourtSuggestionFormProps) {
+  onCourtAdded,
+}: AdminAddCourtProps) {
   const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -43,67 +43,96 @@ export default function NewCourtSuggestionForm({
     courtCondition: '',
     hittingWall: false,
     lighted: false,
+    isPublic: true,
     membershipRequired: false,
     parking: false,
   });
 
   const handleInputChange = (field: keyof typeof formData, value: string | boolean | number | null) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [field]: value,
+    }));
   };
 
-  // Debounced address search
-  const debouncedAddressSearch = useCallback(
-    async (query: string) => {
-      if (query.length < 3) {
-        setAddressSuggestions([]);
-        setShowSuggestions(false);
-        return;
-      }
+  // Custom handler for the private court checkbox that updates both fields
+  const handlePrivateCourtChange = (isPrivate: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      isPublic: !isPrivate,
+      membershipRequired: isPrivate,
+    }));
+  };
 
-      setIsSearching(true);
-      try {
-        const suggestions = await searchAddresses(query);
-        setAddressSuggestions(suggestions);
-        setShowSuggestions(suggestions.length > 0);
-      } catch (error) {
-        console.error('Address search failed:', error);
-        setAddressSuggestions([]);
-        setShowSuggestions(false);
-      } finally {
-        setIsSearching(false);
-      }
-    },
-    [],
-  );
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      address: '',
+      city: '',
+      state: 'IL',
+      zip: '',
+      courtType: '',
+      numberOfCourts: '',
+      surface: '',
+      courtCondition: '',
+      hittingWall: false,
+      lighted: false,
+      isPublic: true,
+      membershipRequired: false,
+      parking: false,
+    });
+    setAddressSuggestions([]);
+    setShowSuggestions(false);
+    setShowError(false);
+    setErrorMessage('');
+  };
 
-  // Handle address input change with debouncing
-  const handleAddressChange = (value: string) => {
-    setFormData(prev => ({ ...prev, address: value }));
+  // Address autocomplete logic
+  const handleAddressSearch = useCallback(async (searchTerm: string) => {
+    if (searchTerm.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
 
-    // Clear existing timeout
+    setIsSearching(true);
+    try {
+      const suggestions = await searchAddresses(searchTerm);
+      setAddressSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } catch (error) {
+      console.error('Error searching addresses:', error);
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  const handleAddressInputChange = (value: string) => {
+    handleInputChange('address', value);
+
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Set new timeout for search
     searchTimeoutRef.current = setTimeout(() => {
-      debouncedAddressSearch(value);
+      handleAddressSearch(value);
     }, 300);
   };
 
-  // Handle address suggestion selection
-  const handleAddressSelect = (suggestion: AddressSuggestion) => {
+  const handleSuggestionSelect = (suggestion: AddressSuggestion) => {
     setFormData(prev => ({
       ...prev,
       address: suggestion.address,
-      city: suggestion.city,
-      zip: suggestion.zip,
+      city: suggestion.city || '',
+      state: suggestion.state || 'IL',
+      zip: suggestion.zip || '',
     }));
     setShowSuggestions(false);
     setAddressSuggestions([]);
   };
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -119,36 +148,17 @@ export default function NewCourtSuggestionForm({
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      // Cleanup search timeout
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
     };
   }, []);
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      address: '',
-      city: '',
-      state: 'IL',
-      zip: '',
-      courtType: '',
-      numberOfCourts: '',
-      surface: '',
-      courtCondition: '',
-      hittingWall: false,
-      lighted: false,
-      membershipRequired: false,
-      parking: false,
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!user) {
-      setErrorMessage('You must be signed in to suggest a court');
+      setErrorMessage('You must be signed in to add a court');
       setShowError(true);
       return;
     }
@@ -163,7 +173,7 @@ export default function NewCourtSuggestionForm({
     setShowError(false);
 
     try {
-      const response = await fetch('/api/court-suggestions', {
+      const response = await fetch('/api/admin/courts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,23 +190,24 @@ export default function NewCourtSuggestionForm({
           courtCondition: formData.courtCondition || null,
           hittingWall: formData.hittingWall,
           lighted: formData.lighted,
+          isPublic: formData.isPublic,
           membershipRequired: formData.membershipRequired,
           parking: formData.parking,
         }),
       });
 
       if (response.ok) {
-        setShowError(false); // Clear any previous error messages
+        setShowError(false);
         resetForm();
-        onSuggestionSubmitted?.();
-        // Remove the automatic closure - parent component handles this now
+        onCourtAdded?.();
+        onClose();
       } else {
         const error = await response.json();
-        setErrorMessage(error.error || 'Failed to submit court suggestion');
+        setErrorMessage(error.error || 'Failed to add court');
         setShowError(true);
       }
     } catch (error) {
-      console.error('Error submitting court suggestion:', error);
+      console.error('Error adding court:', error);
       setErrorMessage('An unexpected error occurred. Please try again.');
       setShowError(true);
     } finally {
@@ -218,7 +229,7 @@ export default function NewCourtSuggestionForm({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Suggest a New Court</h2>
+          <h2 className="text-xl font-semibold text-gray-900">Add New Court</h2>
           <button
             onClick={handleClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -249,7 +260,7 @@ export default function NewCourtSuggestionForm({
                   value={formData.name}
                   onChange={e => handleInputChange('name', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Central Park Tennis Courts"
+                  placeholder="Enter court name"
                 />
               </div>
 
@@ -258,54 +269,42 @@ export default function NewCourtSuggestionForm({
                   Address *
                 </label>
                 <input
+                  ref={addressInputRef}
                   id="address"
                   type="text"
                   required
                   value={formData.address}
-                  onChange={e => handleAddressChange(e.target.value)}
-                  onBlur={() => debouncedAddressSearch(formData.address)}
-                  ref={addressInputRef}
+                  onChange={e => handleAddressInputChange(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 123 Tennis Lane"
+                  placeholder="Start typing an address..."
                 />
 
-                {showSuggestions && (
+                {showSuggestions && addressSuggestions.length > 0 && (
                   <div
                     ref={suggestionsRef}
-                    className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
                   >
-                    {isSearching
-                      ? (
-                          <div className="p-2 text-gray-500 text-sm">Searching...</div>
-                        )
-                      : addressSuggestions.length === 0
-                        ? (
-                            <div className="p-2 text-gray-500 text-sm">No suggestions found.</div>
-                          )
-                        : (
-                            addressSuggestions.map((suggestion, index) => (
-                              <button
-                                key={index}
-                                type="button"
-                                className="w-full p-2 text-left cursor-pointer hover:bg-blue-100 text-sm focus:bg-blue-100 focus:outline-none"
-                                onClick={() => handleAddressSelect(suggestion)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' || e.key === ' ') {
-                                    e.preventDefault();
-                                    handleAddressSelect(suggestion);
-                                  }
-                                }}
-                              >
-                                {suggestion.address}
-                                ,
-                                {suggestion.city}
-                                ,
-                                {suggestion.state}
-                                {' '}
-                                {suggestion.zip}
-                              </button>
-                            ))
-                          )}
+                    {isSearching && (
+                      <div className="px-3 py-2 text-gray-500 text-sm">
+                        Searching...
+                      </div>
+                    )}
+                    {addressSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSuggestionSelect(suggestion)}
+                        className="w-full text-left px-3 py-2 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-b last:border-b-0"
+                      >
+                        <div className="font-medium text-gray-900">{suggestion.address}</div>
+                        <div className="text-sm text-gray-600">
+                          {suggestion.city && `${suggestion.city}, `}
+                          {suggestion.state}
+                          {' '}
+                          {suggestion.zip}
+                        </div>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
@@ -321,8 +320,30 @@ export default function NewCourtSuggestionForm({
                   value={formData.city}
                   onChange={e => handleInputChange('city', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., Chicago"
+                  placeholder="Enter city"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-2">
+                  State *
+                </label>
+                <select
+                  id="state"
+                  required
+                  value={formData.state}
+                  onChange={e => handleInputChange('state', e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="IL">IL</option>
+                  <option value="IN">IN</option>
+                  <option value="WI">WI</option>
+                  <option value="MI">MI</option>
+                  <option value="IA">IA</option>
+                  <option value="MO">MO</option>
+                  <option value="OH">OH</option>
+                  <option value="KY">KY</option>
+                </select>
               </div>
 
               <div>
@@ -336,14 +357,14 @@ export default function NewCourtSuggestionForm({
                   value={formData.zip}
                   onChange={e => handleInputChange('zip', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 10001"
+                  placeholder="Enter zip code"
                 />
               </div>
             </div>
           </div>
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Additional Information (Optional)</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Court Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="courtType" className="block text-sm font-medium text-gray-700 mb-2">
@@ -355,10 +376,9 @@ export default function NewCourtSuggestionForm({
                   onChange={e => handleInputChange('courtType', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Select court type</option>
-                  <option value="Indoor">Indoor</option>
-                  <option value="Outdoor">Outdoor</option>
-                  <option value="Both">Both</option>
+                  <option value="">Select type</option>
+                  <option value="outdoor">Outdoor</option>
+                  <option value="indoor">Indoor</option>
                 </select>
               </div>
 
@@ -373,7 +393,7 @@ export default function NewCourtSuggestionForm({
                   value={formData.numberOfCourts}
                   onChange={e => handleInputChange('numberOfCourts', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="e.g., 4"
+                  placeholder="Number of courts (leave blank for unknown)"
                 />
               </div>
 
@@ -387,7 +407,7 @@ export default function NewCourtSuggestionForm({
                   onChange={e => handleInputChange('surface', e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Select surface</option>
+                  <option value="">Select surface type</option>
                   <option value="Hard">Hard</option>
                   <option value="Clay">Clay</option>
                   <option value="Grass">Grass</option>
@@ -461,8 +481,8 @@ export default function NewCourtSuggestionForm({
               <label className="flex items-center space-x-2">
                 <input
                   type="checkbox"
-                  checked={formData.membershipRequired}
-                  onChange={e => handleInputChange('membershipRequired', e.target.checked)}
+                  checked={!formData.isPublic}
+                  onChange={e => handlePrivateCourtChange(e.target.checked)}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
                 <span className="text-sm text-gray-700">Private Court (Membership Required)</span>
@@ -491,9 +511,9 @@ export default function NewCourtSuggestionForm({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+              {isSubmitting ? 'Adding Court...' : 'Add Court'}
             </button>
           </div>
         </form>

@@ -235,7 +235,7 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
                     <p className="text-sm text-gray-600">
                       <strong>Type:</strong>
                       {' '}
-                      {suggestion.suggestedType}
+                      {capitalizeFirstLetter(suggestion.suggestedType)}
                     </p>
                   )}
 

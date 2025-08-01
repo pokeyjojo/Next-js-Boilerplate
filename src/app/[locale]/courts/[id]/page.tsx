@@ -67,6 +67,12 @@ export default function CourtDetailPage() {
   const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
   const { isSignedIn, user } = useUser();
 
+  // Lazy loading states
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+
   // Check admin status
   useEffect(() => {
     const checkAdminStatus = async () => {
@@ -125,52 +131,79 @@ export default function CourtDetailPage() {
     }
   }, [courtId]);
 
-  useEffect(() => {
-    const fetchReviews = async () => {
-      try {
-        const response = await fetch(`/api/tennis-courts/${courtId}/reviews`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch reviews');
-        }
-        const data = await response.json();
-        setReviews(
-          Array.isArray(data)
-            ? data.map((r: any) => ({
-                id: r.id,
-                courtId: r.courtId,
-                rating: r.rating,
-                comment: r.text,
-                author: r.userName,
-                createdAt: r.createdAt,
-              }))
-            : [],
-        );
-      } catch {
-        setReviews([]);
-      }
-    };
-    if (courtId) {
-      fetchReviews();
+  // Lazy load reviews when tab is first accessed
+  const fetchReviews = useCallback(async () => {
+    if (reviewsLoaded || loadingReviews) {
+      return;
     }
-  }, [courtId, submitting]);
 
-  useEffect(() => {
-    const fetchPhotos = async () => {
-      try {
-        const response = await fetch(`/api/tennis-courts/${courtId}/photos`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch photos');
-        }
-        const data = await response.json();
-        setPhotos(Array.isArray(data) ? data : []);
-      } catch {
-        setPhotos([]);
+    setLoadingReviews(true);
+    try {
+      const response = await fetch(`/api/tennis-courts/${courtId}/reviews`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
       }
-    };
-    if (courtId) {
+      const data = await response.json();
+      setReviews(
+        Array.isArray(data)
+          ? data.map((r: any) => ({
+              id: r.id,
+              courtId: r.courtId,
+              rating: r.rating,
+              comment: r.text,
+              author: r.userName,
+              createdAt: r.createdAt,
+            }))
+          : [],
+      );
+      setReviewsLoaded(true);
+    } catch {
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, [courtId, reviewsLoaded, loadingReviews]);
+
+  // Lazy load photos when tab is first accessed
+  const fetchPhotos = useCallback(async () => {
+    if (photosLoaded || loadingPhotos) {
+      return;
+    }
+
+    setLoadingPhotos(true);
+    try {
+      const response = await fetch(`/api/tennis-courts/${courtId}/photos`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch photos');
+      }
+      const data = await response.json();
+      setPhotos(Array.isArray(data) ? data : []);
+      setPhotosLoaded(true);
+    } catch {
+      setPhotos([]);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  }, [courtId, photosLoaded, loadingPhotos]);
+
+  // Fetch data when tabs are accessed
+  useEffect(() => {
+    if (activeTab === 'reviews' && courtId) {
+      fetchReviews();
+    } else if (activeTab === 'photos' && courtId) {
       fetchPhotos();
     }
-  }, [courtId]);
+  }, [activeTab, courtId, fetchReviews, fetchPhotos]);
+
+  // Refresh reviews after submitting a new review
+  useEffect(() => {
+    if (submitting === false && reviewsLoaded) {
+      setReviewsLoaded(false); // Force reload
+      if (activeTab === 'reviews') {
+        fetchReviews();
+      }
+    }
+  }, [submitting, reviewsLoaded, activeTab, fetchReviews]);
 
   let averageRating = 0;
   if (reviews.length > 0) {
@@ -350,7 +383,7 @@ export default function CourtDetailPage() {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center">
                   <Star className="w-5 h-5 text-yellow-400 mr-1" />
-                  <span className="font-semibold">{averageRating.toFixed(1)}</span>
+                  <span className="font-semibold">{averageRating ? averageRating.toFixed(1) : '0.0'}</span>
                   <span className="text-gray-500 ml-1">
                     (
                     {reviews.length}
@@ -500,7 +533,7 @@ export default function CourtDetailPage() {
                   <div className="flex justify-between">
                     <span className="text-gray-600">Rating</span>
                     <span className="font-medium">
-                      {averageRating.toFixed(1)}
+                      {averageRating ? averageRating.toFixed(1) : '0.0'}
                       /5
                     </span>
                   </div>
@@ -651,7 +684,7 @@ export default function CourtDetailPage() {
                     />
                   ))}
                 </div>
-                <span className="text-2xl font-bold text-gray-900">{averageRating.toFixed(1)}</span>
+                <span className="text-2xl font-bold text-gray-900">{averageRating ? averageRating.toFixed(1) : '0.0'}</span>
                 <span className="text-gray-500 text-lg">/ 5</span>
                 <span className="text-gray-500 ml-2">
                   (

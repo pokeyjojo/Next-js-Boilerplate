@@ -1,7 +1,8 @@
 'use client';
 
 import { CheckCircle, Clock, Edit, Trash2, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { type Suggestion, useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 type Suggestion = {
@@ -63,73 +64,14 @@ function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: 
 }
 
 export default function UserSuggestionDisplay({ courtId, currentUserId, onSuggestionUpdated }: UserSuggestionDisplayProps) {
-  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Use the centralized hook instead of direct API calls
+  const { getUserSuggestions, loading, refreshSuggestions } = useCourtSuggestions(courtId, currentUserId);
+  const suggestions = getUserSuggestions().slice(0, 1); // Only keep the most recent one
+
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
-
-  const fetchSuggestions = async () => {
-    try {
-      const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions?userId=${currentUserId}&limit=1`);
-      if (response.ok) {
-        const data = await response.json();
-        setSuggestions(data);
-      }
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
-      if (!isMounted) {
-        return;
-      }
-
-      setLoading(true);
-      try {
-        const response = await fetch(`/api/tennis-courts/${courtId}/edit-suggestions`);
-        if (!isMounted) {
-          return;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          // Filter to only show current user's suggestions
-          const userSuggestions = data.filter((suggestion: Suggestion) =>
-            suggestion.suggestedBy === currentUserId,
-          );
-          // Sort by creation date and take only the most recent suggestion
-          const sortedSuggestions = userSuggestions.sort((a: Suggestion, b: Suggestion) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-          );
-          setSuggestions(sortedSuggestions.slice(0, 1)); // Only keep the most recent one
-        }
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-        console.error('Error fetching suggestions:', error);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchData();
-
-    // Cleanup function to prevent setting state on unmounted component
-    return () => {
-      isMounted = false;
-    };
-  }, [courtId, currentUserId]);
 
   const handleEdit = (suggestion: Suggestion) => {
     setEditingSuggestion(suggestion);
@@ -385,7 +327,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
               <p className="text-sm text-gray-600">
                 <strong>Type:</strong>
                 {' '}
-                {suggestion.suggestedType}
+                {capitalizeFirstLetter(suggestion.suggestedType)}
               </p>
             )}
 

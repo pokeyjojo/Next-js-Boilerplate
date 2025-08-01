@@ -6,43 +6,22 @@ import L from 'leaflet';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
+import { type TennisCourt, useCourtData } from '../hooks/useCourtData';
 import AdminCourtEdit from './AdminCourtEdit';
 import AllSuggestionsDisplay from './AllSuggestionsDisplay';
 import CourtEditSuggestion from './CourtEditSuggestion';
 import CourtPhotoGallery from './CourtPhotoGallery';
 import CourtPhotoUpload from './CourtPhotoUpload';
 import NewCourtSuggestionForm from './NewCourtSuggestionForm';
+import OptimizedCourtList from './OptimizedCourtList';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
 import UserSuggestionDisplay from './UserSuggestionDisplay';
 import 'leaflet/dist/leaflet.css';
 
 const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
-
-type TennisCourt = {
-  id: number;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  latitude: number;
-  longitude: number;
-  lighted: boolean;
-  membership_required: boolean;
-  court_type: string;
-  hitting_wall: boolean;
-  court_condition: string;
-  number_of_courts: number;
-  surface: string;
-  parking: string;
-  averageRating?: number;
-  reviewCount?: number;
-  average_rating?: number;
-  review_count?: number;
-  is_public?: boolean;
-};
 
 // Custom marker icons for public and private courts
 const createCustomIcon = (isPrivate: boolean) => {
@@ -90,34 +69,12 @@ export function MapController() {
 }
 
 export function TennisCourtMarkers() {
-  const [courts, setCourts] = useState<TennisCourt[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { courts, loading, error } = useCourtData();
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCourts = async () => {
-      try {
-        const response = await fetch('/api/courts');
-        if (!response.ok) {
-          throw new Error('Failed to fetch tennis courts');
-        }
-        const data = await response.json();
-        setCourts(data);
-      } catch (err) {
-        console.error('Error fetching courts:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourts();
-  }, []);
-
-  const handleMarkerClick = (courtId: number) => {
+  const handleMarkerClick = useCallback((courtId: number) => {
     router.push(`/en/courts/${courtId}`);
-  };
+  }, [router]);
 
   if (loading) {
     return null;
@@ -578,7 +535,19 @@ const CourtList = ({
                   {court.zip && court.zip !== '00000' && `, ${court.zip}`}
                 </p>
                 <p className="text-gray-600 text-sm">
-                  {court.state}
+                  {(() => {
+                    const stateAbbreviations: { [key: string]: string } = {
+                      Illinois: 'IL',
+                      Indiana: 'IN',
+                      Wisconsin: 'WI',
+                      Michigan: 'MI',
+                      Iowa: 'IA',
+                      Missouri: 'MO',
+                      Ohio: 'OH',
+                      Kentucky: 'KY',
+                    };
+                    return stateAbbreviations[court.state] || court.state;
+                  })()}
                 </p>
                 <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
                   <span className={`px-2 py-1 rounded text-xs sm:text-sm ${court.membership_required ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
@@ -604,7 +573,7 @@ const CourtList = ({
                         ))}
                       </div>
                       <span className="text-xs text-gray-600 font-medium">
-                        {Number(court.average_rating).toFixed(1)}
+                        {(court.average_rating || 0).toFixed(1)}
                         {court.review_count && Number(court.review_count) > 0 && (
                           <span className="text-gray-500">
                             {' '}
@@ -959,10 +928,10 @@ function CourtDetailsPanel({
   setShowPhotoUploadModal,
   userSuggestionsRefreshKey,
   setUserSuggestionsRefreshKey,
-  showDeleteCourtModal,
-  setShowDeleteCourtModal,
-  deletingCourt,
-  setDeletingCourt,
+  _showDeleteCourtModal,
+  _setShowDeleteCourtModal,
+  _deletingCourt,
+  _setDeletingCourt,
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -973,16 +942,18 @@ function CourtDetailsPanel({
   setShowPhotoUploadModal: (show: boolean) => void;
   userSuggestionsRefreshKey: number;
   setUserSuggestionsRefreshKey: (value: number | ((prev: number) => number)) => void;
-  showDeleteCourtModal: boolean;
-  setShowDeleteCourtModal: (show: boolean) => void;
-  deletingCourt: boolean;
-  setDeletingCourt: (deleting: boolean) => void;
+  _showDeleteCourtModal: boolean;
+  _setShowDeleteCourtModal: (show: boolean) => void;
+  _deletingCourt: boolean;
+  _setDeletingCourt: (deleting: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
-  const [loadingReviews, setLoadingReviews] = useState(true);
-  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [loadingReviews, setLoadingReviews] = useState(false);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [reviewsLoaded, setReviewsLoaded] = useState(false);
+  const [photosLoaded, setPhotosLoaded] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editReview, setEditReview] = useState<any>(null);
   const [modalLoading, setModalLoading] = useState(false);
@@ -999,40 +970,65 @@ function CourtDetailsPanel({
     setUserSuggestionsRefreshKey(prev => prev + 1);
   }, []);
 
+  // Reset loaded states when court changes
   useEffect(() => {
-    if (!selectedCourt) {
-      return;
+    if (selectedCourt) {
+      setReviewsLoaded(false);
+      setPhotosLoaded(false);
+      setReviews([]);
+      setPhotos([]);
     }
-    setLoadingReviews(true);
-    fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`)
-      .then((res) => {
-        if (!res.ok) {
-          // Fallback to original endpoint if the new one fails
-          return fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`);
-        }
-        return res;
-      })
-      .then(res => res.json())
-      .then(data => setReviews(Array.isArray(data) ? data : []))
-      .finally(() => setLoadingReviews(false));
   }, [selectedCourt]);
 
-  useEffect(() => {
-    if (!selectedCourt) {
+  // Lazy load reviews only when needed
+  const fetchReviews = useCallback(async () => {
+    if (!selectedCourt || reviewsLoaded || loadingReviews) {
       return;
     }
+
+    setLoadingReviews(true);
+    try {
+      const res = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`);
+      let data;
+      if (!res.ok) {
+        // Fallback to original endpoint if the new one fails
+        const fallbackRes = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews`);
+        data = await fallbackRes.json();
+      } else {
+        data = await res.json();
+      }
+      setReviews(Array.isArray(data) ? data : []);
+      setReviewsLoaded(true);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      setReviews([]);
+    } finally {
+      setLoadingReviews(false);
+    }
+  }, [selectedCourt, reviewsLoaded, loadingReviews]);
+
+  // Lazy load photos only when needed
+  const fetchPhotos = useCallback(async () => {
+    if (!selectedCourt || photosLoaded || loadingPhotos) {
+      return;
+    }
+
     setLoadingPhotos(true);
-    fetch(`/api/tennis-courts/${selectedCourt.id}/photos`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch photos');
-        }
-        return res.json();
-      })
-      .then(data => setPhotos(Array.isArray(data) ? data : []))
-      .catch(() => setPhotos([]))
-      .finally(() => setLoadingPhotos(false));
-  }, [selectedCourt]);
+    try {
+      const res = await fetch(`/api/tennis-courts/${selectedCourt.id}/photos`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch photos');
+      }
+      const data = await res.json();
+      setPhotos(Array.isArray(data) ? data : []);
+      setPhotosLoaded(true);
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+      setPhotos([]);
+    } finally {
+      setLoadingPhotos(false);
+    }
+  }, [selectedCourt, photosLoaded, loadingPhotos]);
 
   const myReview = useMemo(
     () => Array.isArray(reviews) ? reviews.find(r => r.userId === userId) : undefined,
@@ -1265,13 +1261,19 @@ function CourtDetailsPanel({
           Overview
         </button>
         <button
-          onClick={() => setActiveTab('photos')}
+          onClick={() => {
+            setActiveTab('photos');
+            fetchPhotos();
+          }}
           className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
         >
           Photos
         </button>
         <button
-          onClick={() => setActiveTab('reviews')}
+          onClick={() => {
+            setActiveTab('reviews');
+            fetchReviews();
+          }}
           className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
         >
           Reviews
@@ -1307,7 +1309,7 @@ function CourtDetailsPanel({
                         address: selectedCourt.address,
                         city: selectedCourt.city,
                         zip: selectedCourt.zip,
-                        numberOfCourts: selectedCourt.number_of_courts,
+                        numberOfCourts: selectedCourt.number_of_courts || 1,
                         surfaceType: selectedCourt.surface || '',
                         courtCondition: selectedCourt.court_condition || '',
                         courtType: selectedCourt.court_type || '',
@@ -1328,7 +1330,7 @@ function CourtDetailsPanel({
                           address: selectedCourt.address,
                           city: selectedCourt.city,
                           zip: selectedCourt.zip,
-                          numberOfCourts: selectedCourt.number_of_courts,
+                          numberOfCourts: selectedCourt.number_of_courts || 1,
                           surfaceType: selectedCourt.surface || '',
                           courtCondition: selectedCourt.court_condition || '',
                           courtType: selectedCourt.court_type || '',
@@ -1357,7 +1359,7 @@ function CourtDetailsPanel({
                     )}
                     {isAdmin && (
                       <button
-                        onClick={() => setShowDeleteCourtModal(true)}
+                        onClick={() => _setShowDeleteCourtModal(true)}
                         className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1647,7 +1649,7 @@ function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts:
 }
 
 export default function MapComponent() {
-  const [courts, setCourts] = useState<TennisCourt[]>([]);
+  const { courts } = useCourtData();
   const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
   const [showCourtList, setShowCourtList] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -1668,11 +1670,11 @@ export default function MapComponent() {
   const { isSignedIn, user } = useUser();
 
   // Mobile detection
-  const [isMobile, setIsMobile] = useState(false);
+  const [_isMobile, _setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < 768);
+      _setIsMobile(window.innerWidth < 768);
     };
 
     checkIsMobile();
@@ -1734,22 +1736,6 @@ export default function MapComponent() {
       }
     }
   }, [selectedCourt, setSelectedCourt]);
-
-  useEffect(() => {
-    const fetchCourts = async () => {
-      try {
-        const response = await fetch('/api/courts');
-        if (!response.ok) {
-          throw new Error('Failed to fetch tennis courts');
-        }
-        const data = await response.json();
-        setCourts(data);
-      } catch (err) {
-        console.error('Error fetching courts:', err);
-      }
-    };
-    fetchCourts();
-  }, []);
 
   // Marker click handler
   const handleMarkerClick = useCallback((courtId: number) => {
@@ -1935,7 +1921,7 @@ export default function MapComponent() {
 
           {/* Court list */}
           <div className="overflow-y-auto max-h-[calc(50vh-20px)]">
-            <MemoizedCourtList
+            <OptimizedCourtList
               courts={courts}
               onCourtSelect={handleCourtSelect}
               isMobile={true}
@@ -1947,9 +1933,9 @@ export default function MapComponent() {
         </div>
       </div>
 
-      {/* Desktop: Sidebar (unchanged) */}
+      {/* Desktop: Sidebar (optimized) */}
       <div className="hidden lg:block w-1/3 border-r">
-        <CourtList
+        <OptimizedCourtList
           courts={courts}
           onCourtSelect={handleCourtSelect}
         />
@@ -2003,10 +1989,10 @@ export default function MapComponent() {
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
-                showDeleteCourtModal={showDeleteCourtModal}
-                setShowDeleteCourtModal={setShowDeleteCourtModal}
-                deletingCourt={deletingCourt}
-                setDeletingCourt={setDeletingCourt}
+                _showDeleteCourtModal={showDeleteCourtModal}
+                _setShowDeleteCourtModal={setShowDeleteCourtModal}
+                _deletingCourt={deletingCourt}
+                _setDeletingCourt={setDeletingCourt}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -2020,10 +2006,10 @@ export default function MapComponent() {
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
-                showDeleteCourtModal={showDeleteCourtModal}
-                setShowDeleteCourtModal={setShowDeleteCourtModal}
-                deletingCourt={deletingCourt}
-                setDeletingCourt={setDeletingCourt}
+                _showDeleteCourtModal={showDeleteCourtModal}
+                _setShowDeleteCourtModal={setShowDeleteCourtModal}
+                _deletingCourt={deletingCourt}
+                _setDeletingCourt={setDeletingCourt}
               />
             </div>
             <div
@@ -2197,29 +2183,10 @@ function InlineCourtInfo({
   userId?: string;
   onSuggestionReviewed: () => void;
 }) {
-  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pendingSuggestions, loading, refreshSuggestions } = useCourtSuggestions(court.id, userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewingField, setReviewingField] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
-
-  const fetchPendingSuggestions = async () => {
-    try {
-      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
-      if (response.ok) {
-        const data = await response.json();
-        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
-      }
-    } catch (error) {
-      console.error('Error fetching pending suggestions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingSuggestions();
-  }, [court.id, userId]);
 
   const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
     setIsSubmitting(true);
@@ -2269,19 +2236,39 @@ function InlineCourtInfo({
   const renderFieldWithSuggestions = (field: string, currentValue: any, label: string) => {
     const fieldSuggestions = getFieldSuggestions(field);
 
-    // Capitalize condition values for better display
-    const displayValue = field === 'condition' ? capitalizeFirstLetter(currentValue) : currentValue;
-
     // Format boolean values for display
     const formatValue = (value: any) => {
       if (field === 'hittingWall' || field === 'lights') {
         return value === true ? 'Yes' : value === false ? 'No' : value;
       }
+      if (field === 'parking') {
+        return value === true || value === 'true' ? 'Yes' : value === false || value === 'false' ? 'No' : value;
+      }
       if (field === 'isPublic') {
         return value === true ? 'Public' : value === false ? 'Private' : value;
       }
+      if (field === 'courtType') {
+        return capitalizeFirstLetter(value);
+      }
+      if (field === 'state') {
+        // Convert full state names to abbreviations
+        const stateAbbreviations: { [key: string]: string } = {
+          Illinois: 'IL',
+          Indiana: 'IN',
+          Wisconsin: 'WI',
+          Michigan: 'MI',
+          Iowa: 'IA',
+          Missouri: 'MO',
+          Ohio: 'OH',
+          Kentucky: 'KY',
+        };
+        return stateAbbreviations[value] || value;
+      }
       return field === 'condition' ? capitalizeFirstLetter(value) : value;
     };
+
+    // Use formatValue for all fields
+    const displayValue = formatValue(currentValue);
 
     return (
       <div className="mb-2">
@@ -2291,7 +2278,7 @@ function InlineCourtInfo({
             :
           </strong>
           {' '}
-          {formatValue(displayValue) || 'Not specified'}
+          {displayValue || 'Not specified'}
         </div>
         {fieldSuggestions.map((suggestion) => {
           const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof suggestion;
@@ -2401,7 +2388,7 @@ function InlineCourtInfo({
       {court.number_of_courts !== null && court.number_of_courts !== undefined && court.number_of_courts > 0
         && renderFieldWithSuggestions('numberOfCourts', court.number_of_courts, 'Number of Courts')}
       {(court.court_condition || getFieldSuggestions('condition').length > 0) && renderFieldWithSuggestions('condition', court.court_condition, 'Condition')}
-      {(court.parking || getFieldSuggestions('parking').length > 0) && renderFieldWithSuggestions('parking', court.parking, 'Parking')}
+      {((court.parking !== null && court.parking !== undefined) || getFieldSuggestions('parking').length > 0) && renderFieldWithSuggestions('parking', court.parking, 'Parking')}
       {renderFieldWithSuggestions('hittingWall', court.hitting_wall, 'Hitting Wall')}
       {getFieldSuggestions('lights').length > 0 && renderFieldWithSuggestions('lights', court.lighted, 'Lights')}
       {(court.is_public !== undefined || getFieldSuggestions('isPublic').length > 0) && renderFieldWithSuggestions('isPublic', court.is_public, 'Court Access')}
@@ -2421,29 +2408,10 @@ function CourtNameWithSuggestions({
   userId?: string;
   onSuggestionReviewed: () => void;
 }) {
-  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pendingSuggestions, loading, refreshSuggestions } = useCourtSuggestions(court.id, userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewingField, setReviewingField] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
-
-  const fetchPendingSuggestions = async () => {
-    try {
-      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
-      if (response.ok) {
-        const data = await response.json();
-        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
-      }
-    } catch (error) {
-      console.error('Error fetching pending suggestions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingSuggestions();
-  }, [court.id, userId]);
 
   const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
     setIsSubmitting(true);
@@ -2576,29 +2544,10 @@ function CourtAddressWithSuggestions({
   userId?: string;
   onSuggestionReviewed: () => void;
 }) {
-  const [pendingSuggestions, setPendingSuggestions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { pendingSuggestions, loading, refreshSuggestions } = useCourtSuggestions(court.id, userId);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reviewingField, setReviewingField] = useState<string | null>(null);
   const [reviewNote, setReviewNote] = useState('');
-
-  const fetchPendingSuggestions = async () => {
-    try {
-      const response = await fetch(`/api/tennis-courts/${court.id}/edit-suggestions?status=pending`);
-      if (response.ok) {
-        const data = await response.json();
-        setPendingSuggestions(data.filter((suggestion: any) => suggestion.suggestedBy !== userId));
-      }
-    } catch (error) {
-      console.error('Error fetching pending suggestions:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchPendingSuggestions();
-  }, [court.id, userId]);
 
   const handleFieldReview = async (suggestion: any, field: string, status: 'approved' | 'rejected') => {
     setIsSubmitting(true);

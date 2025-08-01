@@ -1,8 +1,10 @@
 'use client';
 
+import type { TennisCourt } from '@/hooks/useCourtData';
 import type { AddressSuggestion } from '@/libs/GeocodingService';
 import { CheckCircleIcon, Edit, X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { invalidateCourtSuggestionsCache, useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { searchAddresses } from '@/libs/GeocodingService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
@@ -58,20 +60,7 @@ type Suggestion = {
 };
 
 type CourtEditSuggestionProps = {
-  court: {
-    id: string;
-    name: string;
-    address: string;
-    city: string;
-    zip?: string;
-    numberOfCourts: number;
-    surfaceType: string;
-    courtCondition?: string;
-    courtType?: string;
-    hittingWall?: boolean;
-    lighted?: boolean;
-    isPublic?: boolean;
-  };
+  court: TennisCourt;
   userId?: string;
   onSuggestionSubmitted?: () => void;
   onSuggestionCreated?: () => void;
@@ -89,6 +78,9 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
   const [editingSuggestion, setEditingSuggestion] = useState<Suggestion | null>(null);
   const [hasPendingSuggestion, setHasPendingSuggestion] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
+
+  // Use the optimized hook for suggestions
+  const { getLatestUserSuggestion, refreshSuggestions } = useCourtSuggestions(court.id, userId);
 
   // Address autocomplete state
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
@@ -230,19 +222,13 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
     };
   }, []);
 
-  const handleOpenModal = async () => {
-    // If there's already a pending suggestion, show it
-    if (hasPendingSuggestion && existingSuggestion) {
+  const handleOpenModal = () => {
+    // Check for existing suggestion from cache (no API call needed)
+    const existingSuggestion = getLatestUserSuggestion();
+    if (existingSuggestion && existingSuggestion.status === 'pending') {
       setShowExistingSuggestion(true);
     } else {
-      // Double-check for any existing suggestions before opening the form
-      const existing = await checkExistingSuggestion();
-      if (existing && existing.status === 'pending') {
-        setExistingSuggestion(existing);
-        setShowExistingSuggestion(true);
-      } else {
-        setIsOpen(true);
-      }
+      setIsOpen(true);
     }
   };
 
@@ -259,8 +245,8 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
 
       if (response.ok) {
         setShowExistingSuggestion(false);
-        setExistingSuggestion(null);
-        setHasPendingSuggestion(false);
+        invalidateCourtSuggestionsCache(Number(court.id));
+        await refreshSuggestions();
         onSuggestionSubmitted?.();
       } else {
         const error = await response.json();
@@ -520,7 +506,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                   <p className="text-sm text-gray-600">
                     <strong>Type:</strong>
                     {' '}
-                    {existingSuggestion.suggestedType}
+                    {capitalizeFirstLetter(existingSuggestion.suggestedType)}
                   </p>
                 )}
 

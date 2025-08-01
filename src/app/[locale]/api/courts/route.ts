@@ -22,6 +22,7 @@ export async function GET() {
         c.number_of_courts,
         c.surface,
         c.parking,
+        c.is_public,
         COALESCE(AVG(r.rating), 0) as average_rating,
         COUNT(r.id) as review_count
       FROM courts c
@@ -43,9 +44,19 @@ export async function GET() {
         c.court_condition,
         c.number_of_courts,
         c.surface,
-        c.parking
+        c.parking,
+        c.is_public
+      ORDER BY c.name ASC
     `;
-    return NextResponse.json(courts);
+
+    const response = NextResponse.json(courts);
+
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
+    response.headers.set('CDN-Cache-Control', 'public, max-age=300');
+    response.headers.set('Vary', 'Accept-Encoding');
+
+    return response;
   } catch (error) {
     console.error('Error in /api/courts:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';

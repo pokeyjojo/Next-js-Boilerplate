@@ -50,6 +50,14 @@ export default async function DashboardLayout(props: {
             <>
               <li>
                 <Link
+                  href="/dashboard/admin/add-court/"
+                  className="border-none text-green-600 hover:text-green-800 font-medium"
+                >
+                  Add Court
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/dashboard/admin/court-suggestions/"
                   className="border-none text-green-600 hover:text-green-800 font-medium"
                 >

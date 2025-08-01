@@ -156,8 +156,39 @@ export default function PendingSuggestionsReview({
   const renderFieldWithSuggestions = (field: string, currentValue: any, label: string) => {
     const fieldSuggestions = getFieldSuggestions(field);
 
-    // Capitalize condition values for better display
-    const displayValue = field === 'condition' ? capitalizeFirstLetter(currentValue) : currentValue;
+    // Format boolean values and other special cases for display
+    const formatValue = (value: any) => {
+      if (field === 'hittingWall' || field === 'lights') {
+        return value === true ? 'Yes' : value === false ? 'No' : value;
+      }
+      if (field === 'parking') {
+        return value === true || value === 'true' ? 'Yes' : value === false || value === 'false' ? 'No' : value;
+      }
+      if (field === 'isPublic') {
+        return value === true ? 'Public' : value === false ? 'Private' : value;
+      }
+      if (field === 'courtType') {
+        return capitalizeFirstLetter(value);
+      }
+      if (field === 'state') {
+        // Convert full state names to abbreviations
+        const stateAbbreviations: { [key: string]: string } = {
+          Illinois: 'IL',
+          Indiana: 'IN',
+          Wisconsin: 'WI',
+          Michigan: 'MI',
+          Iowa: 'IA',
+          Missouri: 'MO',
+          Ohio: 'OH',
+          Kentucky: 'KY',
+        };
+        return stateAbbreviations[value] || value;
+      }
+      return field === 'condition' ? capitalizeFirstLetter(value) : value;
+    };
+
+    // Format the display value
+    const displayValue = formatValue(currentValue);
 
     if (fieldSuggestions.length === 0) {
       return (
@@ -211,13 +242,7 @@ export default function PendingSuggestionsReview({
                       :
                     </strong>
                     {' '}
-                    {field === 'condition'
-                      ? capitalizeFirstLetter(String(suggestedValue))
-                      : field === 'hittingWall' || field === 'lights'
-                        ? (suggestedValue ? 'Yes' : 'No')
-                        : field === 'isPublic'
-                          ? (suggestedValue ? 'Public' : 'Private')
-                          : suggestedValue}
+                    {formatValue(suggestedValue)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
                     Suggested by
