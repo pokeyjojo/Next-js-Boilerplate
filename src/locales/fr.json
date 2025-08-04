@@ -8,7 +8,7 @@
     "sign_up_link": "S'inscrire"
   },
   "BaseTemplate": {
-    "description": "Code de démarrage pour Next.js avec Tailwind CSS",
+    "description": "Gérez votre compte et vos suggestions pour Court Finder",
     "made_with": "Fait avec <author></author>."
   },
   "Index": {

@@ -1,7 +1,6 @@
 import { SignOutButton } from '@clerk/nextjs';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import Link from 'next/link';
-import { LocaleSwitcher } from '@/components/LocaleSwitcher';
 import { isAdmin } from '@/libs/AdminUtils';
 import { BaseTemplate } from '@/templates/BaseTemplate';
 
@@ -24,16 +23,8 @@ export default async function DashboardLayout(props: {
         <>
           <li>
             <Link
-              href="/dashboard/"
-              className="border-none text-gray-700 hover:text-gray-900"
-            >
-              {t('dashboard_link')}
-            </Link>
-          </li>
-          <li>
-            <Link
               href="/dashboard/user-profile/"
-              className="border-none text-gray-700 hover:text-gray-900"
+              className="border-none text-[#BFC3C7] hover:text-[#69F0FD] transition-colors"
             >
               {t('user_profile_link')}
             </Link>
@@ -41,7 +32,7 @@ export default async function DashboardLayout(props: {
           <li>
             <Link
               href="/dashboard/my-court-suggestions/"
-              className="border-none text-blue-600 hover:text-blue-800 font-medium"
+              className="border-none text-[#69F0FD] hover:text-[#BFC3C7] font-medium transition-colors"
             >
               My Court Suggestions
             </Link>
@@ -51,7 +42,7 @@ export default async function DashboardLayout(props: {
               <li>
                 <Link
                   href="/dashboard/admin/add-court/"
-                  className="border-none text-green-600 hover:text-green-800 font-medium"
+                  className="border-none text-[#EC0037] hover:text-[#4A1C23] font-medium transition-colors"
                 >
                   Add Court
                 </Link>
@@ -59,7 +50,7 @@ export default async function DashboardLayout(props: {
               <li>
                 <Link
                   href="/dashboard/admin/court-suggestions/"
-                  className="border-none text-green-600 hover:text-green-800 font-medium"
+                  className="border-none text-[#EC0037] hover:text-[#4A1C23] font-medium transition-colors"
                 >
                   Review Court Suggestions
                 </Link>
@@ -67,7 +58,7 @@ export default async function DashboardLayout(props: {
               <li>
                 <Link
                   href="/dashboard/admin/reports/"
-                  className="border-none text-red-600 hover:text-red-800 font-medium"
+                  className="border-none text-[#EC0037] hover:text-[#4A1C23] font-medium transition-colors"
                 >
                   Reported Reviews
                 </Link>
@@ -75,7 +66,7 @@ export default async function DashboardLayout(props: {
               <li>
                 <Link
                   href="/dashboard/admin/court-photos/"
-                  className="border-none text-purple-600 hover:text-purple-800 font-medium"
+                  className="border-none text-[#EC0037] hover:text-[#4A1C23] font-medium transition-colors"
                 >
                   Court Photo Management
                 </Link>
@@ -87,15 +78,19 @@ export default async function DashboardLayout(props: {
       rightNav={(
         <>
           <li>
+            <Link
+              href="/"
+              className="border-none text-[#69F0FD] hover:text-[#BFC3C7] transition-colors"
+            >
+              Back to Main Page
+            </Link>
+          </li>
+          <li>
             <SignOutButton>
-              <button className="border-none text-gray-700 hover:text-gray-900" type="button">
+              <button className="border-none text-[#BFC3C7] hover:text-[#69F0FD] transition-colors" type="button">
                 {t('sign_out')}
               </button>
             </SignOutButton>
-          </li>
-
-          <li>
-            <LocaleSwitcher />
           </li>
         </>
       )}

@@ -216,30 +216,30 @@ export default function NewCourtSuggestionForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#002C4D] rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto border-2 border-[#69F0FD]">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">Suggest a New Court</h2>
+          <h2 className="text-xl font-semibold text-[#BFC3C7]">Suggest a New Court</h2>
           <button
             onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-[#BFC3C7] hover:text-[#69F0FD] transition-colors"
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {showError && (
-          <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800 font-medium">Error</p>
-            <p className="text-red-600 text-sm mt-1">{errorMessage}</p>
+          <div className="mb-4 p-4 bg-[#EC0037]/20 border border-[#EC0037] rounded-lg">
+            <p className="text-[#EC0037] font-medium">Error</p>
+            <p className="text-[#EC0037]/80 text-sm mt-1">{errorMessage}</p>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-blue-900 mb-2">Required Information</h3>
+          <div className="bg-[#69F0FD]/10 border border-[#69F0FD] rounded-lg p-4">
+            <h3 className="text-lg font-medium text-[#69F0FD] mb-2">Required Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="name" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Court Name *
                 </label>
                 <input
@@ -248,13 +248,13 @@ export default function NewCourtSuggestionForm({
                   required
                   value={formData.name}
                   onChange={e => handleInputChange('name', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                   placeholder="e.g., Central Park Tennis Courts"
                 />
               </div>
 
               <div className="relative">
-                <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="address" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Address *
                 </label>
                 <input
@@ -265,29 +265,29 @@ export default function NewCourtSuggestionForm({
                   onChange={e => handleAddressChange(e.target.value)}
                   onBlur={() => debouncedAddressSearch(formData.address)}
                   ref={addressInputRef}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                   placeholder="e.g., 123 Tennis Lane"
                 />
 
                 {showSuggestions && (
                   <div
                     ref={suggestionsRef}
-                    className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                    className="absolute z-10 mt-1 w-full bg-[#011B2E] border border-[#69F0FD] rounded-lg shadow-lg max-h-60 overflow-y-auto"
                   >
                     {isSearching
                       ? (
-                          <div className="p-2 text-gray-500 text-sm">Searching...</div>
+                          <div className="p-2 text-[#7F8B95] text-sm">Searching...</div>
                         )
                       : addressSuggestions.length === 0
                         ? (
-                            <div className="p-2 text-gray-500 text-sm">No suggestions found.</div>
+                            <div className="p-2 text-[#7F8B95] text-sm">No suggestions found.</div>
                           )
                         : (
                             addressSuggestions.map((suggestion, index) => (
                               <button
                                 key={index}
                                 type="button"
-                                className="w-full p-2 text-left cursor-pointer hover:bg-blue-100 text-sm focus:bg-blue-100 focus:outline-none"
+                                className="w-full p-2 text-left cursor-pointer hover:bg-[#69F0FD]/20 text-sm focus:bg-[#69F0FD]/20 focus:outline-none text-[#BFC3C7]"
                                 onClick={() => handleAddressSelect(suggestion)}
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter' || e.key === ' ') {
@@ -311,7 +311,7 @@ export default function NewCourtSuggestionForm({
               </div>
 
               <div>
-                <label htmlFor="city" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="city" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   City *
                 </label>
                 <input
@@ -320,13 +320,13 @@ export default function NewCourtSuggestionForm({
                   required
                   value={formData.city}
                   onChange={e => handleInputChange('city', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                   placeholder="e.g., Chicago"
                 />
               </div>
 
               <div>
-                <label htmlFor="zip" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="zip" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Zip Code *
                 </label>
                 <input
@@ -335,25 +335,25 @@ export default function NewCourtSuggestionForm({
                   required
                   value={formData.zip}
                   onChange={e => handleInputChange('zip', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                   placeholder="e.g., 10001"
                 />
               </div>
             </div>
           </div>
 
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Additional Information (Optional)</h3>
+          <div className="bg-[#918AB5]/10 border border-[#918AB5] rounded-lg p-4">
+            <h3 className="text-lg font-medium text-[#918AB5] mb-2">Additional Information (Optional)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="courtType" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="courtType" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Court Type
                 </label>
                 <select
                   id="courtType"
                   value={formData.courtType}
                   onChange={e => handleInputChange('courtType', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                 >
                   <option value="">Select court type</option>
                   <option value="Indoor">Indoor</option>
@@ -363,7 +363,7 @@ export default function NewCourtSuggestionForm({
               </div>
 
               <div>
-                <label htmlFor="numberOfCourts" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="numberOfCourts" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Number of Courts
                 </label>
                 <input
@@ -372,20 +372,20 @@ export default function NewCourtSuggestionForm({
                   min="1"
                   value={formData.numberOfCourts}
                   onChange={e => handleInputChange('numberOfCourts', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                   placeholder="e.g., 4"
                 />
               </div>
 
               <div>
-                <label htmlFor="surface" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="surface" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Surface Type
                 </label>
                 <select
                   id="surface"
                   value={formData.surface}
                   onChange={e => handleInputChange('surface', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                 >
                   <option value="">Select surface</option>
                   <option value="Hard">Hard</option>
@@ -397,14 +397,14 @@ export default function NewCourtSuggestionForm({
               </div>
 
               <div>
-                <label htmlFor="courtCondition" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="courtCondition" className="block text-sm font-medium text-[#BFC3C7] mb-2">
                   Court Condition
                 </label>
                 <select
                   id="courtCondition"
                   value={formData.courtCondition}
                   onChange={e => handleInputChange('courtCondition', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#69F0FD] rounded-lg px-3 py-2 bg-[#011B2E] text-[#BFC3C7] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:outline-none"
                 >
                   <option value="">Select condition</option>
                   <option value="unknown">Unknown</option>
@@ -443,9 +443,9 @@ export default function NewCourtSuggestionForm({
                   type="checkbox"
                   checked={formData.lighted}
                   onChange={e => handleInputChange('lighted', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[#69F0FD] focus:ring-[#69F0FD] border-[#69F0FD] rounded"
                 />
-                <span className="text-sm text-gray-700">Lighted</span>
+                <span className="text-sm text-[#BFC3C7]">Lighted</span>
               </label>
 
               <label className="flex items-center space-x-2">
@@ -453,9 +453,9 @@ export default function NewCourtSuggestionForm({
                   type="checkbox"
                   checked={formData.hittingWall}
                   onChange={e => handleInputChange('hittingWall', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[#69F0FD] focus:ring-[#69F0FD] border-[#69F0FD] rounded"
                 />
-                <span className="text-sm text-gray-700">Hitting Wall</span>
+                <span className="text-sm text-[#BFC3C7]">Hitting Wall</span>
               </label>
 
               <label className="flex items-center space-x-2">
@@ -463,9 +463,9 @@ export default function NewCourtSuggestionForm({
                   type="checkbox"
                   checked={formData.membershipRequired}
                   onChange={e => handleInputChange('membershipRequired', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[#69F0FD] focus:ring-[#69F0FD] border-[#69F0FD] rounded"
                 />
-                <span className="text-sm text-gray-700">Private Court (Membership Required)</span>
+                <span className="text-sm text-[#BFC3C7]">Private Court (Membership Required)</span>
               </label>
 
               <label className="flex items-center space-x-2">
@@ -473,9 +473,9 @@ export default function NewCourtSuggestionForm({
                   type="checkbox"
                   checked={formData.parking}
                   onChange={e => handleInputChange('parking', e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 text-[#69F0FD] focus:ring-[#69F0FD] border-[#69F0FD] rounded"
                 />
-                <span className="text-sm text-gray-700">Parking Available</span>
+                <span className="text-sm text-[#BFC3C7]">Parking Available</span>
               </label>
             </div>
           </div>

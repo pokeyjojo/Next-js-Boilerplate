@@ -51,6 +51,115 @@ a {
   user-select: none;
 }
 
+/* Clerk Form Styling - Gladiator Theme */
+/* Target all possible Clerk input selectors */
+.cl-formFieldInput,
+.cl-formFieldInput input,
+.cl-formFieldInput input[type='text'],
+.cl-formFieldInput input[type='email'],
+.cl-formFieldInput input[type='password'],
+.cl-formFieldInput input[type='tel'],
+.cl-formFieldInput input[type='number'],
+.cl-formFieldInput input[type='search'],
+.cl-formFieldInput input[type='url'],
+.cl-formFieldInput textarea,
+.cl-formFieldInput select,
+.cl-formFieldInput .cl-input,
+.cl-formFieldInput .cl-input input,
+.cl-formFieldInput .cl-input textarea,
+.cl-formFieldInput .cl-input select,
+.cl-input,
+.cl-input input,
+.cl-input textarea,
+.cl-input select,
+input[data-clerk-input],
+textarea[data-clerk-input],
+select[data-clerk-input] {
+  border: 2px solid #69f0fd !important;
+  background-color: white !important;
+  color: #4a1c23 !important;
+}
+
+.cl-formFieldInput:focus,
+.cl-formFieldInput input:focus,
+.cl-formFieldInput input[type='text']:focus,
+.cl-formFieldInput input[type='email']:focus,
+.cl-formFieldInput input[type='password']:focus,
+.cl-formFieldInput input[type='tel']:focus,
+.cl-formFieldInput input[type='number']:focus,
+.cl-formFieldInput input[type='search']:focus,
+.cl-formFieldInput input[type='url']:focus,
+.cl-formFieldInput textarea:focus,
+.cl-formFieldInput select:focus,
+.cl-formFieldInput .cl-input:focus,
+.cl-formFieldInput .cl-input input:focus,
+.cl-formFieldInput .cl-input textarea:focus,
+.cl-formFieldInput .cl-input select:focus,
+.cl-input:focus,
+.cl-input input:focus,
+.cl-input textarea:focus,
+.cl-input select:focus,
+input[data-clerk-input]:focus,
+textarea[data-clerk-input]:focus,
+select[data-clerk-input]:focus {
+  outline: none !important;
+  border: 2px solid #69f0fd !important;
+  box-shadow:
+    0 0 15px rgba(105, 240, 253, 0.6),
+    0 0 0 2px #69f0fd !important;
+}
+
+.cl-formFieldInput::placeholder,
+.cl-formFieldInput input::placeholder,
+.cl-formFieldInput textarea::placeholder,
+.cl-input::placeholder,
+.cl-input input::placeholder,
+.cl-input textarea::placeholder,
+input[data-clerk-input]::placeholder,
+textarea[data-clerk-input]::placeholder {
+  color: #7f8b95 !important;
+}
+
+.cl-verificationCodeFieldInput,
+.cl-verificationCodeFieldInput input,
+.cl-verificationCodeFieldInput input[type='text'],
+.cl-verificationCodeFieldInput input[type='number'],
+.cl-verificationCodeFieldInput .cl-input,
+.cl-verificationCodeFieldInput .cl-input input {
+  border: 2px solid #69f0fd !important;
+  background-color: white !important;
+  color: #4a1c23 !important;
+}
+
+.cl-verificationCodeFieldInput:focus,
+.cl-verificationCodeFieldInput input:focus,
+.cl-verificationCodeFieldInput input[type='text']:focus,
+.cl-verificationCodeFieldInput input[type='number']:focus,
+.cl-verificationCodeFieldInput .cl-input:focus,
+.cl-verificationCodeFieldInput .cl-input input:focus {
+  outline: none !important;
+  border: 2px solid #69f0fd !important;
+  box-shadow:
+    0 0 15px rgba(105, 240, 253, 0.6),
+    0 0 0 2px #69f0fd !important;
+}
+
+/* Additional specificity for Clerk components */
+.cl-formFieldInput *,
+.cl-input *,
+[data-clerk-input] {
+  border-color: #69f0fd !important;
+}
+
+.cl-formFieldInput *:focus,
+.cl-input *:focus,
+[data-clerk-input]:focus {
+  border-color: #69f0fd !important;
+  box-shadow:
+    0 0 15px rgba(105, 240, 253, 0.6),
+    0 0 0 2px #69f0fd !important;
+}
+
 /* Mobile-friendly popup styles for Leaflet */
 .leaflet-popup-content {
   margin: 8px 12px;
@@ -74,6 +183,153 @@ a {
 
 .leaflet-control-container {
   z-index: 2 !important;
+}
+
+/* Gladiator Theme - Leaflet Zoom Controls */
+.leaflet-control-zoom {
+  border: 2px solid #69f0fd !important;
+  background-color: #002c4d !important;
+  box-shadow: 0 2px 8px rgba(105, 240, 253, 0.3) !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: #011b2e !important;
+  border: 1px solid #69f0fd !important;
+  color: #bfc3c7 !important;
+  font-weight: bold !important;
+  transition: all 0.2s ease !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #69f0fd !important;
+  color: #27131d !important;
+  border-color: #69f0fd !important;
+  box-shadow: 0 0 10px rgba(105, 240, 253, 0.5) !important;
+}
+
+.leaflet-control-zoom a:active {
+  background-color: #4dade3 !important;
+  color: #27131d !important;
+}
+
+.leaflet-control-zoom a.leaflet-disabled {
+  background-color: #50394d !important;
+  color: #7f8b95 !important;
+  border-color: #50394d !important;
+  cursor: not-allowed !important;
+}
+
+.leaflet-control-zoom a.leaflet-disabled:hover {
+  background-color: #50394d !important;
+  color: #7f8b95 !important;
+  box-shadow: none !important;
+}
+
+/* Gladiator Theme - Leaflet Attribution Control */
+.leaflet-control-attribution {
+  background-color: rgba(0, 44, 77, 0.9) !important;
+  color: #bfc3c7 !important;
+  border-top: 1px solid #69f0fd !important;
+  font-size: 11px !important;
+}
+
+.leaflet-control-attribution a {
+  color: #69f0fd !important;
+  text-decoration: none !important;
+}
+
+.leaflet-control-attribution a:hover {
+  color: #bfc3c7 !important;
+  text-decoration: underline !important;
+}
+
+/* Gladiator Theme - Clerk UserProfile Component */
+.cl-userProfile-root {
+  background-color: #002c4d !important;
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-card {
+  background-color: #002c4d !important;
+  border: 2px solid #69f0fd !important;
+  box-shadow: 0 4px 12px rgba(105, 240, 253, 0.2) !important;
+}
+
+.cl-userProfile-root .cl-headerTitle {
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-headerSubtitle {
+  color: #7f8b95 !important;
+}
+
+.cl-userProfile-root .cl-formFieldLabel {
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-formFieldInput {
+  background-color: #011b2e !important;
+  border: 2px solid #69f0fd !important;
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-formFieldInput:focus {
+  border-color: #69f0fd !important;
+  box-shadow: 0 0 10px rgba(105, 240, 253, 0.3) !important;
+}
+
+.cl-userProfile-root .cl-formButtonPrimary {
+  background-color: #69f0fd !important;
+  color: #27131d !important;
+  border: none !important;
+}
+
+.cl-userProfile-root .cl-formButtonPrimary:hover {
+  background-color: #4dade3 !important;
+}
+
+.cl-userProfile-root .cl-formButtonSecondary {
+  background-color: #50394d !important;
+  color: #bfc3c7 !important;
+  border: 1px solid #69f0fd !important;
+}
+
+.cl-userProfile-root .cl-formButtonSecondary:hover {
+  background-color: #27131d !important;
+}
+
+.cl-userProfile-root .cl-profileSectionTitleText {
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-profileSectionTitleTextContainer {
+  border-bottom: 1px solid #69f0fd !important;
+}
+
+.cl-userProfile-root .cl-userPreviewMainIdentifier {
+  color: #bfc3c7 !important;
+}
+
+.cl-userProfile-root .cl-userPreviewSecondaryIdentifier {
+  color: #7f8b95 !important;
+}
+
+.cl-userProfile-root .cl-userPreviewTextContainer {
+  background-color: #011b2e !important;
+  border: 1px solid #69f0fd !important;
+}
+
+.cl-userProfile-root .cl-badge {
+  background-color: #69f0fd !important;
+  color: #27131d !important;
+}
+
+.cl-userProfile-root .cl-avatarBox {
+  background-color: #69f0fd !important;
+}
+
+.cl-userProfile-root .cl-avatarImage {
+  color: #27131d !important;
 }
 
 /* Hide AuthNav when photo viewer is open */

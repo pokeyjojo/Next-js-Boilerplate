@@ -15,6 +15,12 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
   const params = useParams();
   const locale = params.locale as string;
   const [isCourtDetailsOpen, setIsCourtDetailsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch by only rendering after mount
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Check if court details panel is open by looking for CSS class on body
   useEffect(() => {
@@ -34,6 +40,11 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
 
     return () => observer.disconnect();
   }, []);
+
+  // Don't render anything until mounted to prevent hydration mismatch
+  if (!isMounted) {
+    return null;
+  }
 
   // Show loading state while Clerk is loading
   if (!isLoaded) {

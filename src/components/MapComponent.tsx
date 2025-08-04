@@ -1,7 +1,6 @@
 'use client';
 
 import type { LatLngTuple } from 'leaflet';
-import { setTimeout } from 'node:timers';
 import { useUser } from '@clerk/nextjs';
 import L from 'leaflet';
 import { Star } from 'lucide-react';
@@ -2346,15 +2345,15 @@ function InlineCourtInfo({
           }
 
           return (
-            <div key={suggestion.id} className="ml-4 mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+            <div key={suggestion.id} className="ml-4 mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-gray-700">
+                  <p className="text-[#BFC3C7]">
                     <strong>Suggested:</strong>
                     {' '}
                     {formatValue(suggestedValue)}
                   </p>
-                  <p className="text-gray-500 mt-1">
+                  <p className="text-[#69F0FD] mt-1">
                     by
                     {' '}
                     {suggestion.suggestedByUserName}
@@ -2364,7 +2363,7 @@ function InlineCourtInfo({
                     {new Date(suggestion.createdAt).toLocaleDateString()}
                   </p>
                   {suggestion.reason && suggestion.reason.trim() && (
-                    <div className="text-gray-600 mt-1 w-full">
+                    <div className="text-[#BFC3C7]/70 mt-1 w-full">
                       <strong>Additional Notes:</strong>
                       <TruncatableText text={suggestion.reason} />
                     </div>
@@ -2383,12 +2382,12 @@ function InlineCourtInfo({
               </div>
 
               {reviewingField === `${suggestion.id}-${field}` && (
-                <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+                <div className="mt-2 p-2 bg-[#002C4D] border border-[#69F0FD] rounded">
                   <textarea
                     value={reviewNote}
                     onChange={e => setReviewNote(e.target.value)}
                     placeholder="Add a review note (optional)..."
-                    className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                    className="w-full text-xs border border-[#69F0FD] rounded px-2 py-1 mb-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95]"
                     rows={2}
                     maxLength={500}
                   />
@@ -2502,15 +2501,15 @@ function CourtNameWithSuggestions({
     <div className="mb-2">
       <h2 className="text-2xl font-bold text-white">{court.name}</h2>
       {nameSuggestions.map(suggestion => (
-        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+        <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-[#BFC3C7]">
                 <strong>Suggested Name:</strong>
                 {' '}
                 {suggestion.suggestedName}
               </p>
-              <p className="text-gray-500 mt-1">
+              <p className="text-[#69F0FD] mt-1">
                 by
                 {' '}
                 {suggestion.suggestedByUserName}
@@ -2520,7 +2519,7 @@ function CourtNameWithSuggestions({
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
               {suggestion.reason && suggestion.reason.trim() && (
-                <div className="text-gray-600 mt-1 w-full">
+                <div className="text-[#BFC3C7]/70 mt-1 w-full">
                   <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
@@ -2539,12 +2538,12 @@ function CourtNameWithSuggestions({
           </div>
 
           {reviewingField === `${suggestion.id}-name` && (
-            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+            <div className="mt-2 p-2 bg-[#002C4D] border border-[#69F0FD] rounded">
               <textarea
                 value={reviewNote}
                 onChange={e => setReviewNote(e.target.value)}
                 placeholder="Add a review note (optional)..."
-                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                className="w-full text-xs border border-[#69F0FD] rounded px-2 py-1 mb-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95]"
                 rows={2}
                 maxLength={500}
               />
@@ -2653,15 +2652,15 @@ function CourtAddressWithSuggestions({
 
       {/* Address suggestions */}
       {addressSuggestions.map(suggestion => (
-        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+        <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-[#BFC3C7]">
                 <strong>Suggested Address:</strong>
                 {' '}
                 {suggestion.suggestedAddress}
               </p>
-              <p className="text-gray-500 mt-1">
+              <p className="text-[#69F0FD] mt-1">
                 by
                 {' '}
                 {suggestion.suggestedByUserName}
@@ -2671,7 +2670,7 @@ function CourtAddressWithSuggestions({
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
               {suggestion.reason && suggestion.reason.trim() && (
-                <div className="text-gray-600 mt-1 w-full">
+                <div className="text-[#BFC3C7]/70 mt-1 w-full">
                   <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
@@ -2690,12 +2689,12 @@ function CourtAddressWithSuggestions({
           </div>
 
           {reviewingField === `${suggestion.id}-address` && (
-            <div className="mt-2 p-2 bg-white border border-gray-200 rounded">
+            <div className="mt-2 p-2 bg-[#002C4D] border border-[#69F0FD] rounded">
               <textarea
                 value={reviewNote}
                 onChange={e => setReviewNote(e.target.value)}
                 placeholder="Add a review note (optional)..."
-                className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                className="w-full text-xs border border-[#69F0FD] rounded px-2 py-1 mb-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95]"
                 rows={2}
                 maxLength={500}
               />
@@ -2731,15 +2730,15 @@ function CourtAddressWithSuggestions({
 
       {/* City suggestions */}
       {citySuggestions.map(suggestion => (
-        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+        <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-[#BFC3C7]">
                 <strong>Suggested City:</strong>
                 {' '}
                 {suggestion.suggestedCity}
               </p>
-              <p className="text-gray-500 mt-1">
+              <p className="text-[#BFC3C7]/80 mt-1">
                 by
                 {' '}
                 {suggestion.suggestedByUserName}
@@ -2749,7 +2748,7 @@ function CourtAddressWithSuggestions({
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
               {suggestion.reason && suggestion.reason.trim() && (
-                <div className="text-gray-600 mt-1 w-full">
+                <div className="text-[#BFC3C7]/70 mt-1 w-full">
                   <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
@@ -2809,15 +2808,15 @@ function CourtAddressWithSuggestions({
 
       {/* State suggestions */}
       {stateSuggestions.map(suggestion => (
-        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+        <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-[#BFC3C7]">
                 <strong>Suggested State:</strong>
                 {' '}
                 {capitalizeFirstLetter(suggestion.suggestedState)}
               </p>
-              <p className="text-gray-500 mt-1">
+              <p className="text-[#BFC3C7]/80 mt-1">
                 by
                 {' '}
                 {suggestion.suggestedByUserName}
@@ -2827,7 +2826,7 @@ function CourtAddressWithSuggestions({
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
               {suggestion.reason && suggestion.reason.trim() && (
-                <div className="text-gray-600 mt-1 w-full">
+                <div className="text-[#BFC3C7]/70 mt-1 w-full">
                   <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>
@@ -2887,15 +2886,15 @@ function CourtAddressWithSuggestions({
 
       {/* Zip suggestions */}
       {zipSuggestions.map(suggestion => (
-        <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
+        <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <p className="text-gray-700">
+              <p className="text-[#BFC3C7]">
                 <strong>Suggested Zip:</strong>
                 {' '}
                 {suggestion.suggestedZip}
               </p>
-              <p className="text-gray-500 mt-1">
+              <p className="text-[#BFC3C7]/80 mt-1">
                 by
                 {' '}
                 {suggestion.suggestedByUserName}
@@ -2905,7 +2904,7 @@ function CourtAddressWithSuggestions({
                 {new Date(suggestion.createdAt).toLocaleDateString()}
               </p>
               {suggestion.reason && suggestion.reason.trim() && (
-                <div className="text-gray-600 mt-1 w-full">
+                <div className="text-[#BFC3C7]/70 mt-1 w-full">
                   <strong>Additional Notes:</strong>
                   <TruncatableText text={suggestion.reason} />
                 </div>

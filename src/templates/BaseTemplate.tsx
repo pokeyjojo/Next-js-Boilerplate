@@ -9,14 +9,14 @@ export const BaseTemplate = (props: {
   const t = useTranslations('BaseTemplate');
 
   return (
-    <div className="w-full px-2 sm:px-4 lg:px-6 text-gray-700 antialiased">
+    <div className="w-full px-2 sm:px-4 lg:px-6 text-[#BFC3C7] antialiased bg-[#002C4D] min-h-screen">
       <div className="mx-auto max-w-screen-lg">
-        <header className="border-b border-gray-300">
+        <header className="border-b border-[#69F0FD]">
           <div className="pb-6 pt-12 sm:pb-8 sm:pt-16">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#BFC3C7]">
               {AppConfig.name}
             </h1>
-            <h2 className="text-lg sm:text-xl">{t('description')}</h2>
+            <h2 className="text-lg sm:text-xl text-[#7F8B95]">{t('description')}</h2>
           </div>
 
           {/* Mobile: Stack navigation vertically */}
@@ -39,13 +39,13 @@ export const BaseTemplate = (props: {
 
         <main className="py-4 sm:py-6">{props.children}</main>
 
-        <footer className="border-t border-gray-300 py-6 sm:py-8 text-center text-sm">
+        <footer className="border-t border-[#69F0FD] py-6 sm:py-8 text-center text-sm text-[#7F8B95]">
           {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
           {t.rich('made_with', {
             author: () => (
               <a
                 href="https://creativedesignsguru.com"
-                className="text-blue-700 hover:border-b-2 hover:border-blue-700"
+                className="text-[#69F0FD] hover:border-b-2 hover:border-[#69F0FD] transition-colors"
               >
                 CreativeDesignsGuru
               </a>

@@ -232,10 +232,10 @@ export default function PendingSuggestionsReview({
           }
 
           return (
-            <div key={suggestion.id} className="ml-4 mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg overflow-hidden">
+            <div key={suggestion.id} className="ml-4 mt-2 p-3 bg-[#918AB5]/20 border border-[#918AB5] rounded-lg overflow-hidden">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className="text-sm text-gray-700">
+                  <p className="text-sm text-[#BFC3C7]">
                     <strong>
                       Suggested
                       {label}
@@ -244,7 +244,7 @@ export default function PendingSuggestionsReview({
                     {' '}
                     {formatValue(suggestedValue)}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-[#69F0FD] mt-1">
                     Suggested by
                     {' '}
                     {suggestion.suggestedByUserName}
@@ -254,7 +254,7 @@ export default function PendingSuggestionsReview({
                     {new Date(suggestion.createdAt).toLocaleDateString()}
                   </p>
                   {suggestion.reason && suggestion.reason.trim() && (
-                    <div className="text-xs text-gray-600 mt-1 w-full">
+                    <div className="text-xs text-[#BFC3C7]/70 mt-1 w-full">
                       <strong>Additional Notes:</strong>
                       <TruncatableText text={suggestion.reason} />
                     </div>
@@ -271,12 +271,12 @@ export default function PendingSuggestionsReview({
               </div>
 
               {reviewingField === `${suggestion.id}-${field}` && (
-                <div className="mt-3 p-3 bg-white border border-gray-200 rounded">
+                <div className="mt-3 p-3 bg-[#002C4D] border border-[#69F0FD] rounded">
                   <textarea
                     value={reviewNote}
                     onChange={e => setReviewNote(e.target.value)}
                     placeholder="Add a review note (optional)..."
-                    className="w-full text-xs border border-gray-300 rounded px-2 py-1 mb-2"
+                    className="w-full text-xs border border-[#69F0FD] rounded px-2 py-1 mb-2 bg-[#011B2E] text-[#BFC3C7] placeholder-[#7F8B95]"
                     rows={2}
                     maxLength={100}
                   />
