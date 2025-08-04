@@ -158,11 +158,11 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-4 h-4 text-[#918AB5]" />;
       case 'approved':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-[#69F0FD]" />;
       case 'rejected':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-[#EC0037]" />;
       default:
         return null;
     }
@@ -182,7 +182,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
   };
 
   if (loading) {
-    return <div className="text-gray-500">Loading suggestions...</div>;
+    return <div className="text-[#BFC3C7]">Loading suggestions...</div>;
   }
 
   if (suggestions.length === 0) {
@@ -192,11 +192,11 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
   return (
     <div className="space-y-4">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-3">
-          <p className="text-red-800 text-sm">{error}</p>
+        <div className="bg-[#002C4D] border border-[#EC0037] rounded-md p-3">
+          <p className="text-white text-sm">{error}</p>
           <button
             onClick={() => setError(null)}
-            className="text-red-600 hover:text-red-800 text-xs mt-1"
+            className="text-[#EC0037] hover:text-[#4A1C23] text-xs mt-1 transition-colors"
           >
             Dismiss
           </button>
@@ -204,18 +204,18 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
       )}
 
       {showDeleteConfirm && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-          <p className="text-yellow-800 text-sm">Are you sure you want to delete this suggestion?</p>
+        <div className="bg-[#002C4D] border border-[#BFC3C7] rounded-md p-3">
+          <p className="text-white text-sm">Are you sure you want to delete this suggestion?</p>
           <div className="flex space-x-2 mt-2">
             <button
               onClick={confirmDelete}
-              className="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700"
+              className="bg-[#EC0037] text-white px-3 py-1 rounded text-xs hover:bg-[#4A1C23] transition-colors"
             >
               Delete
             </button>
             <button
               onClick={cancelDelete}
-              className="bg-gray-600 text-white px-3 py-1 rounded text-xs hover:bg-gray-700"
+              className="bg-[#00487E] text-white px-3 py-1 rounded text-xs hover:bg-[#69F0FD] hover:text-[#27131D] transition-colors"
             >
               Cancel
             </button>
@@ -224,18 +224,18 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
       )}
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Your Suggestion</h3>
-        <p className="text-sm text-gray-600 mt-1">
+        <h3 className="text-lg font-semibold text-white">Your Suggestion</h3>
+        <p className="text-sm text-[#BFC3C7] mt-1">
           Your most recent suggestion for this court
         </p>
       </div>
 
       {suggestions.map(suggestion => (
-        <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4 overflow-hidden w-full">
+        <div key={suggestion.id} className="bg-[#011B2E] border border-[#BFC3C7] rounded-lg p-4 overflow-hidden w-full">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               {getStatusIcon(suggestion.status)}
-              <span className="font-medium text-gray-900">
+              <span className="font-medium text-white">
                 {getStatusText(suggestion.status)}
               </span>
             </div>
@@ -244,13 +244,13 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
                 <>
                   <button
                     onClick={() => handleEdit(suggestion)}
-                    className="text-blue-600 hover:text-blue-800"
+                    className="text-[#69F0FD] hover:text-white transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(suggestion.id)}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-[#EC0037] hover:text-[#4A1C23] transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -261,127 +261,113 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
 
           <div className="space-y-2">
             {suggestion.suggestedName && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Name:</strong>
-                {' '}
-                {suggestion.suggestedName}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedName}</span>
               </p>
             )}
 
             {suggestion.suggestedAddress && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Address:</strong>
-                {' '}
-                {suggestion.suggestedAddress}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedAddress}</span>
               </p>
             )}
 
             {suggestion.suggestedCity && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>City:</strong>
-                {' '}
-                {suggestion.suggestedCity}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedCity}</span>
               </p>
             )}
 
             {suggestion.suggestedZip && suggestion.suggestedZip !== '00000' && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Zip Code:</strong>
-                {' '}
-                {suggestion.suggestedZip}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedZip}</span>
               </p>
             )}
 
             {suggestion.suggestedNumberOfCourts && suggestion.suggestedNumberOfCourts > 0 && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Number of Courts:</strong>
-                {' '}
-                {suggestion.suggestedNumberOfCourts}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedNumberOfCourts}</span>
               </p>
             )}
             {(!suggestion.suggestedNumberOfCourts || suggestion.suggestedNumberOfCourts === 0) && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Number of Courts:</strong>
-                {' '}
-                Unknown
+                <span className="text-[#BFC3C7] ml-1">Unknown</span>
               </p>
             )}
 
             {suggestion.suggestedSurface && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Surface:</strong>
-                {' '}
-                {suggestion.suggestedSurface}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedSurface}</span>
               </p>
             )}
 
             {suggestion.suggestedCondition && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Condition:</strong>
-                {' '}
-                {capitalizeFirstLetter(suggestion.suggestedCondition)}
+                <span className="text-[#BFC3C7] ml-1">{capitalizeFirstLetter(suggestion.suggestedCondition)}</span>
               </p>
             )}
 
             {suggestion.suggestedType && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Type:</strong>
-                {' '}
-                {capitalizeFirstLetter(suggestion.suggestedType)}
+                <span className="text-[#BFC3C7] ml-1">{capitalizeFirstLetter(suggestion.suggestedType)}</span>
               </p>
             )}
 
             {suggestion.suggestedHittingWall !== undefined && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Hitting Wall:</strong>
-                {' '}
-                {suggestion.suggestedHittingWall ? 'Yes' : 'No'}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedHittingWall ? 'Yes' : 'No'}</span>
               </p>
             )}
 
             {suggestion.suggestedLights !== undefined && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Lights:</strong>
-                {' '}
-                {suggestion.suggestedLights ? 'Yes' : 'No'}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedLights ? 'Yes' : 'No'}</span>
               </p>
             )}
 
             {suggestion.suggestedIsPublic !== undefined && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Court Access:</strong>
-                {' '}
-                {suggestion.suggestedIsPublic ? 'Public' : 'Private'}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedIsPublic ? 'Public' : 'Private'}</span>
               </p>
             )}
 
             {suggestion.reviewNote && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Review Note:</strong>
-                {' '}
-                {suggestion.reviewNote}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.reviewNote}</span>
               </p>
             )}
 
             {suggestion.reviewedByUserName && (
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-white">
                 <strong>Reviewed by:</strong>
-                {' '}
-                {suggestion.reviewedByUserName}
+                <span className="text-[#BFC3C7] ml-1">{suggestion.reviewedByUserName}</span>
               </p>
             )}
           </div>
 
           {suggestion.reason && suggestion.reason.trim() && (
-            <div className="text-sm text-gray-600 w-full mt-3 pt-2 border-t border-gray-100">
+            <div className="text-sm text-white w-full mt-3 pt-2 border-t border-[#BFC3C7]">
               <strong>Additional Notes:</strong>
-              <div className="mt-1">
+              <div className="mt-1 text-[#BFC3C7]">
                 <TruncatableText text={suggestion.reason} />
               </div>
             </div>
           )}
 
-          <p className="text-xs text-gray-400 mt-3">
+          <p className="text-xs text-[#BFC3C7] mt-3">
             Submitted on
             {' '}
             {new Date(suggestion.createdAt).toLocaleDateString()}
@@ -392,12 +378,12 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
       {/* Edit Modal */}
       {editingSuggestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#002C4D] rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-[#BFC3C7]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Edit Suggestion</h2>
+              <h2 className="text-xl font-semibold text-white">Edit Suggestion</h2>
               <button
                 onClick={() => setEditingSuggestion(null)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[#BFC3C7] hover:text-white transition-colors"
               >
                 <XCircle className="w-6 h-6" />
               </button>

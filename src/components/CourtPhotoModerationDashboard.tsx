@@ -197,10 +197,10 @@ export default function CourtPhotoModerationDashboard() {
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg font-medium transition-colors shadow ${
             filter === 'all'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'bg-[#EC0037] text-white'
+              : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
           }`}
         >
           All Reports (
@@ -209,10 +209,10 @@ export default function CourtPhotoModerationDashboard() {
         </button>
         <button
           onClick={() => setFilter('recent')}
-          className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg font-medium transition-colors shadow ${
             filter === 'recent'
-              ? 'bg-blue-600 text-white'
-              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              ? 'bg-[#EC0037] text-white'
+              : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
           }`}
         >
           Recent Reports (
@@ -222,19 +222,14 @@ export default function CourtPhotoModerationDashboard() {
         <button
           onClick={clearAllReports}
           disabled={clearingReports}
-          className="px-4 py-2 rounded-lg font-medium transition-colors bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 rounded-lg font-medium transition-colors bg-[#EC0037] text-white hover:bg-[#4A1C23] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
         >
           {clearingReports ? 'Clearing...' : 'Clear All Reports'}
         </button>
         <button
           onClick={fetchReportedPhotos}
           disabled={loading}
-          className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative z-10"
-          style={{
-            backgroundColor: '#059669',
-            color: 'white',
-            border: '2px solid #047857',
-          }}
+          className="px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed relative z-10 bg-[#69F0FD] text-[#27131D] hover:bg-[#4DADE3] border-2 border-[#002C4D] shadow-lg"
         >
           {loading ? 'Refreshing...' : 'Refresh'}
         </button>

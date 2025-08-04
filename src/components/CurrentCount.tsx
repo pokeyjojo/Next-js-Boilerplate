@@ -27,7 +27,7 @@ export const CurrentCount = () => {
   }, []);
 
   if (loading) {
-    return <div className="text-sm sm:text-base text-gray-600">Loading...</div>;
+    return <div className="text-sm sm:text-base text-[#BFC3C7]">Loading...</div>;
   }
 
   return (

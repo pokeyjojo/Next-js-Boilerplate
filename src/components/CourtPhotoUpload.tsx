@@ -78,24 +78,23 @@ export default function CourtPhotoUpload({
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
-          isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+          isDragActive ? 'border-[#69F0FD] bg-[#00487E]' : 'border-[#BFC3C7] hover:border-[#69F0FD] bg-[#011B2E]'
         } ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         <input {...getInputProps()} />
         {isUploading
           ? (
               <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mr-2"></div>
-                <span className="text-gray-600">Uploading...</span>
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#69F0FD] mr-2"></div>
+                <span className="text-[#BFC3C7]">Uploading...</span>
               </div>
             )
           : (
               <div>
-                <div className="text-gray-400 text-4xl mb-2">📸</div>
-                <p className="text-gray-600 mb-1">
+                <p className="text-[#BFC3C7] mb-1">
                   {isDragActive ? 'Drop photos here' : 'Drag & drop photos here, or click to select'}
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-[#7F8B95]">
                   Maximum
                   {' '}
                   {maxPhotos}
@@ -108,7 +107,7 @@ export default function CourtPhotoUpload({
 
       {uploadedPhotos.length > 0 && (
         <div className="mt-4">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Uploaded Photos:</h4>
+          <h4 className="text-sm font-medium text-white mb-2">Uploaded Photos:</h4>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {uploadedPhotos.map((photo, index) => (
               <div key={index} className="relative group">

@@ -90,22 +90,22 @@ export default function CourtSuggestionModerationDashboard() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
-        return <Check className="w-5 h-5 text-green-600" />;
+        return <Check className="w-5 h-5 text-[#69F0FD]" />;
       case 'rejected':
-        return <X className="w-5 h-5 text-red-600" />;
+        return <X className="w-5 h-5 text-[#EC0037]" />;
       default:
-        return <Clock className="w-5 h-5 text-yellow-600" />;
+        return <Clock className="w-5 h-5 text-[#918AB5]" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#69F0FD] text-[#27131D]';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-[#EC0037] text-white';
       default:
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#918AB5] text-white';
     }
   };
 
@@ -122,7 +122,7 @@ export default function CourtSuggestionModerationDashboard() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#EC0037]"></div>
       </div>
     );
   }
@@ -136,10 +136,10 @@ export default function CourtSuggestionModerationDashboard() {
             <button
               key={status}
               onClick={() => setFilter(status)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow ${
                 filter === status
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#EC0037] text-white'
+                  : 'bg-[#EBEDEE] text-[#27131D] hover:bg-[#BFC3C7]'
               }`}
             >
               {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -242,16 +242,16 @@ export default function CourtSuggestionModerationDashboard() {
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     {suggestion.lighted && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Lighted</span>
+                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Lighted</span>
                     )}
                     {suggestion.hittingWall && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Hitting Wall</span>
+                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Hitting Wall</span>
                     )}
                     {suggestion.membershipRequired && (
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Membership Required</span>
+                      <span className="px-2 py-1 bg-[#EC0037] text-white text-xs rounded-full shadow">Membership Required</span>
                     )}
                     {suggestion.parking && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Parking Available</span>
+                      <span className="px-2 py-1 bg-[#002C4D] text-white text-xs rounded-full shadow">Parking Available</span>
                     )}
                   </div>
 

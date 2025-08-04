@@ -408,7 +408,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       {!isLoadingSuggestions && !hasPendingSuggestion && (
         <button
           onClick={handleOpenModal}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-4 py-2 bg-[#EC0037] text-white text-sm font-medium rounded-md hover:bg-[#4A1C23] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EC0037] shadow-lg transition-colors"
         >
           <Edit className="w-4 h-4 mr-2" />
           {' '}
@@ -592,19 +592,19 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       {/* Success notification */}
       {showSuccess && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <div className="bg-[#002C4D] rounded-lg p-6 max-w-md w-full mx-4 border border-[#BFC3C7]">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-gray-900">
+              <h3 className="text-lg font-medium text-white">
                 Suggestion submitted successfully!
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-[#BFC3C7]">
                 Your suggestion has been submitted and is pending review.
               </p>
             </div>
-            <div className="mt-4">
+            <div className="mt-6">
               <button
                 onClick={() => setShowSuccess(false)}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:text-sm"
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#EC0037] text-base font-medium text-white hover:bg-[#4A1C23] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#69F0FD] transition-colors sm:text-sm"
               >
                 Close
               </button>
@@ -616,16 +616,16 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       {/* Error notification */}
       {showError && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+          <div className="bg-[#002C4D] rounded-lg p-6 max-w-sm w-full mx-4 border border-[#BFC3C7]">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <XCircle className="h-6 w-6 text-red-400" />
+                <XCircle className="h-6 w-6 text-[#EC0037]" />
               </div>
               <div className="ml-3">
-                <h3 className="text-sm font-medium text-gray-900">
+                <h3 className="text-sm font-medium text-white">
                   Error submitting suggestion
                 </h3>
-                <p className="mt-1 text-sm text-gray-500">
+                <p className="mt-1 text-sm text-[#BFC3C7]">
                   {errorMessage}
                 </p>
               </div>
@@ -633,7 +633,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
             <div className="mt-4">
               <button
                 onClick={() => setShowError(false)}
-                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm"
+                className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-[#EC0037] text-base font-medium text-white hover:bg-[#4A1C23] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#69F0FD] transition-colors sm:text-sm"
               >
                 Close
               </button>
@@ -819,12 +819,12 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       {/* New Suggestion Modal */}
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#002C4D] rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-[#BFC3C7]">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold">Suggest Court Edit</h2>
+              <h2 className="text-xl font-semibold text-white">Suggest Court Edit</h2>
               <button
                 onClick={() => setIsOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-[#BFC3C7] hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
@@ -833,7 +833,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="suggestedName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedName" className="block text-sm font-medium text-white mb-2">
                     Court Name
                   </label>
                   <input
@@ -841,13 +841,13 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     type="text"
                     value={formData.suggestedName}
                     onChange={e => handleInputChange('suggestedName', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                     placeholder="Court name"
                   />
                 </div>
 
                 <div className="relative">
-                  <label htmlFor="suggestedAddress" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedAddress" className="block text-sm font-medium text-white mb-2">
                     Address
                   </label>
                   <input
@@ -857,29 +857,29 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     onChange={e => handleAddressChange(e.target.value)}
                     onBlur={() => debouncedAddressSearch(formData.suggestedAddress)}
                     ref={addressInputRef}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                     placeholder="Court address"
                   />
 
                   {showSuggestions && (
                     <div
                       ref={suggestionsRef}
-                      className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                      className="absolute z-10 mt-1 w-full bg-[#00487E] border border-[#BFC3C7] rounded-lg shadow-lg max-h-60 overflow-y-auto"
                     >
                       {isSearching
                         ? (
-                            <div className="p-2 text-gray-500 text-sm">Searching...</div>
+                            <div className="p-2 text-[#7F8B95] text-sm">Searching...</div>
                           )
                         : addressSuggestions.length === 0
                           ? (
-                              <div className="p-2 text-gray-500 text-sm">No suggestions found.</div>
+                              <div className="p-2 text-[#7F8B95] text-sm">No suggestions found.</div>
                             )
                           : (
                               addressSuggestions.map((suggestion, index) => (
                                 <button
                                   key={index}
                                   type="button"
-                                  className="w-full p-2 text-left cursor-pointer hover:bg-blue-100 text-sm focus:bg-blue-100 focus:outline-none"
+                                  className="w-full p-2 text-left cursor-pointer hover:bg-[#69F0FD] text-sm focus:bg-[#69F0FD] focus:outline-none text-white hover:text-[#27131D] focus:text-[#27131D] transition-colors"
                                   onClick={() => handleAddressSelect(suggestion)}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' || e.key === ' ') {
@@ -903,7 +903,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedCity" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedCity" className="block text-sm font-medium text-white mb-2">
                     City
                   </label>
                   <input
@@ -911,13 +911,13 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     type="text"
                     value={formData.suggestedCity}
                     onChange={e => handleInputChange('suggestedCity', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                     placeholder="City"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedZip" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedZip" className="block text-sm font-medium text-white mb-2">
                     Zip Code
                   </label>
                   <input
@@ -925,13 +925,13 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                     type="text"
                     value={formData.suggestedZip}
                     onChange={e => handleInputChange('suggestedZip', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                     placeholder="Zip code"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedNumberOfCourts" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedNumberOfCourts" className="block text-sm font-medium text-white mb-2">
                     Number of Courts
                   </label>
                   <input
@@ -952,20 +952,20 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                         }
                       }
                     }}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                     placeholder="Number of courts (leave blank for unknown)"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedSurface" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedSurface" className="block text-sm font-medium text-white mb-2">
                     Surface Type
                   </label>
                   <select
                     id="suggestedSurface"
                     value={formData.suggestedSurface || ''}
                     onChange={e => handleInputChange('suggestedSurface', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="">Select surface type</option>
                     <option value="Hard">Hard</option>
@@ -976,14 +976,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedCondition" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedCondition" className="block text-sm font-medium text-white mb-2">
                     Court Condition
                   </label>
                   <select
                     id="suggestedCondition"
                     value={formData.suggestedCondition || ''}
                     onChange={e => handleInputChange('suggestedCondition', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="">Select condition</option>
                     <option value="unknown">Unknown</option>
@@ -1016,14 +1016,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedType" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedType" className="block text-sm font-medium text-white mb-2">
                     Type
                   </label>
                   <select
                     id="suggestedType"
                     value={formData.suggestedType || ''}
                     onChange={e => handleInputChange('suggestedType', e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="">Select type</option>
                     <option value="Indoor">Indoor</option>
@@ -1033,14 +1033,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedHittingWall" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedHittingWall" className="block text-sm font-medium text-white mb-2">
                     Hitting Wall
                   </label>
                   <select
                     id="suggestedHittingWall"
                     value={formData.suggestedHittingWall ? 'true' : 'false'}
                     onChange={e => handleInputChange('suggestedHittingWall', e.target.value === 'true')}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="">Select</option>
                     <option value="true">Yes</option>
@@ -1049,14 +1049,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedLights" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedLights" className="block text-sm font-medium text-white mb-2">
                     Lights
                   </label>
                   <select
                     id="suggestedLights"
                     value={formData.suggestedLights ? 'true' : 'false'}
                     onChange={e => handleInputChange('suggestedLights', e.target.value === 'true')}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="">Select</option>
                     <option value="true">Yes</option>
@@ -1065,14 +1065,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 </div>
 
                 <div>
-                  <label htmlFor="suggestedIsPublic" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="suggestedIsPublic" className="block text-sm font-medium text-white mb-2">
                     Court Access
                   </label>
                   <select
                     id="suggestedIsPublic"
                     value={formData.suggestedIsPublic ? 'true' : 'false'}
                     onChange={e => handleInputChange('suggestedIsPublic', e.target.value === 'true')}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white transition-all"
                   >
                     <option value="true">Public</option>
                     <option value="false">Private</option>
@@ -1081,19 +1081,19 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
               </div>
 
               <div>
-                <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="reason" className="block text-sm font-medium text-white mb-2">
                   Additional Notes
                 </label>
                 <textarea
                   id="reason"
                   value={formData.reason}
                   onChange={e => handleInputChange('reason', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border border-[#BFC3C7] rounded-lg px-3 py-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
                   placeholder="Any additional notes or explanations for these changes (optional)..."
                   rows={3}
                   maxLength={100}
                 />
-                <div className="text-xs text-gray-500 mt-1 text-right">
+                <div className="text-xs text-[#7F8B95] mt-1 text-right">
                   {formData.reason.length}
                   /100 characters
                 </div>
@@ -1103,14 +1103,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-white border border-[#BFC3C7] rounded-lg hover:bg-[#EBEDEE] hover:text-[#27131D] transition-colors shadow"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 bg-[#EC0037] text-white rounded-lg hover:bg-[#4A1C23] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
                 </button>

@@ -191,16 +191,16 @@ export default function UserCourtSuggestionsDashboard() {
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     {suggestion.lighted && (
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Lighted</span>
+                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Lighted</span>
                     )}
                     {suggestion.hittingWall && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Hitting Wall</span>
+                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Hitting Wall</span>
                     )}
                     {suggestion.membershipRequired && (
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full">Membership Required</span>
+                      <span className="px-2 py-1 bg-[#EC0037] text-white text-xs rounded-full shadow">Membership Required</span>
                     )}
                     {suggestion.parking && (
-                      <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Parking Available</span>
+                      <span className="px-2 py-1 bg-[#002C4D] text-white text-xs rounded-full shadow">Parking Available</span>
                     )}
                   </div>
 

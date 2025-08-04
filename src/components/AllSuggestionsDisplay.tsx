@@ -10,7 +10,7 @@ function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: 
 
   if (text.length <= maxLength) {
     return (
-      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full">
+      <div className="mt-1 break-words whitespace-pre-wrap overflow-hidden w-full text-[#BFC3C7]">
         {text}
       </div>
     );
@@ -18,12 +18,12 @@ function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: 
 
   return (
     <div className="mt-1 w-full">
-      <div className="break-words whitespace-pre-wrap overflow-hidden w-full">
+      <div className="break-words whitespace-pre-wrap overflow-hidden w-full text-[#BFC3C7]">
         {isExpanded ? text : `${text.substring(0, maxLength)}...`}
       </div>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="text-blue-600 hover:text-blue-800 text-xs mt-1 underline"
+        className="text-[#69F0FD] hover:text-white text-xs mt-1 underline transition-colors"
       >
         {isExpanded ? 'Show less' : 'Show more'}
       </button>
@@ -92,11 +92,11 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-4 h-4 text-[#918AB5]" />;
       case 'approved':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-[#69F0FD]" />;
       case 'rejected':
-        return <XCircle className="w-4 h-4 text-red-500" />;
+        return <XCircle className="w-4 h-4 text-[#EC0037]" />;
       default:
         return null;
     }
@@ -121,7 +121,7 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
     : suggestions.filter(suggestion => suggestion.suggestedBy !== currentUserId);
 
   if (loading) {
-    return <div className="text-gray-500">Loading suggestions...</div>;
+    return <div className="text-[#BFC3C7]">Loading suggestions...</div>;
   }
 
   if (suggestions.length === 0) {
@@ -131,14 +131,14 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900">Suggestion History</h3>
+        <h3 className="text-lg font-semibold text-white">Suggestion History</h3>
         {currentUserId && (
-          <label className="flex items-center space-x-2 text-sm text-gray-600">
+          <label className="flex items-center space-x-2 text-sm text-[#BFC3C7]">
             <input
               type="checkbox"
               checked={showOwnSuggestions}
               onChange={e => setShowOwnSuggestions(e.target.checked)}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="rounded border-[#BFC3C7] bg-[#00487E] text-[#69F0FD] focus:ring-[#69F0FD] focus:ring-2"
             />
             <span>Show my suggestions</span>
           </label>
@@ -147,21 +147,21 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
 
       {filteredSuggestions.length === 0
         ? (
-            <div className="text-gray-500 text-center py-4">
+            <div className="text-[#BFC3C7] text-center py-4">
               {showOwnSuggestions ? 'No suggestion history found.' : 'No suggestion history from other users.'}
             </div>
           )
         : (
             filteredSuggestions.map(suggestion => (
-              <div key={suggestion.id} className="bg-white border border-gray-200 rounded-lg p-4 overflow-hidden">
+              <div key={suggestion.id} className="bg-[#011B2E] border border-[#BFC3C7] rounded-lg p-4 overflow-hidden">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
                     {getStatusIcon(suggestion.status)}
-                    <span className="font-medium text-gray-900">
+                    <span className="font-medium text-white">
                       {getStatusText(suggestion.status)}
                     </span>
                   </div>
-                  <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="flex items-center space-x-2 text-sm text-[#BFC3C7]">
                     <User className="w-4 h-4" />
                     <span>{suggestion.suggestedByUserName || 'Unknown User'}</span>
                   </div>
@@ -169,119 +169,105 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
 
                 <div className="space-y-2">
                   {suggestion.suggestedName && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Name:</strong>
-                      {' '}
-                      {suggestion.suggestedName}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedName}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedAddress && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Address:</strong>
-                      {' '}
-                      {suggestion.suggestedAddress}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedAddress}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedCity && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>City:</strong>
-                      {' '}
-                      {suggestion.suggestedCity}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedCity}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedZip && suggestion.suggestedZip !== '00000' && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Zip Code:</strong>
-                      {' '}
-                      {suggestion.suggestedZip}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedZip}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedNumberOfCourts && suggestion.suggestedNumberOfCourts > 0 && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Number of Courts:</strong>
-                      {' '}
-                      {suggestion.suggestedNumberOfCourts}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedNumberOfCourts}</span>
                     </p>
                   )}
                   {(!suggestion.suggestedNumberOfCourts || suggestion.suggestedNumberOfCourts === 0) && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Number of Courts:</strong>
-                      {' '}
-                      Unknown
+                      <span className="text-[#BFC3C7] ml-1">Unknown</span>
                     </p>
                   )}
 
                   {suggestion.suggestedSurface && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Surface:</strong>
-                      {' '}
-                      {suggestion.suggestedSurface}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedSurface}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedCondition && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Condition:</strong>
-                      {' '}
-                      {capitalizeFirstLetter(suggestion.suggestedCondition)}
+                      <span className="text-[#BFC3C7] ml-1">{capitalizeFirstLetter(suggestion.suggestedCondition)}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedType && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Type:</strong>
-                      {' '}
-                      {capitalizeFirstLetter(suggestion.suggestedType)}
+                      <span className="text-[#BFC3C7] ml-1">{capitalizeFirstLetter(suggestion.suggestedType)}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedHittingWall !== undefined && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Hitting Wall:</strong>
-                      {' '}
-                      {suggestion.suggestedHittingWall ? 'Yes' : 'No'}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedHittingWall ? 'Yes' : 'No'}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedLights !== undefined && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Lights:</strong>
-                      {' '}
-                      {suggestion.suggestedLights ? 'Yes' : 'No'}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedLights ? 'Yes' : 'No'}</span>
                     </p>
                   )}
 
                   {suggestion.suggestedIsPublic !== undefined && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Court Access:</strong>
-                      {' '}
-                      {suggestion.suggestedIsPublic ? 'Public' : 'Private'}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.suggestedIsPublic ? 'Public' : 'Private'}</span>
                     </p>
                   )}
 
                   {suggestion.reviewNote && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Review Note:</strong>
-                      {' '}
-                      {suggestion.reviewNote}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.reviewNote}</span>
                     </p>
                   )}
 
                   {suggestion.reviewedByUserName && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-white">
                       <strong>Reviewed by:</strong>
-                      {' '}
-                      {suggestion.reviewedByUserName}
+                      <span className="text-[#BFC3C7] ml-1">{suggestion.reviewedByUserName}</span>
                     </p>
                   )}
                 </div>
 
                 {suggestion.reason && suggestion.reason.trim() && (
-                  <div className="text-sm text-gray-600 w-full mt-3 pt-2 border-t border-gray-100">
+                  <div className="text-sm text-white w-full mt-3 pt-2 border-t border-[#BFC3C7]">
                     <strong>Additional Notes:</strong>
                     <div className="mt-1">
                       <TruncatableText text={suggestion.reason} />
@@ -289,7 +275,7 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
                   </div>
                 )}
 
-                <p className="text-xs text-gray-400 mt-3">
+                <p className="text-xs text-[#BFC3C7] mt-3">
                   Submitted on
                   {' '}
                   {new Date(suggestion.createdAt).toLocaleDateString()}

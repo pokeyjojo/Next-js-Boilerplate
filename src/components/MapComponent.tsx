@@ -1,6 +1,7 @@
 'use client';
 
 import type { LatLngTuple } from 'leaflet';
+import { setTimeout } from 'node:timers';
 import { useUser } from '@clerk/nextjs';
 import L from 'leaflet';
 import { Star } from 'lucide-react';
@@ -26,7 +27,7 @@ const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
 
 // Custom marker icons for public and private courts
 const createCustomIcon = (isPrivate: boolean) => {
-  const color = isPrivate ? '#FF4444' : '#3388FF';
+  const color = isPrivate ? '#EC0037' : '#002C4D';
   return L.divIcon({
     className: 'custom-marker',
     html: `
@@ -35,8 +36,8 @@ const createCustomIcon = (isPrivate: boolean) => {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        border: 3px solid white;
-        box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        border: 3px solid #FFFFFF;
+        box-shadow: 0 0 10px rgba(39,19,29,0.4);
       ">
       </div>
     `,
@@ -364,7 +365,7 @@ const CourtList = ({
                   onExternalSearchChange(e.target.value);
                 }
               }}
-              className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-3 py-2 border border-[#BFC3C7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EC0037] text-sm bg-[#FFFFFF] text-[#27131D]"
               ref={searchInputRef}
             />
             {effectiveSearchQuery && (
@@ -391,8 +392,8 @@ const CourtList = ({
                 onClick={() => applyQuickFilter(filter.key)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   activeFilters.includes(filter.key)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#EC0037] text-white shadow-lg'
+                    : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
                 }`}
               >
                 {filter.label}
@@ -409,8 +410,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('az')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 sortType === 'az'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#002C4D] text-white shadow-lg'
+                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
               }`}
             >
               A-Z
@@ -420,8 +421,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('distance')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 sortType === 'distance'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#002C4D] text-white shadow-lg'
+                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
               }`}
             >
               Distance
@@ -458,8 +459,8 @@ const CourtList = ({
                 onClick={() => applyQuickFilter(filter.key)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   activeFilters.includes(filter.key)
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    ? 'bg-[#EC0037] text-white shadow-lg'
+                    : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
                 }`}
               >
                 {filter.label}
@@ -476,8 +477,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('az')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 sortType === 'az'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#002C4D] text-white shadow-lg'
+                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
               }`}
             >
               A-Z
@@ -487,8 +488,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('distance')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 sortType === 'distance'
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  ? 'bg-[#002C4D] text-white shadow-lg'
+                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
               }`}
             >
               Distance
@@ -551,11 +552,11 @@ const CourtList = ({
                   })()}
                 </p>
                 <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
-                  <span className={`px-2 py-1 rounded text-xs sm:text-sm ${court.membership_required ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}>
+                  <span className={`px-2 py-1 rounded text-xs sm:text-sm shadow ${court.membership_required ? 'bg-[#EC0037] text-white' : 'bg-[#002C4D] text-white'}`}>
                     {court.membership_required ? 'Private' : 'Public'}
                   </span>
                   {court.lighted && (
-                    <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs sm:text-sm">
+                    <span className="px-2 py-1 rounded bg-[#69F0FD] text-[#27131D] text-xs sm:text-sm shadow">
                       Lights
                     </span>
                   )}
@@ -604,7 +605,7 @@ const CourtList = ({
 };
 
 // Memoized version of CourtList
-const MemoizedCourtList = React.memo(CourtList);
+const _MemoizedCourtList = React.memo(CourtList);
 
 // Optimized search component with debouncing
 const OptimizedSearchBar = React.memo(({
@@ -815,16 +816,16 @@ function ReviewModal({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative max-h-[90vh] overflow-y-auto">
-        <button className="absolute top-2 right-2 text-gray-400 hover:text-gray-700" onClick={onClose}>&times;</button>
-        <h3 className="text-lg font-bold mb-4">{isEdit ? 'Edit Review' : 'Leave a Review'}</h3>
+      <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto border border-[#BFC3C7]">
+        <button className="absolute top-2 right-2 text-[#BFC3C7] hover:text-white transition-colors" onClick={onClose}>&times;</button>
+        <h3 className="text-lg font-bold mb-4 text-white">{isEdit ? 'Edit Review' : 'Leave a Review'}</h3>
 
         <div className="mb-4">
           <StarRating value={rating} onChange={setRating} editable />
         </div>
 
         <textarea
-          className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
+          className="w-full bg-[#00487E] text-white placeholder-[#7F8B95] border border-[#BFC3C7] rounded-lg p-2 mb-4 min-h-[80px] focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
           placeholder="Share your experience..."
           value={text}
           onChange={e => setText(e.target.value)}
@@ -842,7 +843,7 @@ function ReviewModal({
         </div>
 
         <button
-          className="w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60"
+          className="w-full bg-[#EC0037] text-white py-2 rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors disabled:opacity-60 shadow-lg"
           onClick={() => onSubmit(rating, text, photos)}
           disabled={loading || rating < 1}
         >
@@ -919,6 +920,7 @@ function CourtDetailsPanel({
   _setShowDeleteCourtModal,
   _deletingCourt,
   _setDeletingCourt,
+  onSetActiveTab,
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -933,6 +935,7 @@ function CourtDetailsPanel({
   _setShowDeleteCourtModal: (show: boolean) => void;
   _deletingCourt: boolean;
   _setDeletingCourt: (deleting: boolean) => void;
+  onSetActiveTab?: (tab: 'overview' | 'photos' | 'reviews') => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
@@ -1186,13 +1189,25 @@ function CourtDetailsPanel({
     }
   };
 
+  // Listen for setActiveTab events
+  useEffect(() => {
+    const handleSetActiveTab = (event: CustomEvent) => {
+      setActiveTab(event.detail.tab);
+    };
+
+    window.addEventListener('setActiveTab', handleSetActiveTab as EventListener);
+    return () => {
+      window.removeEventListener('setActiveTab', handleSetActiveTab as EventListener);
+    };
+  }, []);
+
   if (!selectedCourt) {
     return null;
   }
   return (
     <div
       className={
-        'fixed z-50 bg-white shadow-2xl border-t border-l border-gray-200 '
+        'fixed z-50 bg-[#002C4D] shadow-2xl border-t border-l border-[#BFC3C7] '
         + 'transition-all duration-300 '
         + 'w-full max-w-lg bottom-0 left-0 right-0 mx-auto rounded-t-xl p-6 '
         + 'lg:static lg:rounded-none lg:border-t-0 lg:border-l lg:w-[400px] lg:max-w-[400px] lg:h-full lg:overflow-y-auto lg:shadow-none lg:p-8 '
@@ -1214,7 +1229,7 @@ function CourtDetailsPanel({
       }}
     >
       <button
-        className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
+        className="absolute top-4 right-4 text-[#BFC3C7] hover:text-white transition-colors"
         onClick={() => setSelectedCourt(null)}
         aria-label="Close details"
       >
@@ -1233,17 +1248,19 @@ function CourtDetailsPanel({
         onSuggestionReviewed={() => refreshCourtData()}
       />
       <div className="flex items-center space-x-4 mb-4">
-        <span className="px-2 py-1 rounded bg-blue-100 text-blue-800 text-xs">
+        <span className="px-2 py-1 rounded bg-[#00487E] text-white text-xs">
           {selectedCourt.membership_required ? 'Private' : 'Public'}
         </span>
         {selectedCourt.lighted && (
-          <span className="px-2 py-1 rounded bg-yellow-100 text-yellow-800 text-xs">Lights</span>
+          <span className="px-2 py-1 rounded bg-[#69F0FD] text-[#27131D] text-xs sm:text-sm shadow">
+            Lights
+          </span>
         )}
       </div>
       <div className="flex space-x-8 border-b mb-4">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
         >
           Overview
         </button>
@@ -1252,7 +1269,7 @@ function CourtDetailsPanel({
             setActiveTab('photos');
             fetchPhotos();
           }}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
         >
           Photos
         </button>
@@ -1261,7 +1278,7 @@ function CourtDetailsPanel({
             setActiveTab('reviews');
             fetchReviews();
           }}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
         >
           Reviews
         </button>
@@ -1278,8 +1295,8 @@ function CourtDetailsPanel({
 
               {/* Sign-in prompt for suggestions */}
               {!isSignedIn && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
-                  <div className="text-center text-gray-600 py-4">
+                <div className="mt-6 pt-4 border-t border-[#BFC3C7]">
+                  <div className="text-center text-[#BFC3C7] py-4">
                     <p className="text-sm">Sign in to make a suggestion</p>
                   </div>
                 </div>
@@ -1287,7 +1304,7 @@ function CourtDetailsPanel({
 
               {/* Edit Buttons */}
               {isSignedIn && (
-                <div className="mt-6 pt-4 border-t border-gray-200">
+                <div className="mt-6 pt-4 border-t border-[#BFC3C7]">
                   <div className="flex items-center space-x-3">
                     <CourtEditSuggestion
                       court={{
@@ -1347,7 +1364,7 @@ function CourtDetailsPanel({
                     {isAdmin && (
                       <button
                         onClick={() => _setShowDeleteCourtModal(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 bg-[#EC0037] text-white rounded-lg hover:bg-[#4A1C23] transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1389,19 +1406,19 @@ function CourtDetailsPanel({
               <div>
                 {loadingPhotos
                   ? (
-                      <div className="text-center text-gray-400">Loading photos...</div>
+                      <div className="text-center text-[#BFC3C7]">Loading photos...</div>
                     )
                   : (
                       <>
                         {!isSignedIn && (
-                          <div className="mb-4 text-center text-gray-600 py-4">
+                          <div className="mb-4 text-center text-[#BFC3C7] py-4">
                             <p className="text-sm">Sign in to post photos</p>
                           </div>
                         )}
                         {isSignedIn && (
                           <div className="mb-4 flex justify-center">
                             <button
-                              className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
+                              className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors shadow-lg"
                               onClick={() => setShowPhotoUploadModal(true)}
                             >
                               Add Photos
@@ -1424,27 +1441,27 @@ function CourtDetailsPanel({
               <div>
                 {loadingReviews
                   ? (
-                      <div className="text-center text-gray-400">Loading reviews...</div>
+                      <div className="text-center text-[#BFC3C7]">Loading reviews...</div>
                     )
                   : (
                       <>
                         {reviews.length === 0 && (
-                          <div className="text-center text-gray-400">No reviews yet.</div>
+                          <div className="text-center text-[#BFC3C7]">No reviews yet.</div>
                         )}
                         {reviews.map(review => (
-                          <div key={review.id} className="mb-4 border-b pb-3">
+                          <div key={review.id} className="mb-4 border-b border-[#BFC3C7] pb-3">
                             <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold">{review.userName}</span>
+                              <span className="font-semibold text-white">{review.userName}</span>
                               <StarRating value={review.rating} />
-                              <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                              <span className="text-xs text-[#BFC3C7]">{new Date(review.createdAt).toLocaleDateString()}</span>
                             </div>
-                            <div className="text-gray-700 text-sm whitespace-pre-line">{review.text}</div>
+                            <div className="text-[#BFC3C7] text-sm whitespace-pre-line">{review.text}</div>
                             {review.photos && (
                               <div className="mt-2 grid grid-cols-2 gap-2">
                                 {JSON.parse(review.photos).map((photo: string, index: number) => (
                                   <button
                                     key={index}
-                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#69F0FD] hover:ring-2 hover:ring-[#69F0FD] transition-all"
                                     onClick={() => {
                                       setPhotoViewerPhotos(JSON.parse(review.photos));
                                       setPhotoViewerIndex(index);
@@ -1466,7 +1483,7 @@ function CourtDetailsPanel({
                               {canEditReview(review) && (
                                 <>
                                   <button
-                                    className="text-xs text-blue-600 hover:underline"
+                                    className="text-xs text-[#69F0FD] hover:text-white transition-colors"
                                     onClick={() => {
                                       setEditReview(review);
                                       setShowModal(true);
@@ -1475,7 +1492,7 @@ function CourtDetailsPanel({
                                     Edit
                                   </button>
                                   <button
-                                    className="text-xs text-red-600 hover:underline"
+                                    className="text-xs text-[#EC0037] hover:text-[#4A1C23] transition-colors"
                                     onClick={() => handleDelete(review.id)}
                                   >
                                     Delete
@@ -1484,7 +1501,7 @@ function CourtDetailsPanel({
                               )}
                               {isSignedIn && (
                                 <button
-                                  className="text-xs text-orange-600 hover:underline"
+                                  className="text-xs text-[#918AB5] hover:text-white transition-colors"
                                   onClick={() => handleReport(review.id)}
                                 >
                                   Report
@@ -1496,14 +1513,14 @@ function CourtDetailsPanel({
                       </>
                     )}
                 {!isSignedIn && (
-                  <div className="mt-6 text-center text-gray-600 py-4">
+                  <div className="mt-6 text-center text-[#BFC3C7] py-4">
                     <p className="text-sm">Sign in to leave a review</p>
                   </div>
                 )}
                 {isSignedIn && !myReview && (
                   <div className="mt-6 flex justify-center">
                     <button
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow"
+                      className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors shadow-lg"
                       onClick={() => {
                         setEditReview(null);
                         setShowModal(true);
@@ -1515,7 +1532,7 @@ function CourtDetailsPanel({
                 )}
                 {isAdmin && (
                   <div className="mt-2 text-center">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Admin Mode</span>
+                    <span className="text-xs bg-[#00487E] text-white px-2 py-1 rounded-full">Admin Mode</span>
                   </div>
                 )}
                 <ReviewModal
@@ -1539,8 +1556,8 @@ function CourtDetailsPanel({
                         {isAdmin ? 'Delete this review?' : 'Delete your review?'}
                       </div>
                       <div className="flex gap-2 justify-center">
-                        <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700" onClick={confirmDelete}>Delete</button>
-                        <button className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300" onClick={cancelDelete}>Cancel</button>
+                        <button className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors" onClick={confirmDelete}>Delete</button>
+                        <button className="px-4 py-2 bg-[#00487E] text-white rounded-lg font-semibold hover:bg-[#69F0FD] hover:text-[#27131D] transition-colors" onClick={cancelDelete}>Cancel</button>
                       </div>
                     </div>
                   </div>
@@ -1579,7 +1596,7 @@ function CourtDetailsPanel({
                           id="report-reason"
                           value={reportReason}
                           onChange={e => setReportReason(e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD]"
                           rows={4}
                           placeholder="Please explain why you're reporting this review..."
                           maxLength={100}
@@ -1592,7 +1609,7 @@ function CourtDetailsPanel({
                       </div>
                       <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
                         <button
-                          className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg font-semibold hover:bg-gray-400 border border-gray-400 shadow"
+                          className="px-4 py-2 bg-[#00487E] text-white rounded-lg font-semibold hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7] shadow transition-colors"
                           onClick={cancelReport}
                           disabled={submittingReport}
                           style={{ minWidth: '80px' }}
@@ -1600,7 +1617,7 @@ function CourtDetailsPanel({
                           Cancel
                         </button>
                         <button
-                          className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed border-2 border-red-700 shadow-lg"
+                          className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#4A1C23] shadow-lg transition-colors"
                           onClick={submitReport}
                           disabled={submittingReport || !reportReason.trim()}
                           style={{ minWidth: '120px' }}
@@ -1645,9 +1662,10 @@ export default function MapComponent() {
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
-  const [uploadingPhotos, setUploadingPhotos] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
+  const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [showPhotoUploadSuccess, setShowPhotoUploadSuccess] = useState(false);
   const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
   const [showNewCourtSuggestionForm, setShowNewCourtSuggestionForm] = useState(false);
   const [showDeleteCourtModal, setShowDeleteCourtModal] = useState(false);
@@ -1851,6 +1869,11 @@ export default function MapComponent() {
       setShowPhotoUploadModal(false);
       setSelectedPhotos([]);
       setPhotoCaption('');
+      setShowPhotoUploadSuccess(true); // Show success message
+
+      // Set active tab to photos
+      handleSetActiveTab('photos');
+
       // Refresh photos by temporarily changing selectedCourt to trigger re-fetch
       if (selectedCourt) {
         const currentCourt = selectedCourt;
@@ -1865,6 +1888,20 @@ export default function MapComponent() {
       setUploadingPhotos(false);
     }
   };
+
+  // Callback to set photos tab active
+  const setPhotosTabActive = useCallback(() => {
+    // This will be called from CourtDetailsPanel to set the photos tab active
+    // We'll handle this by passing a callback that the panel can call
+  }, []);
+
+  // Callback to set active tab
+  const handleSetActiveTab = useCallback((tab: 'overview' | 'photos' | 'reviews') => {
+    // This will be called from CourtDetailsPanel to set the active tab
+    // We'll use a custom event to communicate with the panel
+    const event = new CustomEvent('setActiveTab', { detail: { tab } });
+    window.dispatchEvent(event);
+  }, []);
 
   return (
     <div className="flex flex-col lg:flex-row h-screen relative">
@@ -1921,7 +1958,7 @@ export default function MapComponent() {
       </div>
 
       {/* Desktop: Sidebar (optimized) */}
-      <div className="hidden lg:block w-1/3 border-r">
+      <div className="hidden lg:block w-1/3 border-r border-[#BFC3C7]">
         <OptimizedCourtList
           courts={courts}
           onCourtSelect={handleCourtSelect}
@@ -1953,7 +1990,7 @@ export default function MapComponent() {
         {isSignedIn && (
           <button
             onClick={() => setShowNewCourtSuggestionForm(true)}
-            className="absolute bottom-6 left-6 z-40 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-full shadow-lg transition-colors duration-200 flex items-center space-x-2"
+            className="absolute bottom-6 left-6 z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -1980,6 +2017,7 @@ export default function MapComponent() {
                 _setShowDeleteCourtModal={setShowDeleteCourtModal}
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
+                onSetActiveTab={handleSetActiveTab}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -1997,6 +2035,7 @@ export default function MapComponent() {
                 _setShowDeleteCourtModal={setShowDeleteCourtModal}
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
+                onSetActiveTab={handleSetActiveTab}
               />
             </div>
             <div
@@ -2010,22 +2049,22 @@ export default function MapComponent() {
       {/* Photo Upload Modal */}
       {showPhotoUploadModal && (
         <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto border border-[#BFC3C7]">
             <button
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              className="absolute top-2 right-2 text-[#BFC3C7] hover:text-white transition-colors"
               onClick={() => setShowPhotoUploadModal(false)}
             >
               &times;
             </button>
-            <h3 className="text-lg font-bold mb-4">Add Photos</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Add Photos</h3>
 
             <div className="mb-4">
-              <label htmlFor="photo-caption" className="block text-sm font-medium text-gray-700 mb-2">
-                Photo Caption (optional)
+              <label htmlFor="photo-caption" className="block text-sm font-medium text-white mb-2">
+                Caption
               </label>
               <textarea
                 id="photo-caption"
-                className="w-full border rounded-lg p-2"
+                className="w-full bg-[#00487E] text-white placeholder-[#7F8B95] border border-[#BFC3C7] rounded-lg p-2 focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
                 placeholder="Add a caption for your photos..."
                 value={photoCaption}
                 onChange={e => setPhotoCaption(e.target.value)}
@@ -2043,13 +2082,13 @@ export default function MapComponent() {
 
             <div className="flex gap-2 justify-end">
               <button
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                className="px-4 py-2 bg-[#EBEDEE] text-[#27131D] rounded-lg font-semibold hover:bg-[#BFC3C7] transition-colors shadow"
                 onClick={() => setShowPhotoUploadModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-60"
+                className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:opacity-60 transition-colors shadow-lg"
                 onClick={handleSubmitPhotos}
                 disabled={uploadingPhotos || selectedPhotos.length === 0}
               >
@@ -2060,19 +2099,40 @@ export default function MapComponent() {
         </div>
       )}
 
-      {/* Success message for court suggestion */}
-      {showCourtSuggestionSuccess && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-green-50 border-2 border-green-300 rounded-lg shadow-lg p-6 max-w-md mx-auto">
+      {/* Photo Upload Success Message */}
+      {showPhotoUploadSuccess && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#002C4D] border-2 border-[#BFC3C7] rounded-lg shadow-lg p-6 max-w-md mx-auto">
           <div className="flex items-center mb-2">
-            <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-8 h-8 bg-[#69F0FD] rounded-full flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-[#27131D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-green-800 font-semibold text-lg">Success!</p>
+            <h3 className="text-lg font-bold text-white">Photos Uploaded Successfully!</h3>
           </div>
-          <p className="text-green-700 font-medium mb-1">Your court suggestion has been submitted successfully!</p>
-          <p className="text-green-600 text-sm">
+          <p className="text-[#BFC3C7]">Your photos have been added to the court gallery.</p>
+          <button
+            onClick={() => setShowPhotoUploadSuccess(false)}
+            className="mt-4 bg-[#EC0037] text-white px-4 py-2 rounded-lg hover:bg-[#4A1C23] transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      )}
+
+      {/* Success message for court suggestion */}
+      {showCourtSuggestionSuccess && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-[#002C4D] border-2 border-[#BFC3C7] rounded-lg shadow-lg p-6 max-w-md mx-auto">
+          <div className="flex items-center mb-2">
+            <div className="w-8 h-8 bg-[#69F0FD] rounded-full flex items-center justify-center mr-3">
+              <svg className="w-5 h-5 text-[#27131D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <p className="text-white font-semibold text-lg">Success!</p>
+          </div>
+          <p className="text-white font-medium mb-1">Your court suggestion has been submitted successfully!</p>
+          <p className="text-[#BFC3C7] text-sm">
             Thank you for contributing to our tennis court database. An admin will review your suggestion and you'll be notified of the decision.
           </p>
         </div>
@@ -2261,13 +2321,13 @@ function InlineCourtInfo({
 
     return (
       <div className="mb-2">
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-white">
           <strong>
             {label}
             :
           </strong>
           {' '}
-          {displayValue || 'Not specified'}
+          <span className="text-[#BFC3C7]">{displayValue || 'Not specified'}</span>
         </div>
         {fieldSuggestions.map((suggestion) => {
           const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof suggestion;
@@ -2314,7 +2374,7 @@ function InlineCourtInfo({
                   <div className="flex gap-1 ml-2">
                     <button
                       onClick={() => setReviewingField(`${suggestion.id}-${field}`)}
-                      className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      className="px-2 py-1 text-xs bg-[#002C4D] text-white rounded hover:bg-[#00487E] transition-colors shadow"
                     >
                       Review
                     </button>
@@ -2336,14 +2396,14 @@ function InlineCourtInfo({
                     <button
                       onClick={() => handleFieldReview(suggestion, field, 'approved')}
                       disabled={isSubmitting}
-                      className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 transition-colors"
+                      className="px-2 py-1 text-xs bg-[#69F0FD] text-[#27131D] rounded hover:bg-[#4DADE3] disabled:opacity-50 transition-colors shadow"
                     >
                       {isSubmitting ? 'Approving...' : 'Approve'}
                     </button>
                     <button
                       onClick={() => handleFieldReview(suggestion, field, 'rejected')}
                       disabled={isSubmitting}
-                      className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 transition-colors"
+                      className="px-2 py-1 text-xs bg-[#EC0037] text-white rounded hover:bg-[#4A1C23] disabled:opacity-50 transition-colors shadow"
                     >
                       {isSubmitting ? 'Rejecting...' : 'Reject'}
                     </button>
@@ -2352,7 +2412,7 @@ function InlineCourtInfo({
                         setReviewingField(null);
                         setReviewNote('');
                       }}
-                      className="px-2 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                      className="px-2 py-1 text-xs bg-[#7F8B95] text-white rounded hover:bg-[#50394D] transition-colors shadow"
                     >
                       Cancel
                     </button>
@@ -2367,7 +2427,7 @@ function InlineCourtInfo({
   };
 
   if (loading) {
-    return <div className="text-center text-gray-400">Loading...</div>;
+    return <div className="text-center text-[#BFC3C7]">Loading...</div>;
   }
 
   return (
@@ -2435,12 +2495,12 @@ function CourtNameWithSuggestions({
   const nameSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedName);
 
   if (loading) {
-    return <h2 className="text-2xl font-bold mb-2">{court.name}</h2>;
+    return <h2 className="text-2xl font-bold mb-2 text-white">{court.name}</h2>;
   }
 
   return (
     <div className="mb-2">
-      <h2 className="text-2xl font-bold">{court.name}</h2>
+      <h2 className="text-2xl font-bold text-white">{court.name}</h2>
       {nameSuggestions.map(suggestion => (
         <div key={suggestion.id} className="mt-1 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
@@ -2575,7 +2635,7 @@ function CourtAddressWithSuggestions({
 
   if (loading) {
     return (
-      <div className="text-gray-600 mb-2">
+      <div className="text-[#BFC3C7] mb-2">
         {court.address}
         {court.city && `, ${court.city}`}
         {court.zip && court.zip !== '00000' && `, ${court.zip}`}
@@ -2585,7 +2645,7 @@ function CourtAddressWithSuggestions({
 
   return (
     <div className="mb-2">
-      <div className="text-gray-600">
+      <div className="text-[#BFC3C7]">
         {court.address}
         {court.city && `, ${court.city}`}
         {court.zip && court.zip !== '00000' && `, ${court.zip}`}

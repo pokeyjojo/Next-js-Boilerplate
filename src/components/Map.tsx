@@ -6,8 +6,8 @@ import dynamic from 'next/dynamic';
 const DynamicMap = dynamic(() => import('./MapComponent'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-screen items-center justify-center">
-      <div className="text-lg">Loading map...</div>
+    <div className="flex h-screen items-center justify-center bg-[#002C4D]">
+      <div className="text-lg text-[#BFC3C7]">Loading map...</div>
     </div>
   ),
 });

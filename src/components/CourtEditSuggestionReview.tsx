@@ -113,31 +113,31 @@ export default function CourtEditSuggestionReview({ courtId, currentUserId }: Co
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'pending':
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-4 h-4 text-[#918AB5]" />;
       case 'approved':
-        return <Check className="w-4 h-4 text-green-500" />;
+        return <Check className="w-4 h-4 text-[#69F0FD]" />;
       case 'rejected':
-        return <X className="w-4 h-4 text-red-500" />;
+        return <X className="w-4 h-4 text-[#EC0037]" />;
       default:
-        return <AlertCircle className="w-4 h-4 text-gray-500" />;
+        return <AlertCircle className="w-4 h-4 text-[#7F8B95]" />;
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-[#918AB5] text-white';
       case 'approved':
-        return 'bg-green-100 text-green-800';
+        return 'bg-[#69F0FD] text-[#27131D]';
       case 'rejected':
-        return 'bg-red-100 text-red-800';
+        return 'bg-[#EC0037] text-white';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#EBEDEE] text-[#27131D]';
     }
   };
 
   if (loading) {
-    return <div className="text-center py-4">Loading suggestions...</div>;
+    return <div className="text-center py-4 text-[#BFC3C7]">Loading suggestions...</div>;
   }
 
   if (suggestions.length === 0) {

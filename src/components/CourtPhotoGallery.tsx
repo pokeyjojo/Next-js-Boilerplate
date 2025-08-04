@@ -215,9 +215,8 @@ export default function CourtPhotoGallery({
   if (photos.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="text-gray-400 text-6xl mb-4">📸</div>
-        <h3 className="text-xl font-semibold text-gray-600 mb-2">No photos yet</h3>
-        <p className="text-gray-500">Be the first to share photos of this court!</p>
+        <h3 className="text-xl font-semibold text-white mb-2">No photos yet</h3>
+        <p className="text-[#BFC3C7]">Be the first to share photos of this court!</p>
       </div>
     );
   }
@@ -226,11 +225,11 @@ export default function CourtPhotoGallery({
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-2 gap-6">
         {photos.map((photo, index) => (
-          <div key={photo.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+          <div key={photo.id} className="bg-[#011B2E] rounded-lg shadow-md overflow-hidden border border-[#BFC3C7]">
             <div className="relative group">
               <button
                 type="button"
-                className="w-full aspect-[4/3] overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full aspect-[4/3] overflow-hidden focus:outline-none focus:ring-2 focus:ring-[#69F0FD]"
                 onClick={() => openPhotoViewer(photos.map(p => p.photoUrl), index)}
                 aria-label={`View photo ${index + 1}`}
               >
@@ -250,7 +249,7 @@ export default function CourtPhotoGallery({
                       setReportingPhotoId(photo.id);
                       setReportModalOpen(true);
                     }}
-                    className="bg-red-500 text-white w-6 h-6 rounded-full hover:bg-red-600 transition-colors shadow-sm flex items-center justify-center"
+                    className="bg-[#EC0037] text-white w-6 h-6 rounded-full hover:bg-[#4A1C23] transition-colors shadow-sm flex items-center justify-center"
                     aria-label="Report photo"
                   >
                     <Flag className="w-3 h-3" />
@@ -265,7 +264,7 @@ export default function CourtPhotoGallery({
                         setEditingPhotoId(photo.id);
                         setEditingCaption(photo.caption || '');
                       }}
-                      className="bg-blue-500 text-white w-6 h-6 rounded-full hover:bg-blue-600 transition-colors shadow-sm flex items-center justify-center"
+                      className="bg-[#002C4D] text-white w-6 h-6 rounded-full hover:bg-[#00487E] transition-colors shadow-sm flex items-center justify-center"
                       aria-label="Edit photo"
                     >
                       <Edit3 className="w-3 h-3" />
@@ -273,7 +272,7 @@ export default function CourtPhotoGallery({
                     <button
                       type="button"
                       onClick={() => handleDeletePhoto(photo.id)}
-                      className="bg-red-600 text-white w-6 h-6 rounded-full hover:bg-red-700 transition-colors shadow-sm flex items-center justify-center"
+                      className="bg-[#EC0037] text-white w-6 h-6 rounded-full hover:bg-[#4A1C23] transition-colors shadow-sm flex items-center justify-center"
                       aria-label="Delete photo"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -285,11 +284,12 @@ export default function CourtPhotoGallery({
 
             <div className="p-3">
               {photo.caption && (
-                <p className="text-sm text-gray-700 mb-2">{photo.caption}</p>
+                <p className="text-sm text-[#BFC3C7] mb-2">{photo.caption}</p>
               )}
-              <div className="flex items-center justify-between text-xs text-gray-500">
+              <div className="flex items-center justify-between text-xs text-[#BFC3C7]">
                 <span>
                   By
+                  {' '}
                   {photo.uploadedByUserName}
                 </span>
                 <span>{new Date(photo.createdAt).toLocaleDateString()}</span>
@@ -354,7 +354,7 @@ export default function CourtPhotoGallery({
       {/* Report Modal */}
       {reportModalOpen && (
         <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-md relative border border-[#BFC3C7]">
             <button
               type="button"
               onClick={() => {
@@ -362,14 +362,14 @@ export default function CourtPhotoGallery({
                 setReportingPhotoId(null);
                 setReportReason('');
               }}
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              className="absolute top-2 right-2 text-[#BFC3C7] hover:text-white transition-colors"
               aria-label="Close report modal"
             >
               ×
             </button>
-            <h3 className="text-lg font-bold mb-4">Report Photo</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Report Photo</h3>
             <textarea
-              className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
+              className="w-full bg-[#00487E] text-white placeholder-[#7F8B95] border border-[#BFC3C7] rounded-lg p-2 mb-4 min-h-[80px] focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
               placeholder="Please explain why you're reporting this photo..."
               value={reportReason}
               onChange={e => setReportReason(e.target.value)}
@@ -383,7 +383,7 @@ export default function CourtPhotoGallery({
                   setReportingPhotoId(null);
                   setReportReason('');
                 }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                className="px-4 py-2 bg-[#EBEDEE] text-[#27131D] rounded-lg font-semibold hover:bg-[#BFC3C7] transition-colors"
               >
                 Cancel
               </button>
@@ -391,7 +391,7 @@ export default function CourtPhotoGallery({
                 type="button"
                 onClick={handleReportPhoto}
                 disabled={reportLoading || !reportReason.trim()}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50"
+                className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:opacity-50 transition-colors"
               >
                 {reportLoading ? 'Reporting...' : 'Report Photo'}
               </button>
@@ -403,21 +403,21 @@ export default function CourtPhotoGallery({
       {/* Edit Modal */}
       {editingPhotoId && (
         <div className="fixed inset-0 z-[2100] flex items-center justify-center bg-black bg-opacity-40">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+          <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-md relative border border-[#BFC3C7]">
             <button
               type="button"
               onClick={() => {
                 setEditingPhotoId(null);
                 setEditingCaption('');
               }}
-              className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+              className="absolute top-2 right-2 text-[#BFC3C7] hover:text-white transition-colors"
               aria-label="Close edit modal"
             >
               ×
             </button>
-            <h3 className="text-lg font-bold mb-4">Edit Photo Caption</h3>
+            <h3 className="text-lg font-bold mb-4 text-white">Edit Photo Caption</h3>
             <textarea
-              className="w-full border rounded-lg p-2 mb-4 min-h-[80px]"
+              className="w-full bg-[#00487E] text-white placeholder-[#7F8B95] border border-[#BFC3C7] rounded-lg p-2 mb-4 min-h-[80px] focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
               placeholder="Add a caption for this photo..."
               value={editingCaption}
               onChange={e => setEditingCaption(e.target.value)}
@@ -430,14 +430,14 @@ export default function CourtPhotoGallery({
                   setEditingPhotoId(null);
                   setEditingCaption('');
                 }}
-                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300"
+                className="px-4 py-2 bg-[#EBEDEE] text-[#27131D] rounded-lg font-semibold hover:bg-[#BFC3C7] transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleEditPhoto}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700"
+                className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors"
               >
                 Save Changes
               </button>

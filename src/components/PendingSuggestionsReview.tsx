@@ -315,7 +315,7 @@ export default function PendingSuggestionsReview({
   };
 
   if (loading) {
-    return <div className="text-center text-gray-400">Loading suggestions...</div>;
+    return <div className="text-center text-[#BFC3C7]">Loading suggestions...</div>;
   }
 
   const hasPendingSuggestions = pendingSuggestions.some(suggestion =>

@@ -50,7 +50,7 @@ export const CounterForm = () => {
 
       <div>
         <button
-          className="w-full sm:w-auto rounded-sm bg-blue-500 px-6 py-2 font-bold text-white hover:bg-blue-600 focus:outline-hidden focus:ring-3 focus:ring-blue-300/50 disabled:pointer-events-none disabled:opacity-50 transition-colors"
+          className="w-full sm:w-auto rounded-sm bg-[#EC0037] px-6 py-2 font-bold text-white hover:bg-[#4A1C23] focus:outline-hidden focus:ring-3 focus:ring-[#EC0037]/50 disabled:pointer-events-none disabled:opacity-50 transition-colors shadow-lg"
           type="submit"
           disabled={form.formState.isSubmitting}
         >

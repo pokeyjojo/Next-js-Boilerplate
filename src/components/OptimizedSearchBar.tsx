@@ -93,7 +93,7 @@ const OptimizedSearchBar = React.memo(({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-150"
+          className="w-full px-3 py-2 border border-[#BFC3C7] rounded-lg bg-[#FFFFFF] text-[#27131D] text-sm focus:outline-none focus:ring-2 focus:ring-[#EC0037] focus:border-[#EC0037] transition-colors duration-150"
           aria-label="Search tennis courts"
           autoComplete="off"
           autoCorrect="off"
@@ -103,7 +103,7 @@ const OptimizedSearchBar = React.memo(({
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 transition-colors duration-150"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7F8B95] hover:text-[#27131D] p-1 transition-colors duration-150"
             aria-label="Clear search"
             type="button"
           >
