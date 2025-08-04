@@ -97,13 +97,37 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
     suggestedCity: court.city,
     suggestedZip: court.zip || '',
     suggestedNumberOfCourts: '',
-    suggestedSurface: court.surfaceType,
-    suggestedCondition: court.courtCondition || '',
-    suggestedType: court.courtType || '',
-    suggestedHittingWall: court.hittingWall || false,
+    suggestedSurface: court.surface,
+    suggestedCondition: court.court_condition || '',
+    suggestedType: court.court_type || '',
+    suggestedHittingWall: court.hitting_wall || false,
     suggestedLights: court.lighted || false,
-    suggestedIsPublic: court.isPublic !== false, // Default to true (public) if not specified
+    suggestedIsPublic: court.is_public !== false, // Default to true (public) if not specified
   });
+
+  // Reset form data to current court's data
+  const resetFormData = useCallback(() => {
+    setFormData({
+      reason: '',
+      suggestedName: court.name,
+      suggestedAddress: court.address,
+      suggestedCity: court.city,
+      suggestedZip: court.zip || '',
+      suggestedNumberOfCourts: '',
+      suggestedSurface: court.surface,
+      suggestedCondition: court.court_condition || '',
+      suggestedType: court.court_type || '',
+      suggestedHittingWall: court.hitting_wall || false,
+      suggestedLights: court.lighted || false,
+      suggestedIsPublic: court.is_public !== false,
+    });
+  }, [court]);
+
+  // Close handler that resets form data
+  const handleClose = useCallback(() => {
+    resetFormData();
+    setIsOpen(false);
+  }, [resetFormData]);
 
   // Debounced address search
   const debouncedAddressSearch = useCallback(
@@ -199,6 +223,11 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
     }
   }, [userId, court.id, checkExistingSuggestion, refreshKey]);
 
+  // Reset form data when court changes
+  useEffect(() => {
+    resetFormData();
+  }, [resetFormData]);
+
   // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -292,6 +321,10 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
         setShowExistingSuggestion(false);
         setExistingSuggestion(null);
         setHasPendingSuggestion(false);
+
+        // Refresh suggestions to ensure fresh data is available
+        await refreshSuggestions();
+
         onSuggestionSubmitted?.();
         // Refresh the suggestion state
         await checkExistingSuggestion();
@@ -340,24 +373,14 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       setIsOpen(false);
 
       // Reset form data
-      setFormData({
-        reason: '',
-        suggestedName: court.name,
-        suggestedAddress: court.address,
-        suggestedCity: court.city,
-        suggestedZip: court.zip || '',
-        suggestedNumberOfCourts: '',
-        suggestedSurface: court.surfaceType,
-        suggestedCondition: court.courtCondition || '',
-        suggestedType: court.courtType || '',
-        suggestedHittingWall: court.hittingWall || false,
-        suggestedLights: court.lighted || false,
-        suggestedIsPublic: court.isPublic !== false,
-      });
+      resetFormData();
 
       // Update the component state immediately with the new suggestion
       setExistingSuggestion(submittedSuggestion);
       setHasPendingSuggestion(true);
+
+      // Refresh suggestions to ensure fresh data is available
+      await refreshSuggestions();
 
       onSuggestionCreated?.();
     } catch (error) {
@@ -823,7 +846,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-white">Suggest Court Edit</h2>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={handleClose}
                 className="text-[#BFC3C7] hover:text-white transition-colors"
               >
                 <X className="w-6 h-6" />
@@ -1102,7 +1125,7 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
               <div className="flex justify-end space-x-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setIsOpen(false)}
+                  onClick={handleClose}
                   className="px-4 py-2 text-white border border-[#BFC3C7] rounded-lg hover:bg-[#EBEDEE] hover:text-[#27131D] transition-colors shadow"
                 >
                   Cancel

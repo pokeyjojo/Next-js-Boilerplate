@@ -657,7 +657,7 @@ const OptimizedSearchBar = React.memo(({
   }, []);
 
   return (
-    <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-2">
+    <div className="bg-[#011B2E] rounded-lg shadow-xl border-2 border-[#27131D] p-2">
       <div className="relative">
         <input
           type="text"
@@ -665,23 +665,19 @@ const OptimizedSearchBar = React.memo(({
           value={localQuery}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border-2 border-[#50394D] rounded-lg bg-[#002C4D] text-[#EBEDEE] placeholder-[#7F8B95] text-sm focus:outline-none focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.4)] transition-all duration-200"
           aria-label="Search tennis courts"
         />
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFC3C7] hover:text-[#69F0FD] hover:bg-[#27131D] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
             aria-label="Clear search"
           >
             ✕
           </button>
         )}
-        {isMobile && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
-            ↵
-          </div>
-        )}
+
       </div>
     </div>
   );
@@ -1920,11 +1916,11 @@ export default function MapComponent() {
         ${showCourtList ? 'translate-y-0' : 'translate-y-full'}
       `}
       >
-        <div className="bg-white rounded-t-xl shadow-2xl border-t border-gray-200 max-h-[50vh] relative">
+        <div className="bg-[#002C4D] rounded-t-xl shadow-2xl border-t border-[#27131D] max-h-[50vh] relative">
           {/* Close button - positioned at the very top right */}
           <button
             onClick={() => setShowCourtList(false)}
-            className="absolute -top-12 right-4 z-50 text-black hover:text-gray-700 p-2 bg-white rounded-full shadow-lg border border-gray-300"
+            className="absolute -top-12 right-4 z-50 text-[#EBEDEE] hover:text-[#69F0FD] p-2 bg-[#011B2E] rounded-full shadow-lg border-2 border-[#27131D] hover:border-[#69F0FD] transition-all duration-200"
             aria-label="Close court list"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
@@ -1939,7 +1935,7 @@ export default function MapComponent() {
             onTouchStart={handleDragStart}
             aria-label="Drag to resize court list"
           >
-            <div className="w-12 h-1 bg-gray-300 rounded-full" />
+            <div className="w-12 h-1 bg-[#50394D] rounded-full" />
           </button>
 
           {/* Court list */}
@@ -1969,6 +1965,7 @@ export default function MapComponent() {
         <MapContainer
           center={CHICAGO_CENTER}
           zoom={11}
+          zoomControl={false}
           style={{ height: '100%', width: '100%' }}
           ref={mapRef}
           whenReady={() => {
@@ -1985,11 +1982,37 @@ export default function MapComponent() {
           <TennisCourtMarkersMapComponent courts={courts} handleMarkerClick={handleMarkerClick} />
         </MapContainer>
 
+        {/* Custom Zoom Controls - positioned away from search bar */}
+        <div className="lg:hidden absolute bottom-32 right-4 z-30 flex flex-col gap-2">
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.zoomIn();
+              }
+            }}
+            className="w-10 h-10 bg-[#011B2E] border-2 border-[#27131D] text-[#EBEDEE] rounded-lg shadow-lg hover:bg-[#002C4D] hover:border-[#69F0FD] transition-all duration-200 flex items-center justify-center font-bold text-lg"
+            aria-label="Zoom in"
+          >
+            +
+          </button>
+          <button
+            onClick={() => {
+              if (mapRef.current) {
+                mapRef.current.zoomOut();
+              }
+            }}
+            className="w-10 h-10 bg-[#011B2E] border-2 border-[#27131D] text-[#EBEDEE] rounded-lg shadow-lg hover:bg-[#002C4D] hover:border-[#69F0FD] transition-all duration-200 flex items-center justify-center font-bold text-lg"
+            aria-label="Zoom out"
+          >
+            −
+          </button>
+        </div>
+
         {/* Floating "Suggest a Court" Button */}
         {isSignedIn && (
           <button
             onClick={() => setShowNewCourtSuggestionForm(true)}
-            className="absolute bottom-6 left-6 z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
+            className="fixed bottom-20 left-6 lg:left-[60%] z-[9999] bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

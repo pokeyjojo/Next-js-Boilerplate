@@ -1,5 +1,5 @@
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import Map from '@/components/Map';
+import CourtFinderWrapper from '@/components/CourtFinderWrapper';
 
 type IIndexProps = {
   params: Promise<{ locale: string }>;
@@ -22,5 +22,5 @@ export default async function Index(props: IIndexProps) {
   const { locale } = await props.params;
   setRequestLocale(locale);
 
-  return <Map />;
+  return <CourtFinderWrapper />;
 }

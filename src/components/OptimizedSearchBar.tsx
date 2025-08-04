@@ -83,7 +83,7 @@ const OptimizedSearchBar = React.memo(({
   }, []);
 
   return (
-    <div className={`bg-white rounded-lg shadow-xl border border-gray-200 p-2 ${className}`}>
+    <div className={`bg-[#011B2E] rounded-lg shadow-xl border-2 border-[#27131D] p-2 ${className}`}>
       <div className="relative">
         <input
           ref={inputRef}
@@ -93,7 +93,7 @@ const OptimizedSearchBar = React.memo(({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          className="w-full px-3 py-2 border border-[#BFC3C7] rounded-lg bg-[#FFFFFF] text-[#27131D] text-sm focus:outline-none focus:ring-2 focus:ring-[#EC0037] focus:border-[#EC0037] transition-colors duration-150"
+          className="w-full px-3 py-2 border-2 border-[#50394D] rounded-lg bg-[#002C4D] text-[#EBEDEE] placeholder-[#7F8B95] text-sm focus:outline-none focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.4)] transition-all duration-200"
           aria-label="Search tennis courts"
           autoComplete="off"
           autoCorrect="off"
@@ -103,18 +103,14 @@ const OptimizedSearchBar = React.memo(({
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7F8B95] hover:text-[#27131D] p-1 transition-colors duration-150"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFC3C7] hover:text-[#69F0FD] hover:bg-[#27131D] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
             aria-label="Clear search"
             type="button"
           >
             ✕
           </button>
         )}
-        {isMobile && !localQuery && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none">
-            ↵
-          </div>
-        )}
+
       </div>
     </div>
   );

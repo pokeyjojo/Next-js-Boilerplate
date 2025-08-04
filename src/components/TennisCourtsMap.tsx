@@ -83,6 +83,7 @@ export default function TennisCourtsMap() {
       <MapContainer
         center={[41.8781, -87.6298]} // Chicago coordinates
         zoom={12}
+        zoomControl={false}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer

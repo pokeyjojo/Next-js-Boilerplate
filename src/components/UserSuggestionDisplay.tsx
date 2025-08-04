@@ -92,7 +92,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
       });
 
       if (response.ok) {
-        await fetchSuggestions();
+        await refreshSuggestions();
         onSuggestionUpdated?.();
         setShowDeleteConfirm(null);
       } else {
@@ -141,7 +141,7 @@ export default function UserSuggestionDisplay({ courtId, currentUserId, onSugges
 
       if (response.ok) {
         setEditingSuggestion(null);
-        await fetchSuggestions();
+        await refreshSuggestions();
         onSuggestionUpdated?.();
       } else {
         const errorData = await response.json();
