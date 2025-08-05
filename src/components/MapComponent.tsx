@@ -916,6 +916,7 @@ function CourtDetailsPanel({
   _deletingCourt,
   _setDeletingCourt,
   onSetActiveTab,
+  setAnyChildModalOpen,
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -931,6 +932,7 @@ function CourtDetailsPanel({
   _deletingCourt: boolean;
   _setDeletingCourt: (deleting: boolean) => void;
   onSetActiveTab?: (tab: 'overview' | 'photos' | 'reviews') => void;
+  setAnyChildModalOpen: (isOpen: boolean) => void;
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
@@ -964,6 +966,12 @@ function CourtDetailsPanel({
       setPhotos([]);
     }
   }, [selectedCourt]);
+
+  // Notify parent when any modal state changes
+  useEffect(() => {
+    const anyModalOpen = showModal || deleteConfirmId !== null || reportReviewId !== null || photoViewerOpen;
+    setAnyChildModalOpen(anyModalOpen);
+  }, [showModal, deleteConfirmId, reportReviewId, photoViewerOpen, setAnyChildModalOpen]);
 
   // Lazy load reviews only when needed
   const fetchReviews = useCallback(async () => {
@@ -1320,6 +1328,7 @@ function CourtDetailsPanel({
                       onSuggestionSubmitted={() => refreshCourtData()}
                       onSuggestionCreated={() => refreshUserSuggestions()}
                       refreshKey={userSuggestionsRefreshKey}
+                      onModalStateChange={setAnyChildModalOpen}
                     />
                     {isAdmin && (
                       <AdminCourtEdit
@@ -1666,6 +1675,7 @@ export default function MapComponent() {
   const [showDeleteCourtModal, setShowDeleteCourtModal] = useState(false);
   const [deletingCourt, setDeletingCourt] = useState(false);
   const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
+  const [anyChildModalOpen, setAnyChildModalOpen] = useState(false);
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
 
@@ -2009,10 +2019,10 @@ export default function MapComponent() {
         </div>
 
         {/* Floating "Suggest a Court" Button */}
-        {isSignedIn && (
+        {isSignedIn && !showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && !anyChildModalOpen && (
           <button
             onClick={() => setShowNewCourtSuggestionForm(true)}
-            className="fixed bottom-20 left-6 lg:left-[60%] z-[9999] bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
+            className="fixed bottom-20 left-6 lg:left-[34%] z-[9999] bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -2040,6 +2050,7 @@ export default function MapComponent() {
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
                 onSetActiveTab={handleSetActiveTab}
+                setAnyChildModalOpen={setAnyChildModalOpen}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -2058,6 +2069,7 @@ export default function MapComponent() {
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
                 onSetActiveTab={handleSetActiveTab}
+                setAnyChildModalOpen={setAnyChildModalOpen}
               />
             </div>
             <div
@@ -2454,15 +2466,14 @@ function InlineCourtInfo({
 
   return (
     <div>
-      {(court.court_type || getFieldSuggestions('courtType').length > 0) && renderFieldWithSuggestions('courtType', court.court_type, 'Type')}
-      {(court.surface || getFieldSuggestions('surface').length > 0) && renderFieldWithSuggestions('surface', court.surface, 'Surface')}
-      {court.number_of_courts !== null && court.number_of_courts !== undefined && court.number_of_courts > 0
-        && renderFieldWithSuggestions('numberOfCourts', court.number_of_courts, 'Number of Courts')}
-      {(court.court_condition || getFieldSuggestions('condition').length > 0) && renderFieldWithSuggestions('condition', court.court_condition, 'Condition')}
-      {((court.parking !== null && court.parking !== undefined) || getFieldSuggestions('parking').length > 0) && renderFieldWithSuggestions('parking', court.parking, 'Parking')}
+      {renderFieldWithSuggestions('courtType', court.court_type, 'Type')}
+      {renderFieldWithSuggestions('surface', court.surface, 'Surface')}
+      {renderFieldWithSuggestions('numberOfCourts', court.number_of_courts, 'Number of Courts')}
+      {renderFieldWithSuggestions('condition', court.court_condition, 'Condition')}
+      {renderFieldWithSuggestions('parking', court.parking, 'Parking')}
       {renderFieldWithSuggestions('hittingWall', court.hitting_wall, 'Hitting Wall')}
-      {getFieldSuggestions('lights').length > 0 && renderFieldWithSuggestions('lights', court.lighted, 'Lights')}
-      {(court.is_public !== undefined || getFieldSuggestions('isPublic').length > 0) && renderFieldWithSuggestions('isPublic', court.is_public, 'Court Access')}
+      {renderFieldWithSuggestions('lights', court.lighted, 'Lights')}
+      {renderFieldWithSuggestions('isPublic', court.is_public, 'Court Access')}
     </div>
   );
 }

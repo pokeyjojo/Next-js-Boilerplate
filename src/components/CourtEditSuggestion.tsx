@@ -65,9 +65,10 @@ type CourtEditSuggestionProps = {
   onSuggestionSubmitted?: () => void;
   onSuggestionCreated?: () => void;
   refreshKey?: number;
+  onModalStateChange?: (isOpen: boolean) => void;
 };
 
-export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitted, onSuggestionCreated, refreshKey }: CourtEditSuggestionProps) {
+export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitted, onSuggestionCreated, refreshKey, onModalStateChange }: CourtEditSuggestionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -250,6 +251,12 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
       }
     };
   }, []);
+
+  // Notify parent when any modal state changes
+  useEffect(() => {
+    const anyModalOpen = isOpen || showExistingSuggestion || editingSuggestion !== null || showSuccess || showError;
+    onModalStateChange?.(anyModalOpen);
+  }, [isOpen, showExistingSuggestion, editingSuggestion, showSuccess, showError, onModalStateChange]);
 
   const handleOpenModal = () => {
     // Check for existing suggestion from cache (no API call needed)
