@@ -915,8 +915,8 @@ function CourtDetailsPanel({
   _setShowDeleteCourtModal,
   _deletingCourt,
   _setDeletingCourt,
-  onSetActiveTab,
-  setAnyChildModalOpen,
+  onSetActiveTab: _onSetActiveTab,
+
 }: {
   selectedCourt: TennisCourt | null;
   setSelectedCourt: (court: TennisCourt | null) => void;
@@ -932,7 +932,7 @@ function CourtDetailsPanel({
   _deletingCourt: boolean;
   _setDeletingCourt: (deleting: boolean) => void;
   onSetActiveTab?: (tab: 'overview' | 'photos' | 'reviews') => void;
-  setAnyChildModalOpen: (isOpen: boolean) => void;
+
 }) {
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
@@ -968,10 +968,6 @@ function CourtDetailsPanel({
   }, [selectedCourt]);
 
   // Notify parent when any modal state changes
-  useEffect(() => {
-    const anyModalOpen = showModal || deleteConfirmId !== null || reportReviewId !== null || photoViewerOpen;
-    setAnyChildModalOpen(anyModalOpen);
-  }, [showModal, deleteConfirmId, reportReviewId, photoViewerOpen, setAnyChildModalOpen]);
 
   // Lazy load reviews only when needed
   const fetchReviews = useCallback(async () => {
@@ -1328,7 +1324,6 @@ function CourtDetailsPanel({
                       onSuggestionSubmitted={() => refreshCourtData()}
                       onSuggestionCreated={() => refreshUserSuggestions()}
                       refreshKey={userSuggestionsRefreshKey}
-                      onModalStateChange={setAnyChildModalOpen}
                     />
                     {isAdmin && (
                       <AdminCourtEdit
@@ -1675,9 +1670,10 @@ export default function MapComponent() {
   const [showDeleteCourtModal, setShowDeleteCourtModal] = useState(false);
   const [deletingCourt, setDeletingCourt] = useState(false);
   const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
-  const [anyChildModalOpen, setAnyChildModalOpen] = useState(false);
+
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
+  const router = useRouter();
 
   // Mobile detection
   const [_isMobile, _setIsMobile] = useState(false);
@@ -2019,10 +2015,16 @@ export default function MapComponent() {
         </div>
 
         {/* Floating "Suggest a Court" Button */}
-        {isSignedIn && !showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && !anyChildModalOpen && (
+        {!showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && (
           <button
-            onClick={() => setShowNewCourtSuggestionForm(true)}
-            className="fixed bottom-20 left-6 lg:left-[34%] z-[9999] bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
+            onClick={() => {
+              if (isSignedIn) {
+                setShowNewCourtSuggestionForm(true);
+              } else {
+                router.push('/en/sign-in');
+              }
+            }}
+            className="fixed bottom-20 left-6 lg:left-[34%] z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -2050,7 +2052,6 @@ export default function MapComponent() {
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
                 onSetActiveTab={handleSetActiveTab}
-                setAnyChildModalOpen={setAnyChildModalOpen}
               />
             </div>
             <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50">
@@ -2069,7 +2070,6 @@ export default function MapComponent() {
                 _deletingCourt={deletingCourt}
                 _setDeletingCourt={setDeletingCourt}
                 onSetActiveTab={handleSetActiveTab}
-                setAnyChildModalOpen={setAnyChildModalOpen}
               />
             </div>
             <div
