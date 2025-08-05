@@ -1200,6 +1200,12 @@ function CourtDetailsPanel({
     };
   }, []);
 
+  // Get directions URL function
+  const getDirectionsUrl = (court: TennisCourt) => {
+    const address = `${court.address}, ${court.city}, ${court.state} ${court.zip}`.replace(/\s+/g, '+');
+    return `https://www.google.com/maps/dir/?api=1&destination=${address}`;
+  };
+
   if (!selectedCourt) {
     return null;
   }
@@ -1246,15 +1252,18 @@ function CourtDetailsPanel({
         userId={userId}
         onSuggestionReviewed={() => refreshCourtData()}
       />
-      <div className="flex items-center space-x-4 mb-4">
-        <span className="px-2 py-1 rounded bg-[#00487E] text-white text-xs">
-          {selectedCourt.membership_required ? 'Private' : 'Public'}
-        </span>
-        {selectedCourt.lighted && (
-          <span className="px-2 py-1 rounded bg-[#69F0FD] text-[#27131D] text-xs sm:text-sm shadow">
-            Lights
-          </span>
-        )}
+      <div className="flex items-center justify-end mb-4">
+        <a
+          href={getDirectionsUrl(selectedCourt)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-[#69F0FD] hover:text-[#EC0037] text-sm font-medium transition-colors"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+          </svg>
+          Get Directions
+        </a>
       </div>
       <div className="flex space-x-8 border-b mb-4">
         <button
