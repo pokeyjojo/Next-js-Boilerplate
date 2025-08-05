@@ -4,11 +4,29 @@ import type { LatLngTuple } from 'leaflet';
 import { useUser } from '@clerk/nextjs';
 import L from 'leaflet';
 import { Star } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
-import { capitalizeFirstLetter } from '@/utils/Helpers';
+import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
+
+// Helper function to get condition descriptions
+const getConditionDescription = (condition: string | null | undefined): string => {
+  if (!condition) {
+    return '';
+  }
+
+  const descriptions: Record<string, string> = {
+    'new': 'resurfaced in the last year',
+    'like new': 'resurfaced in the last 2-3 years',
+    'showing signs of wear': 'some courts have minor cracks',
+    'rough shape': 'some courts are unplayable',
+    'terrible': 'all courts are unplayable',
+    'unknown': '',
+  };
+
+  return descriptions[condition.toLowerCase()] || '';
+};
 import { invalidateCourtCache, type TennisCourt, useCourtData } from '../hooks/useCourtData';
 import AdminCourtEdit from './AdminCourtEdit';
 import AllSuggestionsDisplay from './AllSuggestionsDisplay';
@@ -551,11 +569,11 @@ const CourtList = ({
                   })()}
                 </p>
                 <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
-                  <span className={`px-2 py-1 rounded text-xs sm:text-sm shadow ${court.membership_required ? 'bg-[#EC0037] text-white' : 'bg-[#002C4D] text-white'}`}>
+                  <span className={`px-2 py-1 rounded text-xs sm:text-sm border ${court.membership_required ? 'border-[#EC0037] text-[#EC0037] bg-[#27131D]/20' : 'border-[#002C4D] text-[#002C4D] bg-[#002C4D]/10'}`}>
                     {court.membership_required ? 'Private' : 'Public'}
                   </span>
                   {court.lighted && (
-                    <span className="px-2 py-1 rounded bg-[#69F0FD] text-[#27131D] text-xs sm:text-sm shadow">
+                    <span className="px-2 py-1 rounded border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 text-xs sm:text-sm">
                       Lights
                     </span>
                   )}
@@ -934,6 +952,9 @@ function CourtDetailsPanel({
   onSetActiveTab?: (tab: 'overview' | 'photos' | 'reviews') => void;
 
 }) {
+  const params = useParams();
+  const locale = params.locale as string;
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'overview' | 'photos' | 'reviews'>('overview');
   const [reviews, setReviews] = useState<any[]>([]);
   const [photos, setPhotos] = useState<any[]>([]);
@@ -1305,7 +1326,16 @@ function CourtDetailsPanel({
               {!isSignedIn && (
                 <div className="mt-6 pt-4 border-t border-[#BFC3C7]">
                   <div className="text-center text-[#BFC3C7] py-4">
-                    <p className="text-sm">Sign in to make a suggestion</p>
+                    <p className="text-sm">
+                      <span
+                        className="text-[#69F0FD] hover:text-[#4DADE3] cursor-pointer underline transition-colors"
+                        onClick={() => router.push(getI18nPath('/sign-in', locale))}
+                      >
+                        Sign in
+                      </span>
+                      {' '}
+                      to edit court details
+                    </p>
                   </div>
                 </div>
               )}
@@ -2033,7 +2063,7 @@ export default function MapComponent() {
                 router.push('/en/sign-in');
               }
             }}
-            className="fixed bottom-20 left-6 lg:left-[34%] z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
+            className="fixed bottom-6 left-6 lg:left-[34%] z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -2356,7 +2386,12 @@ function InlineCourtInfo({
         };
         return stateAbbreviations[value] || value;
       }
-      return field === 'condition' ? capitalizeFirstLetter(value) : value;
+      if (field === 'condition') {
+        const capitalizedCondition = capitalizeFirstLetter(value);
+        const description = getConditionDescription(value);
+        return description ? `${capitalizedCondition} (${description})` : capitalizedCondition;
+      }
+      return value;
     };
 
     // Use formatValue for all fields

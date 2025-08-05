@@ -73,19 +73,19 @@ const CourtListItem = React.memo(({
             )}
 
             {court.lighted && (
-              <span className="text-xs bg-[#69F0FD] text-[#27131D] px-2 py-1 rounded shadow">
+              <span className="text-xs border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 px-2 py-1 rounded">
                 Lighted
               </span>
             )}
 
             {court.court_type && (
-              <span className="text-xs bg-[#EC0037] text-white px-2 py-1 rounded shadow">
+              <span className="text-xs border border-[#EC0037] text-[#EC0037] bg-[#27131D]/20 px-2 py-1 rounded">
                 {court.court_type.charAt(0).toUpperCase() + court.court_type.slice(1)}
               </span>
             )}
 
             {court.membership_required && (
-              <span className="text-xs bg-[#EC0037] text-white px-2 py-1 rounded shadow">
+              <span className="text-xs border border-[#EC0037] text-[#EC0037] bg-[#27131D]/20 px-2 py-1 rounded">
                 Private
               </span>
             )}

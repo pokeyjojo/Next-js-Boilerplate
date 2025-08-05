@@ -3,6 +3,24 @@
 import React, { useEffect, useState } from 'react';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
+// Helper function to get condition descriptions
+const getConditionDescription = (condition: string | null | undefined): string => {
+  if (!condition) {
+    return '';
+  }
+
+  const descriptions: Record<string, string> = {
+    'new': 'resurfaced in the last year',
+    'like new': 'resurfaced in the last 2-3 years',
+    'showing signs of wear': 'some courts have minor cracks',
+    'rough shape': 'some courts are unplayable',
+    'terrible': 'all courts are unplayable',
+    'unknown': '',
+  };
+
+  return descriptions[condition.toLowerCase()] || '';
+};
+
 // TruncatableText component for handling long text with expand/collapse functionality
 function TruncatableText({ text, maxLength = 100 }: { text: string; maxLength?: number }) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -184,7 +202,12 @@ export default function PendingSuggestionsReview({
         };
         return stateAbbreviations[value] || value;
       }
-      return field === 'condition' ? capitalizeFirstLetter(value) : value;
+      if (field === 'condition') {
+        const capitalizedCondition = capitalizeFirstLetter(value);
+        const description = getConditionDescription(value);
+        return description ? `${capitalizedCondition} (${description})` : capitalizedCondition;
+      }
+      return value;
     };
 
     // Format the display value

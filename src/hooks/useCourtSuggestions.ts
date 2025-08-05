@@ -117,6 +117,15 @@ export function useCourtSuggestions(courtId: number, userId?: string) {
       return cached.data;
     }
 
+    // For unauthenticated users, don't fetch suggestions
+    if (!userId) {
+      setSuggestions([]);
+      setPendingSuggestions([]);
+      setLoading(false);
+      setError(null);
+      return [];
+    }
+
     try {
       setLoading(true);
       setError(null);

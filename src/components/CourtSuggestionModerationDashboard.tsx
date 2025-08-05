@@ -242,16 +242,16 @@ export default function CourtSuggestionModerationDashboard() {
 
                   <div className="flex flex-wrap gap-2 mt-3">
                     {suggestion.lighted && (
-                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Lighted</span>
+                      <span className="px-2 py-1 border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 text-xs rounded-full">Lighted</span>
                     )}
                     {suggestion.hittingWall && (
-                      <span className="px-2 py-1 bg-[#69F0FD] text-[#27131D] text-xs rounded-full shadow">Hitting Wall</span>
+                      <span className="px-2 py-1 border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 text-xs rounded-full">Hitting Wall</span>
                     )}
                     {suggestion.membershipRequired && (
-                      <span className="px-2 py-1 bg-[#EC0037] text-white text-xs rounded-full shadow">Membership Required</span>
+                      <span className="px-2 py-1 border border-[#EC0037] text-[#EC0037] bg-[#27131D]/20 text-xs rounded-full">Membership Required</span>
                     )}
                     {suggestion.parking && (
-                      <span className="px-2 py-1 bg-[#002C4D] text-white text-xs rounded-full shadow">Parking Available</span>
+                      <span className="px-2 py-1 border border-[#002C4D] text-[#002C4D] bg-[#002C4D]/10 text-xs rounded-full">Parking Available</span>
                     )}
                   </div>
 
