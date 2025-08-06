@@ -126,7 +126,7 @@ const OptimizedCourtList = React.memo(({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveSearchQuery = onExternalSearchChange ? externalSearchQuery : searchQuery;
+  const effectiveSearchQuery = isMobile ? externalSearchQuery : searchQuery;
 
   // Auto-focus search input on mobile when component becomes visible
   useEffect(() => {
@@ -285,7 +285,7 @@ const OptimizedCourtList = React.memo(({
                   : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
               }`}
             >
-              Lighted Only
+              Lighted
             </button>
 
             {['public', 'private', 'outdoor', 'indoor'].map(filter => (

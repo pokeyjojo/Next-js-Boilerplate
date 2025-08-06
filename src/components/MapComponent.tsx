@@ -929,6 +929,7 @@ function CourtDetailsPanel({
   isAdmin,
   isBanned,
   refreshCourtData,
+  refreshGlobalCourtData,
   setShowPhotoUploadModal,
   userSuggestionsRefreshKey,
   setUserSuggestionsRefreshKey,
@@ -946,6 +947,7 @@ function CourtDetailsPanel({
   isAdmin: boolean;
   isBanned: boolean;
   refreshCourtData: () => Promise<void>;
+  refreshGlobalCourtData: () => Promise<void>;
   setShowPhotoUploadModal: (show: boolean) => void;
   userSuggestionsRefreshKey: number;
   setUserSuggestionsRefreshKey: (value: number | ((prev: number) => number)) => void;
@@ -1069,7 +1071,11 @@ function CourtDetailsPanel({
       body: JSON.stringify(body),
     });
     if (res.ok) {
-      await refreshCourtData(); // Refresh court data (ratings and review counts)
+      // Refresh both local court data (for the details panel) and global court data (for the court list)
+      await Promise.all([
+        refreshCourtData(), // Refresh selected court data (ratings and review counts)
+        refreshGlobalCourtData(), // Refresh global court data to update the court list
+      ]);
 
       // Refresh reviews for the current court
       let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
@@ -1101,7 +1107,12 @@ function CourtDetailsPanel({
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reviewId: deleteConfirmId }),
     });
-    await refreshCourtData(); // Refresh court data (ratings and review counts)
+
+    // Refresh both local court data (for the details panel) and global court data (for the court list)
+    await Promise.all([
+      refreshCourtData(), // Refresh selected court data (ratings and review counts)
+      refreshGlobalCourtData(), // Refresh global court data to update the court list
+    ]);
 
     // Refresh reviews for the current court
     let updated = await fetch(`/api/tennis-courts/${selectedCourt.id}/reviews-with-approved-photos`).then(r => r.json());
@@ -1780,6 +1791,7 @@ export default function MapComponent() {
   const [showDeleteCourtModal, setShowDeleteCourtModal] = useState(false);
   const [deletingCourt, setDeletingCourt] = useState(false);
   const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
+  const [isListCollapsed, setIsListCollapsed] = useState(false);
 
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
@@ -1979,6 +1991,18 @@ export default function MapComponent() {
     }
   }, [selectedCourt]);
 
+  // Trigger map resize when list is collapsed/expanded
+  useEffect(() => {
+    if (mapRef.current) {
+      // Wait for the CSS transition to complete (300ms) before resizing map
+      const timer = setTimeout(() => {
+        mapRef.current.invalidateSize();
+      }, 350);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isListCollapsed]);
+
   // Photo upload handler
   const handleSubmitPhotos = async () => {
     if (selectedPhotos.length === 0 || !selectedCourt) {
@@ -2082,18 +2106,69 @@ export default function MapComponent() {
         </div>
       </div>
 
-      {/* Desktop: Sidebar (optimized) */}
-      <div className="hidden lg:block w-1/3 border-r border-[#BFC3C7]">
-        <OptimizedCourtList
-          courts={courts}
-          onCourtSelect={handleCourtSelect}
-          externalSearchQuery={desktopSearchQuery}
-          onExternalSearchChange={setDesktopSearchQuery}
-        />
+      {/* Desktop: Sidebar (optimized) with collapsible functionality */}
+      <div
+        className={`hidden lg:block border-r border-[#BFC3C7] transition-all duration-300 ease-in-out ${
+          isListCollapsed ? 'w-16' : 'w-1/3'
+        }`}
+      >
+        {/* Collapse/Expand Button */}
+        <div className="relative h-full">
+          <button
+            type="button"
+            onClick={() => setIsListCollapsed(!isListCollapsed)}
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-1/2 z-50 bg-[#002C4D] hover:bg-[#00487E] text-[#EBEDEE] border-2 border-[#BFC3C7] hover:border-[#69F0FD] rounded-full p-2 shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#69F0FD]"
+            aria-label={isListCollapsed ? 'Expand court list' : 'Collapse court list'}
+            title={isListCollapsed ? 'Expand court list' : 'Collapse court list'}
+          >
+            <svg
+              className={`w-4 h-4 transition-transform duration-200 ${isListCollapsed ? 'rotate-0' : 'rotate-180'}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          {/* Court List Content */}
+          <div
+            className={`h-full transition-all duration-300 ease-in-out ${
+              isListCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+          >
+            {!isListCollapsed && (
+              <OptimizedCourtList
+                courts={courts}
+                onCourtSelect={handleCourtSelect}
+                externalSearchQuery={desktopSearchQuery}
+                onExternalSearchChange={setDesktopSearchQuery}
+              />
+            )}
+          </div>
+
+          {/* Collapsed State Content */}
+          {isListCollapsed && (
+            <div className="h-full flex flex-col items-center justify-start pt-8 px-2">
+              <div className="text-[#BFC3C7] text-xs text-center mb-4 transform -rotate-90 whitespace-nowrap origin-center">
+                Court List
+              </div>
+              <div className="text-[#69F0FD] text-xs text-center transform -rotate-90 whitespace-nowrap origin-center">
+                {courts.length}
+                {' '}
+                courts
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Map Container */}
-      <div className="w-full lg:w-2/3 flex-1 relative">
+      <div
+        className={`w-full flex-1 relative transition-all duration-300 ease-in-out ${
+          isListCollapsed ? 'lg:w-[calc(100%-4rem)]' : 'lg:w-2/3'
+        }`}
+      >
         <MapContainer
           center={CHICAGO_CENTER}
           zoom={11}
@@ -2151,7 +2226,9 @@ export default function MapComponent() {
                 router.push('/en/sign-in');
               }
             }}
-            className="fixed bottom-6 left-6 lg:left-[34%] z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-colors duration-200 flex items-center space-x-2"
+            className={`fixed bottom-6 z-40 bg-[#EC0037] hover:bg-[#4A1C23] text-white font-medium py-3 px-4 rounded-full shadow-xl transition-all duration-300 flex items-center space-x-2 ${
+              isListCollapsed ? 'left-6 lg:left-20' : 'left-6 lg:left-[34%]'
+            }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -2162,7 +2239,11 @@ export default function MapComponent() {
 
         {/* Banned user message for suggest court */}
         {!showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && isSignedIn && isBanned && (
-          <div className="fixed bottom-6 left-6 lg:left-[34%] z-40 bg-[#50394D] text-[#EC0037] font-medium py-3 px-4 rounded-full shadow-xl flex items-center space-x-2">
+          <div
+            className={`fixed bottom-6 z-40 bg-[#50394D] text-[#EC0037] font-medium py-3 px-4 rounded-full shadow-xl transition-all duration-300 flex items-center space-x-2 ${
+              isListCollapsed ? 'left-6 lg:left-20' : 'left-6 lg:left-[34%]'
+            }`}
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
             </svg>
@@ -2182,6 +2263,7 @@ export default function MapComponent() {
                 isAdmin={isAdmin}
                 isBanned={isBanned}
                 refreshCourtData={refreshSelectedCourtData}
+                refreshGlobalCourtData={refreshGlobalCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}
@@ -2201,6 +2283,7 @@ export default function MapComponent() {
                 isAdmin={isAdmin}
                 isBanned={isBanned}
                 refreshCourtData={refreshSelectedCourtData}
+                refreshGlobalCourtData={refreshGlobalCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
                 setUserSuggestionsRefreshKey={setUserSuggestionsRefreshKey}

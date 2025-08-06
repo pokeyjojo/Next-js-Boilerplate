@@ -26,6 +26,7 @@ function TabButton({ isActive, onClick, children }: TabButtonProps) {
 
 function AboutContent() {
   const [showDeveloperModal, setShowDeveloperModal] = useState(false);
+  const [showSponsorModal, setShowSponsorModal] = useState(false);
 
   return (
     <div className="h-full w-full bg-[#002C4D] flex items-center justify-center p-8">
@@ -47,14 +48,24 @@ function AboutContent() {
               The most important thing that you can do is add photos or a review to the courts you visit, 
               so that other people know what to expect.
             </p>
-            <button
-              onClick={() => setShowDeveloperModal(true)}
-              className="mt-8 inline-block bg-[#4A1C23] hover:bg-[#27131D] px-6 py-3 rounded-full border-2 border-[#69F0FD] hover:border-[#EC0037] transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <span className="text-[#69F0FD] font-medium hover:text-[#EC0037] transition-colors duration-200">
-                About the Developer
-              </span>
-            </button>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <button
+                onClick={() => setShowDeveloperModal(true)}
+                className="inline-block bg-[#4A1C23] hover:bg-[#27131D] px-6 py-3 rounded-full border-2 border-[#69F0FD] hover:border-[#EC0037] transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <span className="text-[#69F0FD] font-medium hover:text-[#EC0037] transition-colors duration-200">
+                  About the Developer
+                </span>
+              </button>
+              <button
+                onClick={() => setShowSponsorModal(true)}
+                className="inline-block bg-[#4A1C23] hover:bg-[#27131D] px-6 py-3 rounded-full border-2 border-[#69F0FD] hover:border-[#EC0037] transition-all duration-200 shadow-lg hover:shadow-xl"
+              >
+                <span className="text-[#69F0FD] font-medium hover:text-[#EC0037] transition-colors duration-200">
+                  About the sponsor
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -108,6 +119,57 @@ function AboutContent() {
                         className="text-[#69F0FD] hover:text-[#EC0037] underline transition-colors duration-200"
                       >
                         johnny@theschwans.io
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sponsor Modal */}
+      {showSponsorModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[2000] p-4">
+          <div className="bg-[#011B2E] rounded-lg shadow-2xl border-2 border-[#27131D] max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-start mb-6">
+                <h2 className="text-2xl md:text-3xl font-bold text-[#EC0037]">
+                  About the sponsor
+                </h2>
+                <button
+                  onClick={() => setShowSponsorModal(false)}
+                  className="text-[#BFC3C7] hover:text-[#69F0FD] p-2 hover:bg-[#27131D] rounded-full transition-all duration-200"
+                  aria-label="Close modal"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="text-[#BFC3C7] leading-relaxed space-y-4">
+                    <p>
+                      <span className="text-[#69F0FD] font-semibold">Chicago.tennis</span> is thrilled to announce its proud sponsorship by{' '}
+                      <span className="text-[#918AB5] font-semibold">Gladiator</span>, Chicago's premier and top-ranked flexible tennis league.
+                    </p>
+                    <p>
+                      Gladiator offers an unparalleled opportunity for tennis enthusiasts of all skill levels to engage in competitive and friendly play. 
+                      Whether you're a seasoned pro or just starting, Gladiator has a league perfectly suited to your game, ensuring an exciting 
+                      and rewarding experience on the court.
+                    </p>
+                    <p>
+                      Ready to get started? Go to{' '}
+                      <a 
+                        href="https://Gladiatortennis.com" 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#69F0FD] hover:text-[#EC0037] underline transition-colors duration-200 font-semibold"
+                      >
+                        Gladiatortennis.com
                       </a>
                     </p>
                   </div>
