@@ -7,7 +7,9 @@ import { Star } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
+import BanButton from '@/components/BanButton';
 import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
+import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
 
 // Helper function to get condition descriptions
@@ -925,6 +927,7 @@ function CourtDetailsPanel({
   isSignedIn,
   userId,
   isAdmin,
+  isBanned,
   refreshCourtData,
   setShowPhotoUploadModal,
   userSuggestionsRefreshKey,
@@ -941,6 +944,7 @@ function CourtDetailsPanel({
   isSignedIn: boolean;
   userId?: string;
   isAdmin: boolean;
+  isBanned: boolean;
   refreshCourtData: () => Promise<void>;
   setShowPhotoUploadModal: (show: boolean) => void;
   userSuggestionsRefreshKey: number;
@@ -1351,15 +1355,17 @@ function CourtDetailsPanel({
                         address: selectedCourt.address,
                         city: selectedCourt.city,
                         zip: selectedCourt.zip,
-                        numberOfCourts: selectedCourt.number_of_courts || 1,
-                        surfaceType: selectedCourt.surface || '',
-                        courtCondition: selectedCourt.court_condition || '',
-                        courtType: selectedCourt.court_type || '',
-                        hittingWall: selectedCourt.hitting_wall || false,
+                        number_of_courts: selectedCourt.number_of_courts || 1,
+                        surface: selectedCourt.surface || '',
+                        court_condition: selectedCourt.court_condition || '',
+                        court_type: selectedCourt.court_type || '',
+                        hitting_wall: selectedCourt.hitting_wall || false,
                         lighted: selectedCourt.lighted || false,
-                        isPublic: selectedCourt.is_public !== false,
+                        is_public: selectedCourt.is_public !== false,
                       }}
                       userId={userId}
+                      isAdmin={isAdmin}
+                      isBanned={isBanned}
                       onSuggestionSubmitted={() => refreshCourtData()}
                       onSuggestionCreated={() => refreshUserSuggestions()}
                       refreshKey={userSuggestionsRefreshKey}
@@ -1453,7 +1459,7 @@ function CourtDetailsPanel({
                             <p className="text-sm">Sign in to post photos</p>
                           </div>
                         )}
-                        {isSignedIn && (
+                        {isSignedIn && !isBanned && (
                           <div className="mb-4 flex justify-center">
                             <button
                               className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors shadow-lg"
@@ -1461,6 +1467,11 @@ function CourtDetailsPanel({
                             >
                               Add Photos
                             </button>
+                          </div>
+                        )}
+                        {isSignedIn && isBanned && (
+                          <div className="mb-4 text-center text-[#EC0037] py-4">
+                            <p className="text-sm">You are banned from submitting content</p>
                           </div>
                         )}
                         <CourtPhotoGallery
@@ -1517,8 +1528,8 @@ function CourtDetailsPanel({
                                 ))}
                               </div>
                             )}
-                            <div className="flex gap-2 mt-2">
-                              {canEditReview(review) && (
+                            <div className="flex gap-2 mt-2 items-center">
+                              {canEditReview(review) && !isBanned && (
                                 <>
                                   <button
                                     className="text-xs text-[#69F0FD] hover:text-white transition-colors"
@@ -1545,6 +1556,15 @@ function CourtDetailsPanel({
                                   Report
                                 </button>
                               )}
+                              {isAdmin && review.userId !== userId && (
+                                <BanButton
+                                  userId={review.userId}
+                                  userName={review.userName}
+                                  banType="reviews"
+                                  size="sm"
+                                  variant="button"
+                                />
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1555,7 +1575,7 @@ function CourtDetailsPanel({
                     <p className="text-sm">Sign in to leave a review</p>
                   </div>
                 )}
-                {isSignedIn && !myReview && (
+                {isSignedIn && !myReview && !isBanned && (
                   <div className="mt-6 flex justify-center">
                     <button
                       className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors shadow-lg"
@@ -1566,6 +1586,11 @@ function CourtDetailsPanel({
                     >
                       Leave a Review
                     </button>
+                  </div>
+                )}
+                {isSignedIn && !myReview && isBanned && (
+                  <div className="mt-6 text-center text-[#EC0037] py-4">
+                    <p className="text-sm">You are banned from submitting content</p>
                   </div>
                 )}
                 {isAdmin && (
@@ -1758,6 +1783,7 @@ export default function MapComponent() {
 
   const mapRef = useRef<any>(null);
   const { isSignedIn, user } = useUser();
+  const { isBanned } = useUserBanStatus();
   const router = useRouter();
 
   // Mobile detection
@@ -2116,7 +2142,7 @@ export default function MapComponent() {
         </div>
 
         {/* Floating "Suggest a Court" Button */}
-        {!showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && (
+        {!showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && !isBanned && (
           <button
             onClick={() => {
               if (isSignedIn) {
@@ -2134,6 +2160,16 @@ export default function MapComponent() {
           </button>
         )}
 
+        {/* Banned user message for suggest court */}
+        {!showNewCourtSuggestionForm && !showPhotoUploadModal && !showDeleteCourtModal && !showCourtSuggestionSuccess && isSignedIn && isBanned && (
+          <div className="fixed bottom-6 left-6 lg:left-[34%] z-40 bg-[#50394D] text-[#EC0037] font-medium py-3 px-4 rounded-full shadow-xl flex items-center space-x-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+            </svg>
+            <span className="hidden sm:inline text-sm">Banned from submitting</span>
+          </div>
+        )}
+
         {/* Details panel: right for desktop, bottom for mobile */}
         {selectedCourt && (
           <div>
@@ -2144,6 +2180,7 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
+                isBanned={isBanned}
                 refreshCourtData={refreshSelectedCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}
@@ -2162,6 +2199,7 @@ export default function MapComponent() {
                 isSignedIn={!!isSignedIn}
                 userId={typeof user?.id === 'string' ? user.id : undefined}
                 isAdmin={isAdmin}
+                isBanned={isBanned}
                 refreshCourtData={refreshSelectedCourtData}
                 setShowPhotoUploadModal={setShowPhotoUploadModal}
                 userSuggestionsRefreshKey={userSuggestionsRefreshKey}

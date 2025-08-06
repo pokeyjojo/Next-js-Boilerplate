@@ -9,6 +9,7 @@ import CourtEditSuggestion from '@/components/CourtEditSuggestion';
 import CourtEditSuggestionReview from '@/components/CourtEditSuggestionReview';
 import CourtPhotoGallery from '@/components/CourtPhotoGallery';
 import CourtPhotoUpload from '@/components/CourtPhotoUpload';
+import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 
 type TennisCourt = {
   id: string;
@@ -66,6 +67,7 @@ export default function CourtDetailPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [userSuggestionsRefreshKey, setUserSuggestionsRefreshKey] = useState(0);
   const { isSignedIn, user } = useUser();
+  const { isBanned } = useUserBanStatus();
 
   // Lazy loading states
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
@@ -347,6 +349,7 @@ export default function CourtDetailPage() {
                   <CourtEditSuggestion
                     court={court}
                     userId={user?.id}
+                    isBanned={isBanned}
                     onSuggestionSubmitted={refreshCourtData}
                     onSuggestionCreated={refreshUserSuggestions}
                     refreshKey={userSuggestionsRefreshKey}
@@ -585,13 +588,18 @@ export default function CourtDetailPage() {
             <div className="p-6 border-b border-[#BFC3C7]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-white">Photos</h2>
-                {isSignedIn && (
+                {isSignedIn && !isBanned && (
                   <button
                     className="bg-[#EC0037] text-white px-4 py-2 rounded-lg hover:bg-[#4A1C23] transition-colors"
                     onClick={() => setShowPhotoUploadModal(true)}
                   >
                     Add Photos
                   </button>
+                )}
+                {isSignedIn && isBanned && (
+                  <div className="text-[#EC0037] text-sm">
+                    You are banned from submitting content
+                  </div>
                 )}
               </div>
             </div>
@@ -663,13 +671,18 @@ export default function CourtDetailPage() {
             <div className="p-6 border-b border-[#BFC3C7]">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-white">Reviews</h2>
-                {isSignedIn && (
+                {isSignedIn && !isBanned && (
                   <button
                     className="bg-[#EC0037] text-white px-4 py-2 rounded-lg hover:bg-[#4A1C23] transition-colors"
                     onClick={() => setShowReviewModal(true)}
                   >
                     Write a Review
                   </button>
+                )}
+                {isSignedIn && isBanned && (
+                  <div className="text-[#EC0037] text-sm">
+                    You are banned from submitting content
+                  </div>
                 )}
               </div>
             </div>

@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 import { currentUser } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { checkUserBan } from '@/libs/BanCheck';
 import { getDb } from '@/libs/DB';
 import { deletePhotosFromUrls } from '@/libs/DigitalOceanSpaces';
 import { photoModerationSchema, reviewSchema } from '@/models/Schema';
@@ -66,7 +67,13 @@ export async function GET(_req: NextRequest, context: { params: { id: string } }
 
 // POST: Create a new review for a court
 export async function POST(req: NextRequest, context: { params: { id: string } }) {
-  const user = await currentUser();
+  // Check if user is banned from reviews
+  const banCheck = await checkUserBan();
+  if (banCheck.response) {
+    return banCheck.response;
+  }
+
+  const user = banCheck.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -117,7 +124,13 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
 
 // PUT: Edit a review (only by author)
 export async function PUT(req: NextRequest, context: { params: { id: string } }) {
-  const user = await currentUser();
+  // Check if user is banned from reviews
+  const banCheck = await checkUserBan();
+  if (banCheck.response) {
+    return banCheck.response;
+  }
+
+  const user = banCheck.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

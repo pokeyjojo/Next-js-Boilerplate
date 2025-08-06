@@ -62,13 +62,15 @@ type Suggestion = {
 type CourtEditSuggestionProps = {
   court: TennisCourt;
   userId?: string;
+  isAdmin?: boolean;
+  isBanned?: boolean;
   onSuggestionSubmitted?: () => void;
   onSuggestionCreated?: () => void;
   refreshKey?: number;
   onModalStateChange?: (isOpen: boolean) => void;
 };
 
-export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitted, onSuggestionCreated, refreshKey, onModalStateChange }: CourtEditSuggestionProps) {
+export default function CourtEditSuggestion({ court, userId, isAdmin = false, isBanned = false, onSuggestionSubmitted, onSuggestionCreated, refreshKey, onModalStateChange }: CourtEditSuggestionProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -259,6 +261,13 @@ export default function CourtEditSuggestion({ court, userId, onSuggestionSubmitt
   }, [isOpen, showExistingSuggestion, editingSuggestion, showSuccess, showError, onModalStateChange]);
 
   const handleOpenModal = () => {
+    if (isBanned) {
+      // Show user-friendly message for banned users
+      setErrorMessage('You are banned from submitting content.');
+      setShowError(true);
+      return;
+    }
+
     // Check for existing suggestion from cache (no API call needed)
     const existingSuggestion = getLatestUserSuggestion();
     if (existingSuggestion && existingSuggestion.status === 'pending') {

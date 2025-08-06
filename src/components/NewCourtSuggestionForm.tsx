@@ -4,6 +4,7 @@ import type { AddressSuggestion } from '@/libs/GeocodingService';
 import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { searchAddresses } from '@/libs/GeocodingService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
@@ -19,6 +20,7 @@ export default function NewCourtSuggestionForm({
   onSuggestionSubmitted,
 }: NewCourtSuggestionFormProps) {
   const { user } = useUser();
+  const { isBanned } = useUserBanStatus();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showError, setShowError] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -149,6 +151,12 @@ export default function NewCourtSuggestionForm({
 
     if (!user) {
       setErrorMessage('You must be signed in to suggest a court');
+      setShowError(true);
+      return;
+    }
+
+    if (isBanned) {
+      setErrorMessage('You are banned from submitting content');
       setShowError(true);
       return;
     }
@@ -490,10 +498,10 @@ export default function NewCourtSuggestionForm({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isBanned}
               className="px-6 py-2 bg-[#EC0037] text-white rounded-lg hover:bg-[#4A1C23] focus:ring-2 focus:ring-[#EC0037] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
+              {isBanned ? 'Banned from submitting' : isSubmitting ? 'Submitting...' : 'Submit Suggestion'}
             </button>
           </div>
         </form>

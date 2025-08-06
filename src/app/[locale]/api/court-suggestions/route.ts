@@ -2,12 +2,19 @@ import type { NextRequest } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { and, desc, eq, ilike } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
+import { checkUserBan } from '@/libs/BanCheck';
 import { getDb } from '@/libs/DB';
 import { geocodeAddress } from '@/libs/GeocodingService';
 import { courtsSchema, newCourtSuggestionSchema } from '@/models/Schema';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if user is banned from submitting content
+    const banCheck = await checkUserBan();
+    if (banCheck.response) {
+      return banCheck.response;
+    }
+
     const { userId } = await auth();
 
     if (!userId) {

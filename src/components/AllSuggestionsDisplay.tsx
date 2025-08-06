@@ -2,6 +2,7 @@
 
 import { CheckCircle, Clock, User, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import BanButton from '@/components/BanButton';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 // TruncatableText component for handling long text with expand/collapse functionality
@@ -59,10 +60,11 @@ type Suggestion = {
 type AllSuggestionsDisplayProps = {
   courtId: string;
   currentUserId?: string;
+  isAdmin?: boolean;
   onSuggestionUpdated?: () => void;
 };
 
-export default function AllSuggestionsDisplay({ courtId, currentUserId, onSuggestionUpdated: _onSuggestionUpdated }: AllSuggestionsDisplayProps) {
+export default function AllSuggestionsDisplay({ courtId, currentUserId, isAdmin = false, onSuggestionUpdated: _onSuggestionUpdated }: AllSuggestionsDisplayProps) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [showOwnSuggestions, setShowOwnSuggestions] = useState(false);
@@ -164,6 +166,15 @@ export default function AllSuggestionsDisplay({ courtId, currentUserId, onSugges
                   <div className="flex items-center space-x-2 text-sm text-[#BFC3C7]">
                     <User className="w-4 h-4" />
                     <span>{suggestion.suggestedByUserName || 'Unknown User'}</span>
+                    {isAdmin && suggestion.suggestedBy && suggestion.suggestedBy !== currentUserId && (
+                      <BanButton
+                        userId={suggestion.suggestedBy}
+                        userName={suggestion.suggestedByUserName || 'Unknown User'}
+                        banType="suggestions"
+                        size="sm"
+                        variant="icon"
+                      />
+                    )}
                   </div>
                 </div>
 

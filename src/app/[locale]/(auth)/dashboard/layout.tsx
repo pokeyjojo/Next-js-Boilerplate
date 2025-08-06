@@ -71,6 +71,14 @@ export default async function DashboardLayout(props: {
                   Court Photo Management
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/dashboard/admin/user-bans/"
+                  className="border-none text-[#EC0037] hover:text-[#4A1C23] font-medium transition-colors"
+                >
+                  User Ban Management
+                </Link>
+              </li>
             </>
           )}
         </>

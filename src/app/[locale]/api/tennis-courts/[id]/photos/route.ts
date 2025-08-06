@@ -3,6 +3,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { desc, eq } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { isAdmin } from '@/libs/AdminUtils';
+import { checkUserBan } from '@/libs/BanCheck';
 import { getDb } from '@/libs/DB';
 import { deletePhotosFromUrls } from '@/libs/DigitalOceanSpaces';
 import { courtPhotoSchema } from '@/models/Schema';
@@ -27,7 +28,13 @@ export async function GET(_req: NextRequest, context: { params: { id: string } }
 
 // POST: Upload a new photo to a court
 export async function POST(req: NextRequest, context: { params: { id: string } }) {
-  const user = await currentUser();
+  // Check if user is banned from photos
+  const banCheck = await checkUserBan();
+  if (banCheck.response) {
+    return banCheck.response;
+  }
+
+  const user = banCheck.user;
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

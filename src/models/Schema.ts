@@ -213,6 +213,24 @@ export const newCourtSuggestionSchema = pgTable('new_court_suggestions', {
     .notNull(),
 });
 
+export const userBanSchema = pgTable('user_bans', {
+  id: uuid('id').primaryKey().defaultRandom().notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(), // Clerk user ID who is banned
+  userName: varchar('user_name', { length: 255 }).notNull(), // user name who is banned
+  userEmail: varchar('user_email', { length: 255 }), // user email who is banned
+  bannedBy: varchar('banned_by', { length: 255 }).notNull(), // admin user ID who banned
+  bannedByUserName: varchar('banned_by_user_name', { length: 255 }).notNull(), // admin user name who banned
+  banReason: varchar('ban_reason', { length: 500 }), // reason for ban (optional)
+  banType: varchar('ban_type', { length: 50 }).notNull().default('full'), // full, reviews, suggestions, photos
+  isActive: boolean('is_active').notNull().default(true), // true if ban is active
+  expiresAt: timestamp('expires_at', { mode: 'date' }), // null for permanent ban
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' })
+    .defaultNow()
+    .$onUpdate(() => new Date())
+    .notNull(),
+});
+
 // NOTE: If you need to reset the reviews table to use UUIDs, run the following SQL in a migration or manually:
 //
 // DROP TABLE IF EXISTS "reviews";
