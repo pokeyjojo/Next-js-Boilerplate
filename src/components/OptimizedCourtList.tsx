@@ -126,7 +126,7 @@ const OptimizedCourtList = React.memo(({
   const [isRefreshing, setIsRefreshing] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const effectiveSearchQuery = isMobile ? externalSearchQuery : searchQuery;
+  const effectiveSearchQuery = onExternalSearchChange ? externalSearchQuery : searchQuery;
 
   // Auto-focus search input on mobile when component becomes visible
   useEffect(() => {

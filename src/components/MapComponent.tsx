@@ -1672,6 +1672,51 @@ function CourtDetailsPanel({
   );
 }
 
+// Map controller to handle zoom and bounds changes
+function MapZoomController({
+  filteredCourts,
+  searchQuery,
+}: {
+  filteredCourts: TennisCourt[];
+  searchQuery: string;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (searchQuery && filteredCourts.length > 0) {
+      if (filteredCourts.length === 1) {
+        // Single court - zoom to it
+        const court = filteredCourts[0];
+        if (court) {
+          map.setView([court.latitude, court.longitude], 16, {
+            animate: true,
+            duration: 1,
+          });
+        }
+      } else {
+        // Multiple courts - fit all in view
+        const bounds = L.latLngBounds(
+          filteredCourts.map(court => [court.latitude, court.longitude]),
+        );
+        map.fitBounds(bounds, {
+          padding: [20, 20],
+          animate: true,
+          duration: 1,
+          maxZoom: 15,
+        });
+      }
+    } else if (!searchQuery) {
+      // No search query - return to default view
+      map.setView(CHICAGO_CENTER, 11, {
+        animate: true,
+        duration: 1,
+      });
+    }
+  }, [map, filteredCourts, searchQuery]);
+
+  return null;
+}
+
 // Place this at the top level, outside MapComponent
 function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts: TennisCourt[]; handleMarkerClick: (courtId: string) => void }) {
   return (
@@ -1682,7 +1727,7 @@ function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts:
           position={[court.latitude, court.longitude]}
           icon={createCustomIcon(court.membership_required)}
           eventHandlers={{
-            click: () => handleMarkerClick(court.id),
+            click: () => handleMarkerClick(court.id.toString()),
           }}
         />
       ))}
@@ -1698,6 +1743,7 @@ export default function MapComponent() {
   const [dragStartY, setDragStartY] = useState(0);
   const [dragCurrentY, setDragCurrentY] = useState(0);
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
@@ -1715,11 +1761,29 @@ export default function MapComponent() {
   const router = useRouter();
 
   // Mobile detection
-  const [_isMobile, _setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Combine mobile and desktop search queries
+  const activeSearchQuery = isMobile ? mobileSearchQuery : desktopSearchQuery;
+
+  // Filter courts based on search query
+  const filteredCourts = useMemo(() => {
+    if (!activeSearchQuery.trim()) {
+      return courts;
+    }
+
+    const query = activeSearchQuery.toLowerCase().trim();
+    return courts.filter(court =>
+      court.name.toLowerCase().includes(query)
+      || court.address.toLowerCase().includes(query)
+      || court.city.toLowerCase().includes(query)
+      || court.zip.includes(query),
+    );
+  }, [courts, activeSearchQuery]);
 
   useEffect(() => {
     const checkIsMobile = () => {
-      _setIsMobile(window.innerWidth < 768);
+      setIsMobile(window.innerWidth < 1024);
     };
 
     checkIsMobile();
@@ -1912,7 +1976,8 @@ export default function MapComponent() {
       setShowPhotoUploadSuccess(true); // Show success message
 
       // Set active tab to photos
-      handleSetActiveTab('photos');
+      const event = new CustomEvent('setActiveTab', { detail: { tab: 'photos' } });
+      window.dispatchEvent(event);
 
       // Refresh photos by temporarily changing selectedCourt to trigger re-fetch
       if (selectedCourt) {
@@ -1928,12 +1993,6 @@ export default function MapComponent() {
       setUploadingPhotos(false);
     }
   };
-
-  // Callback to set photos tab active
-  const setPhotosTabActive = useCallback(() => {
-    // This will be called from CourtDetailsPanel to set the photos tab active
-    // We'll handle this by passing a callback that the panel can call
-  }, []);
 
   // Callback to set active tab
   const handleSetActiveTab = useCallback((tab: 'overview' | 'photos' | 'reviews') => {
@@ -2002,6 +2061,8 @@ export default function MapComponent() {
         <OptimizedCourtList
           courts={courts}
           onCourtSelect={handleCourtSelect}
+          externalSearchQuery={desktopSearchQuery}
+          onExternalSearchChange={setDesktopSearchQuery}
         />
       </div>
 
@@ -2024,7 +2085,8 @@ export default function MapComponent() {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapController />
-          <TennisCourtMarkersMapComponent courts={courts} handleMarkerClick={handleMarkerClick} />
+          <MapZoomController filteredCourts={filteredCourts} searchQuery={activeSearchQuery} />
+          <TennisCourtMarkersMapComponent courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
         </MapContainer>
 
         {/* Custom Zoom Controls - positioned away from search bar */}
