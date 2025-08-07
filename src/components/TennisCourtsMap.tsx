@@ -1,21 +1,9 @@
 'use client';
 
-import { Icon } from 'leaflet';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { MapContainer, Marker, TileLayer } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-
-// Fix for default marker icon in Next.js
-const customIcon = new Icon({
-  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41],
-});
+import GoogleMap from './GoogleMap';
+import GoogleMapCustomMarker from './GoogleMapCustomMarker';
 
 type TennisCourt = {
   id: number;
@@ -80,27 +68,32 @@ export default function TennisCourtsMap() {
 
   return (
     <div className="h-[400px] sm:h-[500px] lg:h-[600px] w-full">
-      <MapContainer
-        center={[41.8781, -87.6298]} // Chicago coordinates
+      <GoogleMap
+        center={{ lat: 41.8781, lng: -87.6298 }} // Chicago coordinates
         zoom={12}
-        zoomControl={false}
         style={{ height: '100%', width: '100%' }}
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {courts.map(court => (
-          <Marker
-            key={court.id}
-            position={[court.latitude, court.longitude]}
-            icon={customIcon}
-            eventHandlers={{
-              click: () => handleMarkerClick(court.id),
-            }}
-          />
-        ))}
-      </MapContainer>
+        {courts.map((court) => {
+          // Ensure coordinates are valid numbers
+          const lat = typeof court.latitude === 'string' ? Number.parseFloat(court.latitude) : court.latitude;
+          const lng = typeof court.longitude === 'string' ? Number.parseFloat(court.longitude) : court.longitude;
+
+          if (Number.isNaN(lat) || Number.isNaN(lng) || lat === 0 || lng === 0) {
+            console.warn(`Skipping court ${court.name} due to invalid coordinates:`, { lat, lng });
+            return null;
+          }
+
+          return (
+            <GoogleMapCustomMarker
+              key={court.id}
+              position={{ lat, lng }}
+              title={court.name}
+              isPrivate={court.is_public !== undefined ? !court.is_public : false}
+              onClick={() => handleMarkerClick(court.id)}
+            />
+          );
+        })}
+      </GoogleMap>
     </div>
   );
 }

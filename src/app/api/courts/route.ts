@@ -22,6 +22,7 @@ export async function GET() {
         c.number_of_courts,
         c.surface,
         c.parking,
+        c.is_public,
         COALESCE(AVG(r.rating), 0) as average_rating,
         COUNT(r.id) as review_count
       FROM courts c
@@ -43,7 +44,8 @@ export async function GET() {
         c.court_condition,
         c.number_of_courts,
         c.surface,
-        c.parking
+        c.parking,
+        c.is_public
     `;
     return NextResponse.json(courts);
   } catch (error) {

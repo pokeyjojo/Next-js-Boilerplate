@@ -1,11 +1,11 @@
 'use client';
 
 import type { TennisCourt } from '@/hooks/useCourtData';
-import type { AddressSuggestion } from '@/libs/GeocodingService';
+import type { AddressSuggestion } from '@/libs/GoogleMapsService';
 import { CheckCircleIcon, Edit, X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { invalidateCourtSuggestionsCache, useCourtSuggestions } from '@/hooks/useCourtSuggestions';
-import { searchAddresses } from '@/libs/GeocodingService';
+import { searchAddresses } from '@/libs/GoogleMapsService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 // TruncatableText component for handling long text with expand/collapse functionality

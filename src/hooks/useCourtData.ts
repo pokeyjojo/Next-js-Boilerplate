@@ -51,7 +51,7 @@ export function useCourtData() {
       setError(null);
 
       // Add cache-busting parameter when forcing refresh
-      const url = force ? `/api/courts?t=${now}` : '/api/courts';
+      const url = force ? `/en/api/courts?t=${now}` : '/en/api/courts';
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch tennis courts');

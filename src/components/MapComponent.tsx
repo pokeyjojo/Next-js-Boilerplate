@@ -1,16 +1,16 @@
 'use client';
 
-import type { LatLngTuple } from 'leaflet';
 import { useUser } from '@clerk/nextjs';
-import L from 'leaflet';
 import { Star } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { MapContainer, Marker, TileLayer, useMap } from 'react-leaflet';
 import BanButton from '@/components/BanButton';
 import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
+import GoogleMap from './GoogleMap';
+import { GoogleMapController } from './GoogleMapControllers';
+import { GoogleMapDirectMarkers } from './GoogleMapDirectMarkers';
 
 // Helper function to get condition descriptions
 const getConditionDescription = (condition: string | null | undefined): string => {
@@ -40,88 +40,8 @@ import OptimizedCourtList from './OptimizedCourtList';
 import PhotoUpload from './PhotoUpload';
 import PhotoViewer from './PhotoViewer';
 import UserSuggestionDisplay from './UserSuggestionDisplay';
-import 'leaflet/dist/leaflet.css';
 
-const CHICAGO_CENTER: LatLngTuple = [41.8781, -87.6298];
-
-// Custom marker icons for public and private courts
-const createCustomIcon = (isPrivate: boolean) => {
-  const color = isPrivate ? '#EC0037' : '#002C4D';
-  return L.divIcon({
-    className: 'custom-marker',
-    html: `
-      <div style="
-        background-color: ${color};
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        border: 3px solid #FFFFFF;
-        box-shadow: 0 0 10px rgba(39,19,29,0.4);
-      ">
-      </div>
-    `,
-    iconSize: [24, 24],
-    iconAnchor: [12, 12],
-  });
-};
-
-// Add the pulse animation to the document
-if (typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    .custom-marker {
-      transition: transform 0.2s ease;
-      }
-    .custom-marker:hover {
-      transform: scale(1.1);
-    }
-  `;
-  document.head.appendChild(style);
-}
-
-export function MapController() {
-  const map = useMap();
-
-  useEffect(() => {
-    map.setView(CHICAGO_CENTER, 11);
-  }, [map]);
-
-  return null;
-}
-
-export function TennisCourtMarkers() {
-  const { courts, loading, error } = useCourtData();
-  const router = useRouter();
-
-  const handleMarkerClick = useCallback((courtId: number) => {
-    router.push(`/en/courts/${courtId}`);
-  }, [router]);
-
-  if (loading) {
-    return null;
-  }
-  if (error) {
-    console.error('Error state:', error);
-    return null;
-  }
-
-  return (
-    <>
-      {courts.map((court) => {
-        return (
-          <Marker
-            key={court.id}
-            position={[court.latitude, court.longitude]}
-            icon={createCustomIcon(court.membership_required)}
-            eventHandlers={{
-              click: () => handleMarkerClick(court.id),
-            }}
-          />
-        );
-      })}
-    </>
-  );
-}
+const CHICAGO_CENTER = { lat: 41.8781, lng: -87.6298 };
 
 // Unified CourtList component that handles its own search state
 const CourtList = ({
@@ -1708,69 +1628,6 @@ function CourtDetailsPanel({
   );
 }
 
-// Map controller to handle zoom and bounds changes
-function MapZoomController({
-  filteredCourts,
-  searchQuery,
-}: {
-  filteredCourts: TennisCourt[];
-  searchQuery: string;
-}) {
-  const map = useMap();
-
-  useEffect(() => {
-    if (searchQuery && filteredCourts.length > 0) {
-      if (filteredCourts.length === 1) {
-        // Single court - zoom to it
-        const court = filteredCourts[0];
-        if (court) {
-          map.setView([court.latitude, court.longitude], 16, {
-            animate: true,
-            duration: 1,
-          });
-        }
-      } else {
-        // Multiple courts - fit all in view
-        const bounds = L.latLngBounds(
-          filteredCourts.map(court => [court.latitude, court.longitude]),
-        );
-        map.fitBounds(bounds, {
-          padding: [20, 20],
-          animate: true,
-          duration: 1,
-          maxZoom: 15,
-        });
-      }
-    } else if (!searchQuery) {
-      // No search query - return to default view
-      map.setView(CHICAGO_CENTER, 11, {
-        animate: true,
-        duration: 1,
-      });
-    }
-  }, [map, filteredCourts, searchQuery]);
-
-  return null;
-}
-
-// Place this at the top level, outside MapComponent
-function TennisCourtMarkersMapComponent({ courts, handleMarkerClick }: { courts: TennisCourt[]; handleMarkerClick: (courtId: string) => void }) {
-  return (
-    <>
-      {courts.map(court => (
-        <Marker
-          key={court.id}
-          position={[court.latitude, court.longitude]}
-          icon={createCustomIcon(court.membership_required)}
-          eventHandlers={{
-            click: () => handleMarkerClick(court.id.toString()),
-          }}
-        />
-      ))}
-    </>
-  );
-}
-
 export default function MapComponent() {
   const { courts, refreshCourtData: refreshGlobalCourtData } = useCourtData();
   const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
@@ -1793,7 +1650,7 @@ export default function MapComponent() {
   const [showCourtSuggestionSuccess, setShowCourtSuggestionSuccess] = useState(false);
   const [isListCollapsed, setIsListCollapsed] = useState(false);
 
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<google.maps.Map | null>(null);
   const { isSignedIn, user } = useUser();
   const { isBanned } = useUserBanStatus();
   const router = useRouter();
@@ -1898,15 +1755,8 @@ export default function MapComponent() {
   const handleCourtSelect = useCallback((court: TennisCourt) => {
     setSelectedCourt(court);
     if (mapRef.current) {
-      mapRef.current.flyTo(
-        [court.latitude, court.longitude],
-        15,
-        {
-          duration: 1.5,
-          easeLinearity: 0.25,
-          noMoveStart: true,
-        },
-      );
+      mapRef.current.panTo({ lat: court.latitude, lng: court.longitude });
+      mapRef.current.setZoom(15);
     }
     // On mobile, hide the court list and show details
     if (window.innerWidth < 1024) {
@@ -1976,17 +1826,21 @@ export default function MapComponent() {
     if (selectedCourt && window.innerWidth < 1024 && mapRef.current) {
       const map = mapRef.current;
       // Disable map dragging and touch events
-      map.dragging.disable();
-      map.touchZoom.disable();
-      map.doubleClickZoom.disable();
-      map.scrollWheelZoom.disable();
+      map.setOptions({
+        draggable: false,
+        zoomControl: false,
+        scrollwheel: false,
+        disableDoubleClickZoom: true,
+      });
 
       return () => {
         // Re-enable map interactions when details panel closes
-        map.dragging.enable();
-        map.touchZoom.enable();
-        map.doubleClickZoom.enable();
-        map.scrollWheelZoom.enable();
+        map.setOptions({
+          draggable: true,
+          zoomControl: false,
+          scrollwheel: true,
+          disableDoubleClickZoom: false,
+        });
       };
     }
   }, [selectedCourt]);
@@ -1996,7 +1850,9 @@ export default function MapComponent() {
     if (mapRef.current) {
       // Wait for the CSS transition to complete (300ms) before resizing map
       const timer = setTimeout(() => {
-        mapRef.current.invalidateSize();
+        if (mapRef.current) {
+          google.maps.event.trigger(mapRef.current, 'resize');
+        }
       }, 350);
 
       return () => clearTimeout(timer);
@@ -2169,33 +2025,25 @@ export default function MapComponent() {
           isListCollapsed ? 'lg:w-[calc(100%-4rem)]' : 'lg:w-2/3'
         }`}
       >
-        <MapContainer
+        <GoogleMap
           center={CHICAGO_CENTER}
           zoom={11}
-          zoomControl={false}
           style={{ height: '100%', width: '100%' }}
-          ref={mapRef}
-          whenReady={() => {
-            if (mapRef.current) {
-              mapRef.current.invalidateSize();
-            }
+          onMapReady={(map) => {
+            mapRef.current = map;
+            google.maps.event.trigger(map, 'resize');
           }}
         >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MapController />
-          <MapZoomController filteredCourts={filteredCourts} searchQuery={activeSearchQuery} />
-          <TennisCourtMarkersMapComponent courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
-        </MapContainer>
+          <GoogleMapController />
+          <GoogleMapDirectMarkers courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
+        </GoogleMap>
 
         {/* Custom Zoom Controls - positioned away from search bar */}
         <div className="lg:hidden absolute bottom-32 right-4 z-30 flex flex-col gap-2">
           <button
             onClick={() => {
               if (mapRef.current) {
-                mapRef.current.zoomIn();
+                mapRef.current.setZoom(mapRef.current.getZoom()! + 1);
               }
             }}
             className="w-10 h-10 bg-[#011B2E] border-2 border-[#27131D] text-[#EBEDEE] rounded-lg shadow-lg hover:bg-[#002C4D] hover:border-[#69F0FD] transition-all duration-200 flex items-center justify-center font-bold text-lg"
@@ -2206,7 +2054,7 @@ export default function MapComponent() {
           <button
             onClick={() => {
               if (mapRef.current) {
-                mapRef.current.zoomOut();
+                mapRef.current.setZoom(mapRef.current.getZoom()! - 1);
               }
             }}
             className="w-10 h-10 bg-[#011B2E] border-2 border-[#27131D] text-[#EBEDEE] rounded-lg shadow-lg hover:bg-[#002C4D] hover:border-[#69F0FD] transition-all duration-200 flex items-center justify-center font-bold text-lg"

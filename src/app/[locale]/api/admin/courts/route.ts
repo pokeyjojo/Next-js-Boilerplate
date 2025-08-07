@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { isAdmin } from '@/libs/AdminUtils';
 import { getDb } from '@/libs/DB';
-import { geocodeAddress } from '@/libs/GeocodingService';
+import { geocodeAddress } from '@/libs/GoogleMapsService';
 import { courtsSchema } from '@/models/Schema';
 
 export async function POST(req: NextRequest) {

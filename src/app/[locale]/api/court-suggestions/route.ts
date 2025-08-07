@@ -4,7 +4,7 @@ import { and, desc, eq, ilike } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { checkUserBan } from '@/libs/BanCheck';
 import { getDb } from '@/libs/DB';
-import { geocodeAddress } from '@/libs/GeocodingService';
+import { geocodeAddress } from '@/libs/GoogleMapsService';
 import { courtsSchema, newCourtSuggestionSchema } from '@/models/Schema';
 
 export async function POST(request: NextRequest) {

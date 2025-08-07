@@ -1,11 +1,11 @@
 'use client';
 
-import type { AddressSuggestion } from '@/libs/GeocodingService';
+import type { AddressSuggestion } from '@/libs/GoogleMapsService';
 import { useUser } from '@clerk/nextjs';
 import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useUserBanStatus } from '@/hooks/useUserBanStatus';
-import { searchAddresses } from '@/libs/GeocodingService';
+import { searchAddresses } from '@/libs/GoogleMapsService';
 import { capitalizeFirstLetter } from '@/utils/Helpers';
 
 type NewCourtSuggestionFormProps = {
