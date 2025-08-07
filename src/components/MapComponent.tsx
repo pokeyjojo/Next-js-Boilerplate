@@ -10,7 +10,7 @@ import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
 import GoogleMap from './GoogleMap';
 import { GoogleMapController } from './GoogleMapControllers';
-import { GoogleMapDirectMarkers } from './GoogleMapDirectMarkers';
+import { OptimizedGoogleMapMarkers } from './OptimizedGoogleMapMarkers';
 
 // Helper function to get condition descriptions
 const getConditionDescription = (condition: string | null | undefined): string => {
@@ -2035,7 +2035,7 @@ export default function MapComponent() {
           }}
         >
           <GoogleMapController />
-          <GoogleMapDirectMarkers courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
+          <OptimizedGoogleMapMarkers courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
         </GoogleMap>
 
         {/* Custom Zoom Controls - positioned away from search bar */}

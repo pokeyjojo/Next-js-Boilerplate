@@ -39,6 +39,7 @@
     "@clerk/nextjs": "^6.21.0",
     "@electric-sql/pglite": "^0.3.3",
     "@googlemaps/js-api-loader": "^1.16.10",
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@hello-pangea/dnd": "^18.0.1",
     "@hookform/resolvers": "^5.1.1",
     "@logtail/pino": "^0.5.5",
