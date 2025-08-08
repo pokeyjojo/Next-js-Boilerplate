@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
 import type { TennisCourt } from '@/hooks/useCourtData';
+import { useEffect, useRef } from 'react';
+
 import { useGoogleMap } from './GoogleMap';
 
 // Map controller to handle initial positioning
@@ -28,12 +29,24 @@ export function GoogleMapZoomController({
   searchQuery: string;
 }) {
   const map = useGoogleMap();
+  const hasSearchedRef = useRef(false);
+  const previousSearchQueryRef = useRef(searchQuery);
 
   useEffect(() => {
-    if (!map) return;
+    if (!map) {
+      return;
+    }
 
-    if (searchQuery && filteredCourts.length > 0) {
-      if (filteredCourts.length === 1) {
+    // Track if user has ever performed a search
+    if (searchQuery && searchQuery.trim()) {
+      hasSearchedRef.current = true;
+    }
+
+    // Only handle search-related zoom changes
+    if (searchQuery && searchQuery.trim()) {
+      if (filteredCourts.length === 0) {
+        // No results found - keep current view but don't change zoom
+      } else if (filteredCourts.length === 1) {
         // Single court - zoom to it
         const court = filteredCourts[0];
         if (court) {
@@ -47,15 +60,20 @@ export function GoogleMapZoomController({
           bounds.extend({ lat: court.latitude, lng: court.longitude });
         });
         map.fitBounds(bounds);
-        
+
         // Add some padding
         const padding = 50;
         map.fitBounds(bounds, padding);
       }
+    } else if (hasSearchedRef.current && previousSearchQueryRef.current && !searchQuery) {
+      // User has cleared a previous search - reset to default view
+      const CHICAGO_CENTER = { lat: 41.8781, lng: -87.6298 };
+      map.setCenter(CHICAGO_CENTER);
+      map.setZoom(11);
     }
+
+    previousSearchQueryRef.current = searchQuery;
   }, [map, filteredCourts, searchQuery]);
 
   return null;
 }
-
-

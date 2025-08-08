@@ -9,7 +9,7 @@ import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
 import GoogleMap from './GoogleMap';
-import { GoogleMapController } from './GoogleMapControllers';
+import { GoogleMapController, GoogleMapZoomController } from './GoogleMapControllers';
 import { OptimizedGoogleMapMarkers } from './OptimizedGoogleMapMarkers';
 
 // Helper function to get condition descriptions
@@ -2035,6 +2035,10 @@ export default function MapComponent() {
           }}
         >
           <GoogleMapController />
+          <GoogleMapZoomController
+            filteredCourts={filteredCourts}
+            searchQuery={activeSearchQuery}
+          />
           <OptimizedGoogleMapMarkers courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
         </GoogleMap>
 
