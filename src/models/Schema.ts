@@ -57,6 +57,7 @@ export const courtsSchema = pgTable('courts', {
   surface: varchar('surface', { length: 50 }),
   parking: boolean('parking'),
   isPublic: boolean('is_public').default(true),
+  regionId: uuid('region_id'),
 });
 
 export const reviewSchema = pgTable('reviews', {

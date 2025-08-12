@@ -27,7 +27,9 @@ export async function GET() {
         COUNT(r.id) as review_count
       FROM courts c
       LEFT JOIN reviews r ON c.id = r.court_id
-      WHERE c.latitude IS NOT NULL AND c.longitude IS NOT NULL
+      WHERE c.latitude IS NOT NULL 
+        AND c.longitude IS NOT NULL 
+        AND c.region_id = 'cf45ee10-3404-4c1e-8e92-b8fad59ebe6a'
       GROUP BY 
         c.id,
         c.name,
