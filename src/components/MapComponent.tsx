@@ -1387,6 +1387,25 @@ function CourtDetailsPanel({
                   )}
                 </div>
               )}
+
+              {/* Gladiator Tennis League Button */}
+              <div className="mt-8 pt-6 border-t border-[#BFC3C7]">
+                <div className="text-center">
+                  <p className="text-[#BFC3C7] text-sm mb-4">
+                    Want to play matches at these courts?
+                    <br />
+                    Join a Chicago tennis league
+                  </p>
+                  <a
+                    href="https://www.gladiatortennis.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block w-full px-6 py-3 bg-[#002C4D] text-[#FFFFFF] font-bold text-sm rounded-lg hover:bg-[#011B2E] transition-colors duration-200 shadow-lg border border-[#27131D]"
+                  >
+                    RESERVE YOUR GLADIATOR SPOT
+                  </a>
+                </div>
+              </div>
             </div>
           )
         : activeTab === 'photos'
