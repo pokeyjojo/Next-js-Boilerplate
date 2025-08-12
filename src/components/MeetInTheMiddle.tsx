@@ -777,9 +777,9 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
               <button
                 type="button"
                 onClick={() => handleFilterChange('all')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('all')
-                    ? 'bg-[#69F0FD] text-[#002C4D]'
+                    ? 'bg-[#69F0FD] text-[#002C4D] hover:bg-[#918AB5]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
@@ -788,57 +788,57 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
               <button
                 type="button"
                 onClick={() => handleFilterChange('lighted')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('lighted')
-                    ? 'bg-[#EC0037] text-white'
+                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
-                🌟 Lighted
+                Lighted
               </button>
               <button
                 type="button"
                 onClick={() => handleFilterChange('public')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('public')
-                    ? 'bg-[#EC0037] text-white'
+                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
-                🏛️ Public
+                Public
               </button>
               <button
                 type="button"
                 onClick={() => handleFilterChange('private')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('private')
-                    ? 'bg-[#EC0037] text-white'
+                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
-                🔐 Private
+                Private
               </button>
               <button
                 type="button"
                 onClick={() => handleFilterChange('outdoor')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('outdoor')
-                    ? 'bg-[#EC0037] text-white'
+                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
-                🌞 Outdoor
+                Outdoor
               </button>
               <button
                 type="button"
                 onClick={() => handleFilterChange('indoor')}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('indoor')
-                    ? 'bg-[#EC0037] text-white'
+                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
                     : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
                 }`}
               >
-                🏢 Indoor
+                Indoor
               </button>
             </div>
           </div>
@@ -868,7 +868,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
             type="button"
             onClick={findCourtsInBetween}
             disabled={!address1.selected || !address2.selected || isCalculating}
-            className="w-full py-3 px-4 bg-[#EC0037] hover:bg-[#4A1C23] disabled:bg-[#50394D] disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+            className="w-full px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:bg-[#50394D] disabled:cursor-not-allowed transition-colors"
           >
             {isCalculating
               ? (
@@ -923,7 +923,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                         <div className="font-medium text-white">{court.name}</div>
                         {mostEquidistantCourt?.id === court.id && (
                           <div className="px-2 py-1 bg-[#EC0037] text-white text-xs rounded-full font-medium">
-                            📍 Map Center
+                            Map Center
                           </div>
                         )}
                       </div>

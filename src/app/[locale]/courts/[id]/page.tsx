@@ -9,6 +9,7 @@ import CourtEditSuggestion from '@/components/CourtEditSuggestion';
 import CourtEditSuggestionReview from '@/components/CourtEditSuggestionReview';
 import CourtPhotoGallery from '@/components/CourtPhotoGallery';
 import CourtPhotoUpload from '@/components/CourtPhotoUpload';
+import ReviewStatistics from '@/components/ReviewStatistics';
 import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 
 type TennisCourt = {
@@ -32,8 +33,11 @@ type Review = {
   id: string;
   courtId: string;
   rating: number;
+  text?: string | null;
   comment: string;
   author: string;
+  userName: string;
+  userId: string;
   createdAt: string;
 };
 
@@ -152,8 +156,11 @@ export default function CourtDetailPage() {
               id: r.id,
               courtId: r.courtId,
               rating: r.rating,
+              text: r.text,
               comment: r.text,
               author: r.userName,
+              userName: r.userName,
+              userId: r.userId,
               createdAt: r.createdAt,
             }))
           : [],
@@ -258,6 +265,35 @@ export default function CourtDetailPage() {
       // Optionally show error
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    // eslint-disable-next-line no-alert
+    if (!confirm('Are you sure you want to delete this review?')) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/tennis-courts/${courtId}/reviews`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewId }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to delete review');
+      }
+
+      // Refresh reviews
+      setReviewsLoaded(false);
+      if (activeTab === 'reviews') {
+        fetchReviews();
+      }
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      // eslint-disable-next-line no-alert
+      alert('Failed to delete review. Please try again.');
     }
   };
 
@@ -716,29 +752,58 @@ export default function CourtDetailPage() {
                 </div>
               )}
               {reviews.length > 0 && (
-                <div className="space-y-6">
-                  {reviews.map(review => (
-                    <div key={review.id} className="border-b border-[#BFC3C7] pb-6 last:border-b-0">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                          <div className="flex items-center mr-3">
-                            {[...Array.from({ length: 5 })].map((_, i) => (
-                              <Star
-                                key={i}
-                                className={`w-4 h-4 ${i < review.rating ? 'text-[#69F0FD]' : 'text-[#50394D]'}`}
-                              />
-                            ))}
+                <>
+                  {/* Review Statistics Graph */}
+                  <ReviewStatistics
+                    reviews={reviews}
+                    currentUserId={user?.id}
+                    isAdmin={isAdmin}
+                    onDeleteReview={handleDeleteReview}
+                  />
+
+                  {/* Text Reviews Section */}
+                  <div className="bg-[#011B2E] rounded-lg p-4 border border-[#BFC3C7]">
+                    <h3 className="text-md font-semibold text-white mb-3">
+                      Written Reviews (
+                      {reviews.filter(r => r.text && r.text.trim()).length}
+                      )
+                    </h3>
+
+                    {reviews.filter(r => r.text && r.text.trim()).length === 0
+                      ? (
+                          <div className="text-center py-4">
+                            <p className="text-[#BFC3C7] text-sm">No written reviews yet. Be the first to share your experience!</p>
                           </div>
-                          <span className="font-medium text-white">{review.author}</span>
-                        </div>
-                        <span className="text-sm text-[#BFC3C7]">
-                          {new Date(review.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <p className="text-[#BFC3C7]">{review.comment}</p>
-                    </div>
-                  ))}
-                </div>
+                        )
+                      : (
+                          <div className="space-y-4 max-h-60 overflow-y-auto">
+                            {reviews
+                              .filter(review => review.text && review.text.trim())
+                              .map(review => (
+                                <div key={review.id} className="border-b border-[#BFC3C7] pb-3 last:border-b-0">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center">
+                                      <div className="flex items-center mr-2">
+                                        {[...Array.from({ length: 5 })].map((_, i) => (
+                                          <Star
+                                            key={`star-${review.id}-${i}`}
+                                            className={`w-3 h-3 ${i < review.rating ? 'text-[#69F0FD] fill-current' : 'text-[#50394D]'}`}
+                                          />
+                                        ))}
+                                      </div>
+                                      <span className="font-medium text-white text-sm">{review.author}</span>
+                                    </div>
+                                    <span className="text-xs text-[#BFC3C7]">
+                                      {new Date(review.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <p className="text-[#BFC3C7] text-sm leading-relaxed whitespace-pre-line">{review.text}</p>
+                                </div>
+                              ))}
+                          </div>
+                        )}
+                  </div>
+                </>
               )}
             </div>
             {/* Review Modal */}

@@ -5,6 +5,7 @@ import { Star } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import BanButton from '@/components/BanButton';
+import ReviewStatistics from '@/components/ReviewStatistics';
 import { useCourtSuggestions } from '@/hooks/useCourtSuggestions';
 import { useUserBanStatus } from '@/hooks/useUserBanStatus';
 import { capitalizeFirstLetter, getI18nPath } from '@/utils/Helpers';
@@ -586,12 +587,12 @@ const OptimizedSearchBar = React.memo(({
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      
+
       // Call onEnterPress if provided (for immediate map zoom)
       if (onEnterPress) {
         onEnterPress();
       }
-      
+
       // Mobile specific: toggle list
       if (isMobile) {
         onToggleList();
@@ -1440,77 +1441,110 @@ function CourtDetailsPanel({
                         {reviews.length === 0 && (
                           <div className="text-center text-[#BFC3C7]">No reviews yet.</div>
                         )}
-                        {reviews.map(review => (
-                          <div key={review.id} className="mb-4 border-b border-[#BFC3C7] pb-3">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="font-semibold text-white">{review.userName}</span>
-                              <StarRating value={review.rating} />
-                              <span className="text-xs text-[#BFC3C7]">{new Date(review.createdAt).toLocaleDateString()}</span>
+                        {reviews.length > 0 && (
+                          <>
+                            {/* Review Statistics Graph */}
+                            <ReviewStatistics
+                              reviews={reviews}
+                              currentUserId={userId}
+                              isAdmin={isAdmin}
+                              onDeleteReview={reviewId => handleDelete(reviewId)}
+                            />
+
+                            {/* Text Reviews Section */}
+                            <div className="bg-[#002C4D] rounded-lg p-3 border border-[#BFC3C7] mb-4">
+                              <h4 className="text-sm font-semibold text-white mb-2">
+                                Written Reviews (
+                                {reviews.filter((r: any) => r.text && r.text.trim()).length}
+                                )
+                              </h4>
+
+                              {reviews.filter((r: any) => r.text && r.text.trim()).length === 0
+                                ? (
+                                    <div className="text-center py-3">
+                                      <p className="text-[#BFC3C7] text-xs">No written reviews yet.</p>
+                                    </div>
+                                  )
+                                : (
+                                    <div className="space-y-3 max-h-48 overflow-y-auto">
+                                      {reviews
+                                        .filter((review: any) => review.text && review.text.trim())
+                                        .map((review: any) => (
+                                          <div key={review.id} className="mb-3 border-b border-[#BFC3C7] pb-2 last:border-b-0">
+                                            <div className="flex items-center gap-2 mb-1">
+                                              <span className="font-semibold text-white text-sm">{review.userName}</span>
+                                              <StarRating value={review.rating} />
+                                              <span className="text-xs text-[#BFC3C7]">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                            </div>
+                                            <div className="text-[#BFC3C7] text-xs leading-relaxed whitespace-pre-line">{review.text}</div>
+                                            {review.photos && (
+                                              <div className="mt-2 grid grid-cols-2 gap-2">
+                                                {JSON.parse(review.photos).map((photo: string, index: number) => (
+                                                  <button
+                                                    key={index}
+                                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#69F0FD] hover:ring-2 hover:ring-[#69F0FD] transition-all"
+                                                    onClick={() => {
+                                                      setPhotoViewerPhotos(JSON.parse(review.photos));
+                                                      setPhotoViewerIndex(index);
+                                                      setPhotoViewerOpen(true);
+                                                    }}
+                                                    aria-label={`View photo ${index + 1}`}
+                                                    type="button"
+                                                  >
+                                                    <img
+                                                      src={photo}
+                                                      alt={`${index + 1}`}
+                                                      className="w-full h-full object-cover"
+                                                    />
+                                                  </button>
+                                                ))}
+                                              </div>
+                                            )}
+                                            <div className="flex gap-2 mt-2 items-center">
+                                              {canEditReview(review) && !isBanned && (
+                                                <>
+                                                  <button
+                                                    className="text-xs text-[#69F0FD] hover:text-white transition-colors"
+                                                    onClick={() => {
+                                                      setEditReview(review);
+                                                      setShowModal(true);
+                                                    }}
+                                                  >
+                                                    Edit
+                                                  </button>
+                                                  <button
+                                                    className="text-xs text-[#EC0037] hover:text-[#4A1C23] transition-colors"
+                                                    onClick={() => handleDelete(review.id)}
+                                                  >
+                                                    Delete
+                                                  </button>
+                                                </>
+                                              )}
+                                              {isSignedIn && (
+                                                <button
+                                                  className="text-xs text-[#918AB5] hover:text-white transition-colors"
+                                                  onClick={() => handleReport(review.id)}
+                                                >
+                                                  Report
+                                                </button>
+                                              )}
+                                              {isAdmin && review.userId !== userId && (
+                                                <BanButton
+                                                  userId={review.userId}
+                                                  userName={review.userName}
+                                                  banType="reviews"
+                                                  size="sm"
+                                                  variant="button"
+                                                />
+                                              )}
+                                            </div>
+                                          </div>
+                                        ))}
+                                    </div>
+                                  )}
                             </div>
-                            <div className="text-[#BFC3C7] text-sm whitespace-pre-line">{review.text}</div>
-                            {review.photos && (
-                              <div className="mt-2 grid grid-cols-2 gap-2">
-                                {JSON.parse(review.photos).map((photo: string, index: number) => (
-                                  <button
-                                    key={index}
-                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#69F0FD] hover:ring-2 hover:ring-[#69F0FD] transition-all"
-                                    onClick={() => {
-                                      setPhotoViewerPhotos(JSON.parse(review.photos));
-                                      setPhotoViewerIndex(index);
-                                      setPhotoViewerOpen(true);
-                                    }}
-                                    aria-label={`View photo ${index + 1}`}
-                                    type="button"
-                                  >
-                                    <img
-                                      src={photo}
-                                      alt={`${index + 1}`}
-                                      className="w-full h-full object-cover"
-                                    />
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                            <div className="flex gap-2 mt-2 items-center">
-                              {canEditReview(review) && !isBanned && (
-                                <>
-                                  <button
-                                    className="text-xs text-[#69F0FD] hover:text-white transition-colors"
-                                    onClick={() => {
-                                      setEditReview(review);
-                                      setShowModal(true);
-                                    }}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    className="text-xs text-[#EC0037] hover:text-[#4A1C23] transition-colors"
-                                    onClick={() => handleDelete(review.id)}
-                                  >
-                                    Delete
-                                  </button>
-                                </>
-                              )}
-                              {isSignedIn && (
-                                <button
-                                  className="text-xs text-[#918AB5] hover:text-white transition-colors"
-                                  onClick={() => handleReport(review.id)}
-                                >
-                                  Report
-                                </button>
-                              )}
-                              {isAdmin && review.userId !== userId && (
-                                <BanButton
-                                  userId={review.userId}
-                                  userName={review.userName}
-                                  banType="reviews"
-                                  size="sm"
-                                  variant="button"
-                                />
-                              )}
-                            </div>
-                          </div>
-                        ))}
+                          </>
+                        )}
                       </>
                     )}
                 {!isSignedIn && (
@@ -1650,7 +1684,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
-  
+
   // Typing detection state for better map zoom UX
   const [isUserTyping, setIsUserTyping] = useState(false);
   const [mapZoomQuery, setMapZoomQuery] = useState('');
@@ -1679,7 +1713,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
   useEffect(() => {
     if (selectedCourtFromExternal) {
       setSelectedCourt(selectedCourtFromExternal);
-      
+
       // Zoom to the court using the same logic as handleCourtSelect
       // Add a small delay to ensure map is ready
       const zoomToExternal = () => {
@@ -1691,7 +1725,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
           setTimeout(zoomToExternal, 500);
         }
       };
-      
+
       // Try immediately, then with delay if needed
       zoomToExternal();
     }
@@ -1716,14 +1750,14 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
   const handleSearchChange = useCallback((query: string, source: 'mobile' | 'desktop') => {
     // Set typing state immediately
     setIsUserTyping(true);
-    
+
     // Update search query immediately for instant filtering
     if (source === 'mobile') {
       setMobileSearchQuery(query);
     } else {
       setDesktopSearchQuery(query);
     }
-    
+
     // Trigger debounced map zoom
     debouncedMapZoom(query);
   }, [debouncedMapZoom]);
@@ -2013,7 +2047,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
       {/* Mobile: Search bar at top (Google Maps style) */}
       <div className="lg:hidden absolute top-4 left-4 right-4 z-50">
         <OptimizedSearchBar
-          onSearchChange={(query) => handleSearchChange(query, 'mobile')}
+          onSearchChange={query => handleSearchChange(query, 'mobile')}
           onToggleList={() => setShowCourtList(!showCourtList)}
           onEnterPress={handleSearchEnter}
           isMobile={true}
@@ -2064,7 +2098,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
               isMobile={true}
               shouldFocus={showCourtList}
               externalSearchQuery={mobileSearchQuery}
-              onExternalSearchChange={(query) => handleSearchChange(query, 'mobile')}
+              onExternalSearchChange={query => handleSearchChange(query, 'mobile')}
             />
           </div>
         </div>
@@ -2106,7 +2140,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
                 courts={listFilteredCourts}
                 onCourtSelect={handleCourtSelect}
                 externalSearchQuery={desktopSearchQuery}
-                onExternalSearchChange={(query) => handleSearchChange(query, 'desktop')}
+                onExternalSearchChange={query => handleSearchChange(query, 'desktop')}
               />
             )}
           </div>
