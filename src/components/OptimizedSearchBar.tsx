@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 type OptimizedSearchBarProps = {
   onSearchChange: (query: string) => void;
   onToggleList?: () => void;
+  onEnterPress?: () => void;
   isMobile?: boolean;
   placeholder?: string;
   className?: string;
@@ -11,6 +12,7 @@ type OptimizedSearchBarProps = {
 const OptimizedSearchBar = React.memo(({
   onSearchChange,
   onToggleList,
+  onEnterPress,
   isMobile = false,
   placeholder = 'Search by Name, Address, or Zip Code...',
   className = '',
@@ -53,12 +55,21 @@ const OptimizedSearchBar = React.memo(({
   }, [onSearchChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isMobile && onToggleList) {
+    if (e.key === 'Enter') {
       e.preventDefault();
-      onToggleList();
-      inputRef.current?.blur(); // Hide keyboard
+      
+      // Call onEnterPress if provided (for immediate map zoom)
+      if (onEnterPress) {
+        onEnterPress();
+      }
+      
+      // Mobile specific: toggle list and blur input
+      if (isMobile && onToggleList) {
+        onToggleList();
+        inputRef.current?.blur(); // Hide keyboard
+      }
     }
-  }, [isMobile, onToggleList]);
+  }, [isMobile, onToggleList, onEnterPress]);
 
   // Optimize for mobile by preventing unnecessary re-renders
   const handleFocus = useCallback(() => {

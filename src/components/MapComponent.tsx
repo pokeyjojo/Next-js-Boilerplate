@@ -550,10 +550,12 @@ const _MemoizedCourtList = React.memo(CourtList);
 const OptimizedSearchBar = React.memo(({
   onSearchChange,
   onToggleList,
+  onEnterPress,
   isMobile = false,
 }: {
   onSearchChange: (query: string) => void;
   onToggleList: () => void;
+  onEnterPress?: () => void;
   isMobile?: boolean;
 }) => {
   const [localQuery, setLocalQuery] = useState('');
@@ -582,10 +584,20 @@ const OptimizedSearchBar = React.memo(({
   }, [onSearchChange]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && isMobile) {
-      onToggleList();
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      // Call onEnterPress if provided (for immediate map zoom)
+      if (onEnterPress) {
+        onEnterPress();
+      }
+      
+      // Mobile specific: toggle list
+      if (isMobile) {
+        onToggleList();
+      }
     }
-  }, [isMobile, onToggleList]);
+  }, [isMobile, onToggleList, onEnterPress]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -1638,6 +1650,11 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
   const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [desktopSearchQuery, setDesktopSearchQuery] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Typing detection state for better map zoom UX
+  const [isUserTyping, setIsUserTyping] = useState(false);
+  const [mapZoomQuery, setMapZoomQuery] = useState('');
+  const mapZoomTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [showPhotoUploadModal, setShowPhotoUploadModal] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
@@ -1683,8 +1700,45 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
   // Combine mobile and desktop search queries
   const activeSearchQuery = isMobile ? mobileSearchQuery : desktopSearchQuery;
 
-  // Filter courts based on search query
-  const filteredCourts = useMemo(() => {
+  // Debounced map zoom function - triggers after user stops typing
+  const debouncedMapZoom = useCallback((query: string) => {
+    if (mapZoomTimeoutRef.current) {
+      clearTimeout(mapZoomTimeoutRef.current);
+    }
+
+    mapZoomTimeoutRef.current = setTimeout(() => {
+      setMapZoomQuery(query);
+      setIsUserTyping(false);
+    }, 800); // 800ms delay for map zoom operations
+  }, []);
+
+  // Enhanced search change handler with typing detection
+  const handleSearchChange = useCallback((query: string, source: 'mobile' | 'desktop') => {
+    // Set typing state immediately
+    setIsUserTyping(true);
+    
+    // Update search query immediately for instant filtering
+    if (source === 'mobile') {
+      setMobileSearchQuery(query);
+    } else {
+      setDesktopSearchQuery(query);
+    }
+    
+    // Trigger debounced map zoom
+    debouncedMapZoom(query);
+  }, [debouncedMapZoom]);
+
+  // Handle Enter key for immediate map zoom
+  const handleSearchEnter = useCallback(() => {
+    if (mapZoomTimeoutRef.current) {
+      clearTimeout(mapZoomTimeoutRef.current);
+    }
+    setMapZoomQuery(activeSearchQuery);
+    setIsUserTyping(false);
+  }, [activeSearchQuery]);
+
+  // Filter courts based on search query (immediate filtering for list)
+  const listFilteredCourts = useMemo(() => {
     if (!activeSearchQuery.trim()) {
       return courts;
     }
@@ -1698,6 +1752,21 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
     );
   }, [courts, activeSearchQuery]);
 
+  // Filter courts for map markers and zoom (debounced filtering)
+  const mapFilteredCourts = useMemo(() => {
+    if (!mapZoomQuery.trim()) {
+      return courts;
+    }
+
+    const query = mapZoomQuery.toLowerCase().trim();
+    return courts.filter(court =>
+      court.name.toLowerCase().includes(query)
+      || court.address.toLowerCase().includes(query)
+      || court.city.toLowerCase().includes(query)
+      || court.zip.includes(query),
+    );
+  }, [courts, mapZoomQuery]);
+
   useEffect(() => {
     const checkIsMobile = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -1708,6 +1777,15 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
 
     return () => {
       window.removeEventListener('resize', checkIsMobile);
+    };
+  }, []);
+
+  // Cleanup map zoom timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (mapZoomTimeoutRef.current) {
+        clearTimeout(mapZoomTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -1935,10 +2013,18 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
       {/* Mobile: Search bar at top (Google Maps style) */}
       <div className="lg:hidden absolute top-4 left-4 right-4 z-50">
         <OptimizedSearchBar
-          onSearchChange={setMobileSearchQuery}
+          onSearchChange={(query) => handleSearchChange(query, 'mobile')}
           onToggleList={() => setShowCourtList(!showCourtList)}
+          onEnterPress={handleSearchEnter}
           isMobile={true}
         />
+        {/* Typing indicator */}
+        {isUserTyping && (
+          <div className="mt-1 flex items-center text-[#918AB5] text-xs">
+            <div className="animate-pulse w-2 h-2 bg-[#918AB5] rounded-full mr-2"></div>
+            Map updates paused while typing...
+          </div>
+        )}
       </div>
 
       {/* Mobile: Bottom sheet with drag handle (Google Maps style) */}
@@ -1973,12 +2059,12 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
           {/* Court list */}
           <div className="overflow-y-auto max-h-[calc(50vh-20px)]">
             <OptimizedCourtList
-              courts={courts}
+              courts={listFilteredCourts}
               onCourtSelect={handleCourtSelect}
               isMobile={true}
               shouldFocus={showCourtList}
               externalSearchQuery={mobileSearchQuery}
-              onExternalSearchChange={setMobileSearchQuery}
+              onExternalSearchChange={(query) => handleSearchChange(query, 'mobile')}
             />
           </div>
         </div>
@@ -2017,10 +2103,10 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
           >
             {!isListCollapsed && (
               <OptimizedCourtList
-                courts={courts}
+                courts={listFilteredCourts}
                 onCourtSelect={handleCourtSelect}
                 externalSearchQuery={desktopSearchQuery}
-                onExternalSearchChange={setDesktopSearchQuery}
+                onExternalSearchChange={(query) => handleSearchChange(query, 'desktop')}
               />
             )}
           </div>
@@ -2032,7 +2118,7 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
                 Court List
               </div>
               <div className="text-[#69F0FD] text-xs text-center transform -rotate-90 whitespace-nowrap origin-center">
-                {courts.length}
+                {listFilteredCourts.length}
                 {' '}
                 courts
               </div>
@@ -2058,10 +2144,10 @@ export default function MapComponent({ selectedCourtFromExternal }: { selectedCo
         >
           <GoogleMapController />
           <GoogleMapZoomController
-            filteredCourts={filteredCourts}
-            searchQuery={activeSearchQuery}
+            filteredCourts={mapFilteredCourts}
+            searchQuery={mapZoomQuery}
           />
-          <OptimizedGoogleMapMarkers courts={filteredCourts} handleMarkerClick={handleMarkerClick} />
+          <OptimizedGoogleMapMarkers courts={mapFilteredCourts} handleMarkerClick={handleMarkerClick} />
         </GoogleMap>
 
         {/* Custom Zoom Controls - positioned away from search bar */}

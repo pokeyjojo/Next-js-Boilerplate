@@ -51,7 +51,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
     return (
       <>
         {/* Mobile loading skeleton */}
-        <div className="lg:hidden fixed top-20 right-4 z-[1000]">
+        <div className="lg:hidden fixed top-2 right-4 z-[1000]">
           <div className="w-12 h-12 bg-gray-200 rounded-full animate-pulse" />
         </div>
 
@@ -75,11 +75,11 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
 
     return (
       <>
-        {/* Mobile: Profile picture at top right underneath search bar */}
-        <div className="lg:hidden fixed top-36 right-4 z-[1000]">
+        {/* Mobile: Profile picture in top banner */}
+        <div className="lg:hidden fixed top-2 right-4 z-[1000]">
           <Link
             href={getI18nPath('/dashboard/user-profile', locale)}
-            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300 hover:border-blue-500 transition-colors shadow-lg bg-white"
+            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-[#69F0FD] hover:border-[#918AB5] transition-colors shadow-lg bg-white"
           >
             {user.imageUrl
               ? (
@@ -90,7 +90,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
                   />
                 )
               : (
-                  <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                  <div className="w-full h-full bg-[#EC0037] flex items-center justify-center text-white font-semibold text-lg">
                     {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress?.[0] || 'U'}
                   </div>
                 )}

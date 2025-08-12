@@ -1,90 +1,75 @@
 # Geocoding Setup Guide
 
-The court suggestion feature automatically converts addresses to GPS coordinates using geocoding services. This guide explains the available options and how to configure them.
+The court suggestion feature automatically converts addresses to GPS coordinates using Google Maps Geocoding API. This guide explains how to set it up and migrate from the previous OpenStreetMap implementation.
 
-## 🆓 Default Configuration (No Setup Required)
+## 🚀 Current Configuration (Google Maps)
 
-By default, the app uses **Nominatim** (OpenStreetMap's official geocoding service) which is:
-- ✅ **Completely FREE** - no API key required
-- ✅ **No registration** needed
-- ✅ **Perfect integration** with your OpenStreetMap data
-- ⚠️ **Rate limited** to 1 request per second (~2,500/day)
+The app now uses **Google Maps Geocoding API** which provides:
+- ✅ **High accuracy** - Industry-leading geocoding results
+- ✅ **Reliable service** - Enterprise-grade infrastructure
+- ✅ **Server/client support** - Works in both browser and server environments
+- ⚠️ **Requires API key** - Free tier includes $200/month credit
 
-**You don't need to do anything!** The court suggestion feature works out of the box.
+**Setup required**: You need to configure your Google Maps API key (see below).
 
-## 🚀 Optional Paid Services (Better Performance)
+## 🛠️ Setup Instructions
 
-For higher volume or better reliability, you can add API keys for these services in your `.env` file:
+### 1. Get Your Google Maps API Key
 
-### LocationIQ (Recommended for Production)
-- 🆓 **5,000 free requests/day**
-- 💰 **$39/month for 3 million requests** (vs Google's $5 per 1,000!)
-- 🎯 **Designed specifically** for OpenStreetMap/Leaflet apps
-- 📖 **Sign up**: https://locationiq.com/
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the **Geocoding API** and **Places API**
+4. Create credentials (API key)
+5. Restrict the API key to your domain for security
 
-```bash
-LOCATIONIQ_API_KEY="your_api_key_here"
-```
+### 2. Configure Environment Variables
 
-### Geocode.maps.co
-- 🆓 **5,000 free requests/day**
-- 💰 **Very affordable paid plans**
-- 📖 **Sign up**: https://geocode.maps.co/
+Add your API key to your `.env.local` file:
 
 ```bash
-GEOCODE_MAPS_API_KEY="your_api_key_here"
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-api-key-here"
 ```
 
-### OpenCage (Premium Quality)
-- 🆓 **2,500 free requests/day**
-- 🎯 **High-quality results** (combines multiple sources)
-- 📖 **Sign up**: https://opencagedata.com/
+### 3. Enable Required APIs
 
-```bash
-OPENCAGE_API_KEY="your_api_key_here"
-```
+Make sure these APIs are enabled in your Google Cloud project:
+- ✅ **Geocoding API** - For address-to-coordinates conversion
+- ✅ **Places API** - For address autocomplete
+- ✅ **Maps JavaScript API** - For map display
 
 ## 🔄 How It Works
 
 The geocoding service automatically:
 
-1. **Tries providers in order**: Free services first, then paid
-2. **Respects rate limits**: Waits between requests to avoid blocking
-3. **Fallback support**: If one service fails, tries the next
-4. **No vendor lock-in**: Easy to switch providers anytime
+1. **Detects environment**: Uses REST API on server, JavaScript SDK in browser
+2. **High accuracy**: Google's industry-leading geocoding results
+3. **Address autocomplete**: Powered by Google Places API
+4. **Error handling**: Graceful fallbacks and detailed error logging
 
-## 📊 Provider Comparison
+## 💰 Pricing
 
-| Provider | Free Requests/Day | Rate Limit | Paid Plans | Data Source |
-|----------|-------------------|------------|------------|-------------|
-| **Nominatim** | ~2,500 | 1/sec | None | OpenStreetMap |
-| **LocationIQ** | 5,000 | 1/sec | $39/month for 3M | OpenStreetMap |
-| **Geocode.maps.co** | 5,000 | 1/sec | Very affordable | OpenStreetMap |
-| **OpenCage** | 2,500 | 1/sec | Premium plans | Multiple sources |
+Google Maps provides generous free tiers:
 
-## 🛠️ Configuration
+| API | Free Tier | Price After |
+|-----|-----------|-------------|
+| **Geocoding API** | 40,000 requests/month | $5 per 1,000 requests |
+| **Places API** | 100,000 requests/month | $17 per 1,000 requests |
+| **Maps JavaScript API** | Unlimited map loads | $7 per 1,000 loads |
 
-Add any of these to your `.env` file (all are optional):
+Most small to medium apps stay within the free tier limits.
 
-```bash
-# LocationIQ (recommended for production)
-LOCATIONIQ_API_KEY="pk.your_actual_api_key_here"
+## 🚨 Migration from OpenStreetMap
 
-# Geocode.maps.co (good free alternative)
-GEOCODE_MAPS_API_KEY="your_api_key_here"
+If you were using the previous OpenStreetMap/Nominatim setup:
 
-# OpenCage (premium quality)
-OPENCAGE_API_KEY="your_api_key_here"
-```
+1. **Set up Google Maps API key** (see instructions above)
+2. **Remove old environment variables** (if any):
+   - `LOCATIONIQ_API_KEY`
+   - `GEOCODE_MAPS_API_KEY`
+   - `OPENCAGE_API_KEY`
+3. **That's it!** The app now uses Google Maps for all geocoding
 
-## 🚨 Migration from Google Maps
-
-If you were using Google Maps Geocoding API before, you can simply:
-
-1. **Remove** `GOOGLE_MAPS_API_KEY` from your environment
-2. **That's it!** The app now uses free OpenStreetMap geocoding
-
-Your existing court suggestions will continue to work perfectly.
+Your existing court data remains unchanged.
 
 ## 🔍 Testing
 
@@ -94,32 +79,34 @@ To test geocoding in development:
 # Start your development server
 npm run dev
 
-# Try suggesting a new court - the geocoding happens automatically
-# Check the console logs to see which provider was used
+# Try adding a new court via admin panel
+# Check browser/server console logs for any errors
 ```
 
 ## 💡 Pro Tips
 
-1. **Start with free**: Nominatim is perfect for most use cases
-2. **Add LocationIQ** if you need higher volume or better reliability
-3. **Monitor usage**: Check your API dashboards to track request volume
-4. **Cache results**: The app automatically stores coordinates, reducing API calls
+1. **Enable billing**: Set up billing in Google Cloud to avoid service interruptions
+2. **Monitor usage**: Check Google Cloud Console for API usage statistics
+3. **Restrict API keys**: Limit API key usage to your domains for security
+4. **Cache results**: The app stores coordinates in database, reducing API calls
 5. **Test addresses**: Try various address formats to ensure good coverage
 
 ## ❓ Troubleshooting
 
 **Geocoding not working?**
-- Check your `.env` file syntax
-- Verify API keys are correct
-- Check console logs for error messages
-- Try a simpler address format
+- Verify your Google Maps API key is set in `.env.local`
+- Check that Geocoding API is enabled in Google Cloud Console
+- Look for error messages in browser/server console logs
+- Ensure your API key has proper permissions
 
-**Rate limit errors?**
-- The app automatically handles rate limiting
-- Add a paid service for higher limits
-- Check your API usage on provider dashboards
+**"Unable to determine coordinates" error?**
+- The address might be too vague or incorrect
+- Try a more specific address format
+- Check API key quotas in Google Cloud Console
+- Verify billing is set up (required for some APIs)
 
-**Poor geocoding results?**
-- OpenStreetMap coverage varies by region
-- Consider adding OpenCage for better accuracy
-- Use full addresses with city, state, zip code
+**Address autocomplete not working?**
+- Ensure Places API is enabled in Google Cloud Console
+- Check that your API key has Places API permissions
+- Verify the component is running in browser environment
+- Try refreshing the page or clearing browser cache

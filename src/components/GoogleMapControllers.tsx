@@ -108,3 +108,47 @@ export function GoogleMapExternalCourtController({
 
   return null;
 }
+
+// Map controller specifically for MeetInTheMiddle component
+export function MeetInTheMiddleMapController({
+  centerLocation,
+  isCalculating,
+}: {
+  centerLocation: { lat: number; lng: number; zoom: number } | null;
+  isCalculating: boolean;
+}) {
+  const map = useGoogleMap();
+  const lastCenterRef = useRef<{ lat: number; lng: number; zoom: number } | null>(null);
+
+  useEffect(() => {
+    if (!map || !centerLocation || isCalculating) {
+      return;
+    }
+
+    // Validate coordinates
+    const { lat, lng, zoom } = centerLocation;
+    if (Number.isNaN(lat) || Number.isNaN(lng) || lat === 0 || lng === 0) {
+      console.warn('Invalid coordinates provided to MeetInTheMiddleMapController:', centerLocation);
+      return;
+    }
+
+    // Only update if this is a different location than the previous one
+    const isDifferentLocation = !lastCenterRef.current
+      || Math.abs(lastCenterRef.current.lat - lat) > 0.0001
+      || Math.abs(lastCenterRef.current.lng - lng) > 0.0001
+      || lastCenterRef.current.zoom !== zoom;
+
+    if (isDifferentLocation) {
+      console.warn('MeetInTheMiddleMapController: Centering map at:', { lat, lng, zoom });
+
+      // Center the map
+      map.setCenter({ lat, lng });
+      map.setZoom(zoom);
+
+      // Update the reference
+      lastCenterRef.current = { lat, lng, zoom };
+    }
+  }, [map, centerLocation, isCalculating]);
+
+  return null;
+}

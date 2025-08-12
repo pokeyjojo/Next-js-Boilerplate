@@ -25,11 +25,11 @@ class GoogleMapsService {
   private autocompleteService: google.maps.places.AutocompleteService | null = null;
 
   constructor() {
-    const apiKey = Env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-    console.log('GoogleMapsService: Initializing with API key:', apiKey ? `${apiKey.slice(0, 10)}...` : 'NOT SET');
+    // Use client-side key for browser-based Google Maps loader
+    const clientApiKey = Env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     
     this.loader = new Loader({
-      apiKey: apiKey,
+      apiKey: clientApiKey,
       version: 'weekly',
       libraries: ['places', 'geometry'],
     });
@@ -37,12 +37,10 @@ class GoogleMapsService {
 
   async loadMaps(): Promise<void> {
     if (this.mapsLoaded) {
-      console.log('GoogleMapsService: Maps already loaded');
       return;
     }
 
     try {
-      console.log('GoogleMapsService: Loading Google Maps...');
       await this.loader.load();
       this.geocoder = new google.maps.Geocoder();
       
@@ -53,7 +51,6 @@ class GoogleMapsService {
       this.autocompleteService = new google.maps.places.AutocompleteService();
       
       this.mapsLoaded = true;
-      console.log('GoogleMapsService: Google Maps successfully loaded');
     } catch (error) {
       console.error('Failed to load Google Maps:', error);
       throw error;
@@ -66,28 +63,90 @@ class GoogleMapsService {
     state: string,
     zip: string
   ): Promise<GeocodingResult | null> {
-    await this.loadMaps();
+    // Check if we're running in a browser environment
+    if (typeof window !== 'undefined') {
+      // Browser environment - use the JavaScript SDK
+      await this.loadMaps();
+      
+      if (!this.geocoder) {
+        throw new Error('Geocoder not initialized');
+      }
+
+      const fullAddress = `${address}, ${city}, ${state} ${zip}`;
+
+      return new Promise((resolve) => {
+        this.geocoder!.geocode({ address: fullAddress }, (results, status) => {
+          if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
+            const location = results[0].geometry.location;
+            resolve({
+              latitude: location.lat(),
+              longitude: location.lng(),
+            });
+          } else {
+            console.error('Geocoding failed:', status);
+            resolve(null);
+          }
+        });
+      });
+    } else {
+      // Server environment - use the REST API
+      return this.geocodeAddressServer(address, city, state, zip);
+    }
+  }
+
+  private async geocodeAddressServer(
+    address: string,
+    city: string,
+    state: string,
+    zip: string
+  ): Promise<GeocodingResult | null> {
+    // Use server-side key for geocoding API
+    const apiKey = Env.GOOGLE_MAPS_SERVER_API_KEY;
     
-    if (!this.geocoder) {
-      throw new Error('Geocoder not initialized');
+    if (!apiKey) {
+      console.error('Google Maps server API key not found');
+      return null;
     }
 
     const fullAddress = `${address}, ${city}, ${state} ${zip}`;
-
-    return new Promise((resolve) => {
-      this.geocoder!.geocode({ address: fullAddress }, (results, status) => {
-        if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
-          const location = results[0].geometry.location;
-          resolve({
-            latitude: location.lat(),
-            longitude: location.lng(),
-          });
-        } else {
-          console.error('Geocoding failed:', status);
-          resolve(null);
-        }
+    const encodedAddress = encodeURIComponent(fullAddress);
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodedAddress}&key=${apiKey}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
       });
-    });
+
+      if (!response.ok) {
+        console.error('Google Maps Geocoding API request failed:', response.statusText);
+        return null;
+      }
+
+      const data = await response.json();
+
+      if (data.status === 'OK' && data.results && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        const result = {
+          latitude: location.lat,
+          longitude: location.lng,
+        };
+        return result;
+      } else {
+        console.error('Google Maps Geocoding failed:', {
+          status: data.status,
+          error_message: data.error_message,
+          results_count: data.results?.length || 0,
+          address: fullAddress
+        });
+        return null;
+      }
+    } catch (error) {
+      console.error('Error calling Google Maps Geocoding API:', error);
+      return null;
+    }
   }
 
   async searchAddresses(query: string): Promise<AddressSuggestion[]> {

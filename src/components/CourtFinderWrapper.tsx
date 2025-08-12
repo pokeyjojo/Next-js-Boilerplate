@@ -10,9 +10,9 @@ function AboutContent() {
   const [showSponsorModal, setShowSponsorModal] = useState(false);
 
   return (
-    <div className="h-full w-full bg-[#002C4D] flex items-center justify-center p-8">
+    <div className="min-h-full w-full bg-[#002C4D] p-4 md:p-8">
       <div className="max-w-4xl mx-auto text-center">
-        <div className="bg-[#011B2E] rounded-lg shadow-2xl p-8 border border-[#27131D]">
+        <div className="bg-[#011B2E] rounded-lg shadow-2xl p-6 md:p-8 border border-[#27131D]">
           <h1 className="text-4xl md:text-5xl font-bold text-[#EC0037] mb-6">
             About
           </h1>
@@ -257,11 +257,13 @@ export default function CourtFinderWrapper() {
             <Map selectedCourtFromExternal={selectedCourt} />
           </div>
         ) : activeTab === 'meetinthemiddle' ? (
-          <div className="h-full w-full">
+          <div className="h-full w-full overflow-y-auto">
             <MeetInTheMiddle onCourtSelect={handleCourtSelect} />
           </div>
         ) : (
-          <AboutContent />
+          <div className="h-full w-full overflow-y-auto">
+            <AboutContent />
+          </div>
         )}
       </div>
     </div>

@@ -43,15 +43,19 @@ export async function POST(req: NextRequest) {
 
     try {
       const geocodeResult = await geocodeAddress(address, city, state || 'IL', zip);
+
       if (geocodeResult) {
         latitude = geocodeResult.latitude;
         longitude = geocodeResult.longitude;
+      } else {
+        console.error('No geocoding result returned for address:', { address, city, state: state || 'IL', zip });
       }
     } catch (geocodeError) {
-      console.error('Geocoding failed:', geocodeError);
+      console.error('Geocoding error:', geocodeError);
     }
 
     if (!latitude || !longitude) {
+      console.error('No coordinates available for address:', { address, city, state: state || 'IL', zip });
       return NextResponse.json(
         { error: 'Unable to determine coordinates for the provided address. Please verify the address is correct.' },
         { status: 400 },
