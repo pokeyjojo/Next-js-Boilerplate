@@ -77,3 +77,34 @@ export function GoogleMapZoomController({
 
   return null;
 }
+
+// Map controller to handle zooming to externally selected courts (e.g., from Meet in the Middle)
+export function GoogleMapExternalCourtController({
+  selectedCourt,
+}: {
+  selectedCourt: TennisCourt | null;
+}) {
+  const map = useGoogleMap();
+  const previousCourtRef = useRef<TennisCourt | null>(null);
+
+  useEffect(() => {
+    if (!map || !selectedCourt) {
+      return;
+    }
+
+    // Only zoom if this is a different court than the previous one
+    const isDifferentCourt = !previousCourtRef.current
+      || previousCourtRef.current.id !== selectedCourt.id;
+
+    if (isDifferentCourt) {
+      // Zoom to the selected court
+      map.setCenter({ lat: selectedCourt.latitude, lng: selectedCourt.longitude });
+      map.setZoom(16);
+
+      // Update the reference
+      previousCourtRef.current = selectedCourt;
+    }
+  }, [map, selectedCourt]);
+
+  return null;
+}

@@ -1,6 +1,11 @@
 'use client';
 
+import type { TennisCourt } from '@/hooks/useCourtData';
 import dynamic from 'next/dynamic';
+
+type MapProps = {
+  selectedCourtFromExternal?: TennisCourt | null;
+};
 
 // Create a dynamic component for the map with mobile-friendly design
 const DynamicMap = dynamic(() => import('./MapComponent'), {
@@ -12,4 +17,6 @@ const DynamicMap = dynamic(() => import('./MapComponent'), {
   ),
 });
 
-export default DynamicMap;
+export default function Map({ selectedCourtFromExternal }: MapProps) {
+  return <DynamicMap selectedCourtFromExternal={selectedCourtFromExternal} />;
+}

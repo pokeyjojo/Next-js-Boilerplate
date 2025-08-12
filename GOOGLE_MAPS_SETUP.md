@@ -10,6 +10,7 @@ This application has been updated to use Google Maps instead of Leaflet. Follow 
    - Maps JavaScript API
    - Places API
    - Geocoding API
+   - Routes API (for Meet in the Middle feature)
 4. Create credentials (API key)
 5. Restrict the API key to your domain(s) for security
 
@@ -28,8 +29,9 @@ For production, restrict your API key:
 1. **Application restrictions**: Set to "HTTP referrers" and add your domain(s)
 2. **API restrictions**: Limit to only the APIs you need:
    - Maps JavaScript API
-   - Places API  
+   - Places API
    - Geocoding API
+   - Routes API
 
 ## 4. Features Implemented
 
@@ -43,7 +45,7 @@ For production, restrict your API key:
 - Google Places Autocomplete for address input
 - Works in:
   - New Court Suggestion Form
-  - Court Edit Suggestion Form  
+  - Court Edit Suggestion Form
   - Admin Add Court Form
 - Restricted to Illinois addresses
 - Returns detailed address components
@@ -71,7 +73,7 @@ For production, restrict your API key:
 Google Maps APIs have usage-based pricing. For typical court finder usage:
 
 - **Maps JavaScript API**: ~$7 per 1,000 map loads
-- **Places API**: ~$17 per 1,000 requests  
+- **Places API**: ~$17 per 1,000 requests
 - **Geocoding API**: ~$5 per 1,000 requests
 
 Google provides $200 monthly free credit which covers moderate usage.
@@ -82,5 +84,3 @@ The old Leaflet components and Nominatim geocoding are preserved in:
 - `src/libs/GeocodingService.ts` (old implementation)
 
 To revert if needed, you can switch the imports back to the old service.
-
-

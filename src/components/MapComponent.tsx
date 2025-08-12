@@ -1628,7 +1628,7 @@ function CourtDetailsPanel({
   );
 }
 
-export default function MapComponent() {
+export default function MapComponent({ selectedCourtFromExternal }: { selectedCourtFromExternal?: TennisCourt | null } = {}) {
   const { courts, refreshCourtData: refreshGlobalCourtData } = useCourtData();
   const [selectedCourt, setSelectedCourt] = useState<TennisCourt | null>(null);
   const [showCourtList, setShowCourtList] = useState(false);
@@ -1657,6 +1657,28 @@ export default function MapComponent() {
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
+
+  // Handle external court selection (from Meet in the Middle)
+  useEffect(() => {
+    if (selectedCourtFromExternal) {
+      setSelectedCourt(selectedCourtFromExternal);
+      
+      // Zoom to the court using the same logic as handleCourtSelect
+      // Add a small delay to ensure map is ready
+      const zoomToExternal = () => {
+        if (mapRef.current) {
+          mapRef.current.panTo({ lat: selectedCourtFromExternal.latitude, lng: selectedCourtFromExternal.longitude });
+          mapRef.current.setZoom(15);
+        } else {
+          // Retry after a short delay if map is not ready
+          setTimeout(zoomToExternal, 500);
+        }
+      };
+      
+      // Try immediately, then with delay if needed
+      zoomToExternal();
+    }
+  }, [selectedCourtFromExternal]);
 
   // Combine mobile and desktop search queries
   const activeSearchQuery = isMobile ? mobileSearchQuery : desktopSearchQuery;

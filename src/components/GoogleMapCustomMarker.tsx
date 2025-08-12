@@ -9,6 +9,14 @@ type CustomMarkerProps = {
   onClick?: () => void;
   isPrivate?: boolean;
   size?: number;
+  customIcon?: {
+    path: string;
+    fillColor: string;
+    fillOpacity: number;
+    strokeColor: string;
+    strokeWeight: number;
+    scale: number;
+  };
 };
 
 export default function GoogleMapCustomMarker({
@@ -17,12 +25,49 @@ export default function GoogleMapCustomMarker({
   onClick,
   isPrivate = false,
   size = 24,
+  customIcon,
 }: CustomMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const markerColor = isPrivate ? '#EC0037' : '#002C4D'; // Crimson Rally for private, Midnight Arena for public
-  const borderColor = '#FFFFFF'; // Precision White
+  const markerColor = customIcon ? customIcon.fillColor : (isPrivate ? '#EC0037' : '#002C4D'); // Crimson Rally for private, Midnight Arena for public
+  const borderColor = customIcon ? customIcon.strokeColor : '#FFFFFF'; // Precision White
   const hoverScale = isHovered ? 1.2 : 1;
+
+  // If using custom icon, render as SVG
+  if (customIcon) {
+    return (
+      <GoogleMapCustomOverlay position={position}>
+        <button
+          type="button"
+          className="cursor-pointer transition-transform duration-200 ease-out bg-transparent border-none p-0"
+          style={{
+            transform: `scale(${hoverScale * customIcon.scale})`,
+          }}
+          onMouseEnter={() => setIsHovered(true)}
+          onMouseLeave={() => setIsHovered(false)}
+          onClick={onClick}
+          title={title}
+        >
+          <svg
+            width={size}
+            height={size}
+            viewBox="0 0 24 24"
+            style={{
+              filter: isHovered ? 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' : 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))',
+            }}
+          >
+            <path
+              d={customIcon.path}
+              fill={customIcon.fillColor}
+              fillOpacity={customIcon.fillOpacity}
+              stroke={customIcon.strokeColor}
+              strokeWidth={customIcon.strokeWeight}
+            />
+          </svg>
+        </button>
+      </GoogleMapCustomOverlay>
+    );
+  }
 
   return (
     <GoogleMapCustomOverlay position={position}>

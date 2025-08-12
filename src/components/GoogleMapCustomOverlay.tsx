@@ -50,11 +50,11 @@ export default function GoogleMapCustomOverlay({
           // Projection is not available yet, skip drawing
           return;
         }
-        
+
         const point = projection.fromLatLngToDivPixel(this.position);
         if (point) {
-          this.container.style.left = point.x + 'px';
-          this.container.style.top = point.y + 'px';
+          this.container.style.left = `${point.x}px`;
+          this.container.style.top = `${point.y}px`;
         }
       }
 
@@ -112,7 +112,7 @@ export default function GoogleMapCustomOverlay({
     if (!containerRef.current || !isMountedRef.current) {
       return undefined;
     }
-    
+
     const initializeRoot = async () => {
       try {
         const { createRoot } = await import('react-dom/client');
@@ -126,7 +126,7 @@ export default function GoogleMapCustomOverlay({
     };
 
     initializeRoot();
-        
+
     return () => {
       if (rootRef.current) {
         // Use setTimeout to avoid synchronous unmounting during render
