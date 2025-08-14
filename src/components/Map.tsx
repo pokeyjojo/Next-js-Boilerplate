@@ -11,8 +11,8 @@ type MapProps = {
 const DynamicMap = dynamic(() => import('./MapComponent'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-screen items-center justify-center bg-[#002C4D]">
-      <div className="text-lg text-[#BFC3C7]">Loading map...</div>
+    <div className="flex h-screen items-center justify-center bg-[#F4F5F6]">
+      <div className="text-lg text-[#7F8B9F]">Loading map...</div>
     </div>
   ),
 });

@@ -57,12 +57,10 @@ const OptimizedSearchBar = React.memo(({
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      
       // Call onEnterPress if provided (for immediate map zoom)
       if (onEnterPress) {
         onEnterPress();
       }
-      
       // Mobile specific: toggle list and blur input
       if (isMobile && onToggleList) {
         onToggleList();
@@ -94,7 +92,7 @@ const OptimizedSearchBar = React.memo(({
   }, []);
 
   return (
-    <div className={`bg-[#011B2E] rounded-lg shadow-xl border-2 border-[#27131D] p-2 ${className}`}>
+    <div className={`bg-[#F4F5F6] rounded-lg shadow-xl border-2 border-[#BFC37C] p-2 ${className}`}>
       <div className="relative">
         <input
           ref={inputRef}
@@ -104,7 +102,7 @@ const OptimizedSearchBar = React.memo(({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
-          className="w-full px-3 py-2 border-2 border-[#50394D] rounded-lg bg-[#002C4D] text-[#EBEDEE] placeholder-[#7F8B95] text-sm focus:outline-none focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.4)] transition-all duration-200"
+          className="w-full px-3 py-2 border-2 border-[#BFC37C] rounded-lg bg-[#F4F5F6] text-[#7F8B9F] placeholder-[#7F8B9F] text-sm focus:outline-none focus:ring-2 focus:ring-[#011B2E] focus:border-[#011B2E] transition-all duration-200"
           aria-label="Search tennis courts"
           autoComplete="off"
           autoCorrect="off"
@@ -114,7 +112,7 @@ const OptimizedSearchBar = React.memo(({
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFC3C7] hover:text-[#69F0FD] hover:bg-[#27131D] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7F8B9F] hover:text-[#7F8B9F] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
             aria-label="Clear search"
             type="button"
           >

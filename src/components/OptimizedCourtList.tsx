@@ -35,7 +35,7 @@ const CourtListItem = React.memo(({
 
   return (
     <div
-      className="p-3 sm:p-4 hover:bg-[#00487E] border-b border-[#BFC3C7] cursor-pointer transition-colors duration-150 bg-[#002C4D]"
+      className="p-3 sm:p-4 hover:bg-[#F4F5F6] border-b border-[#BFC37C] cursor-pointer transition-colors duration-150 bg-[#F4F5F6]"
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -48,10 +48,10 @@ const CourtListItem = React.memo(({
     >
       <div className="flex justify-between items-start">
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm sm:text-base text-white truncate">
+          <h3 className="font-medium text-sm sm:text-base text-[#7F8B9F] truncate">
             {court.name}
           </h3>
-          <p className="text-xs sm:text-sm text-[#BFC3C7] mt-1">
+          <p className="text-xs sm:text-sm text-[#7F8B9F] mt-1">
             {court.address}
             {court.city && `, ${court.city}`}
             {court.zip && court.zip !== '00000' && `, ${court.zip}`}
@@ -60,11 +60,11 @@ const CourtListItem = React.memo(({
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             {Number(court.average_rating) > 0 && Number(court.review_count) > 0 && (
               <div className="flex items-center gap-1">
-                <Star className="w-3 h-3 sm:w-4 sm:h-4 text-[#918AB5] fill-current" />
-                <span className="text-xs sm:text-sm text-white">
+                <Star className="w-3 h-3 sm:w-4 sm:h-4 text-[#7F8B9F] fill-current" />
+                <span className="text-xs sm:text-sm text-[#7F8B9F]">
                   {Number(court.average_rating).toFixed(1)}
                 </span>
-                <span className="text-xs text-[#BFC3C7]">
+                <span className="text-xs text-[#7F8B9F]">
                   (
                   {Number(court.review_count)}
                   )
@@ -73,19 +73,19 @@ const CourtListItem = React.memo(({
             )}
 
             {court.lighted && (
-              <span className="text-xs border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 px-2 py-1 rounded">
+              <span className="text-xs border border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6] px-2 py-1 rounded">
                 Lighted
               </span>
             )}
 
             {court.court_type && (
-              <span className="text-xs border border-[#EC0037] text-[#EC0037] bg-[#27131D]/20 px-2 py-1 rounded">
+              <span className="text-xs border border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6] px-2 py-1 rounded">
                 {court.court_type.charAt(0).toUpperCase() + court.court_type.slice(1)}
               </span>
             )}
 
             {court.membership_required && (
-              <span className="text-xs border border-[#EC0037] text-[#EC0037] bg-[#27131D]/20 px-2 py-1 rounded">
+              <span className="text-xs border border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6] px-2 py-1 rounded">
                 Private
               </span>
             )}
@@ -95,13 +95,14 @@ const CourtListItem = React.memo(({
         <div className="flex items-center gap-1 ml-2">
           <button
             onClick={handleDirectionsClick}
-            className="p-1.5 sm:p-2 text-[#BFC3C7] hover:text-[#69F0FD] hover:bg-[#00487E] rounded transition-colors duration-150"
+            className="p-1.5 sm:p-2 text-[#7F8B9F] rounded transition-colors duration-150"
+            type="button"
             aria-label="Get directions"
             title="Get directions"
           >
             <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4" />
           </button>
-          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-[#7F8B95]" />
+          <MapPin className="w-3 h-3 sm:w-4 sm:h-4 text-[#7F8B9F]" />
         </div>
       </div>
     </div>
@@ -136,6 +137,7 @@ const OptimizedCourtList = React.memo(({
       }, 300);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isMobile, shouldFocus]);
 
   // Calculate distance between two points using Haversine formula
@@ -241,10 +243,10 @@ const OptimizedCourtList = React.memo(({
   }, []);
 
   return (
-    <div className="h-full flex flex-col bg-[#002C4D] relative">
+    <div className="h-full flex flex-col bg-[#F4F5F6] relative">
       {/* Search controls - only show on desktop */}
       {!isMobile && (
-        <div className="p-3 sm:p-4 border-b border-[#BFC3C7]">
+        <div className="p-3 sm:p-4 border-b border-[#BFC37C]">
           <div className="relative">
             <input
               type="text"
@@ -256,7 +258,7 @@ const OptimizedCourtList = React.memo(({
                   onExternalSearchChange(e.target.value);
                 }
               }}
-              className="w-full px-3 py-2 border border-[#BFC3C7] rounded-lg focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] text-sm bg-[#00487E] text-white placeholder-[#7F8B95] transition-all"
+              className="w-full px-3 py-2 border border-[#BFC37C] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#011B2E] text-sm bg-[#F4F5F6] text-[#7F8B9F] placeholder-[#7F8B9F] transition-all"
               ref={searchInputRef}
             />
             {effectiveSearchQuery && (
@@ -267,7 +269,8 @@ const OptimizedCourtList = React.memo(({
                     onExternalSearchChange('');
                   }
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFC3C7] hover:text-[#69F0FD] p-1 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7F8B9F] p-1 transition-colors"
+                type="button"
                 aria-label="Clear search"
               >
                 ✕
@@ -281,9 +284,10 @@ const OptimizedCourtList = React.memo(({
               onClick={handleLightedToggle}
               className={`px-3 py-1 rounded-full text-xs transition-colors duration-150 ${
                 activeFilters.includes('lighted')
-                  ? 'bg-[#EC0037] text-white border border-[#4A1C23] shadow-lg'
-                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                  ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C] shadow-lg'
+                  : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
               }`}
+              type="button"
             >
               Lighted
             </button>
@@ -294,9 +298,10 @@ const OptimizedCourtList = React.memo(({
                 onClick={() => handleFilterChange(filter)}
                 className={`px-3 py-1 rounded-full text-xs transition-colors duration-150 capitalize ${
                   activeFilters.includes(filter)
-                    ? 'bg-[#EC0037] text-white border border-[#4A1C23] shadow-lg'
-                    : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C] shadow-lg'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
+                type="button"
               >
                 {filter}
               </button>
@@ -308,7 +313,7 @@ const OptimizedCourtList = React.memo(({
             <select
               value={sortType}
               onChange={e => setSortType(e.target.value as 'default' | 'az' | 'distance')}
-              className="text-xs border border-[#BFC3C7] rounded px-2 py-1 flex-1 bg-[#00487E] text-white focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
+              className="text-xs border border-[#BFC37C] rounded px-2 py-1 flex-1 bg-[#F4F5F6] text-[#7F8B9F] focus:outline-none focus:ring-2 focus:ring-[#011B2E] transition-all"
             >
               <option value="default">Default Order</option>
               <option value="az">A-Z</option>
@@ -328,9 +333,10 @@ const OptimizedCourtList = React.memo(({
                 }
               }}
               disabled={isRefreshing}
-              className={`px-2 py-1 text-xs border border-[#BFC3C7] rounded hover:bg-[#69F0FD] hover:text-[#27131D] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 shadow ${
-                isRefreshing ? 'bg-[#69F0FD] text-[#27131D]' : 'bg-[#00487E] text-white'
+              className={`px-2 py-1 text-xs border border-[#BFC37C] rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1 shadow ${
+                isRefreshing ? 'bg-[#F4F5F6] text-[#7F8B9F]' : 'bg-[#F4F5F6] text-[#7F8B9F]'
               }`}
+              type="button"
               title="Refresh court data"
               aria-label="Refresh court data"
             >
@@ -345,7 +351,7 @@ const OptimizedCourtList = React.memo(({
       <div className="flex-1 overflow-y-auto">
         {filteredCourts.length === 0
           ? (
-              <div className="p-4 text-center text-[#BFC3C7] text-sm">
+              <div className="p-4 text-center text-[#7F8B9F] text-sm">
                 {effectiveSearchQuery ? 'No courts found matching your search.' : 'No courts available.'}
               </div>
             )

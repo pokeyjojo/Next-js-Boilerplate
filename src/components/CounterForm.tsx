@@ -33,24 +33,24 @@ export const CounterForm = () => {
     <form onSubmit={handleIncrement} className="space-y-4">
       <p className="text-sm sm:text-base">{t('presentation')}</p>
       <div className="space-y-2">
-        <label className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm font-bold text-gray-700" htmlFor="increment">
+        <label className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm font-bold text-[#7F8B9F]" htmlFor="increment">
           <span>{t('label_increment')}</span>
           <input
             id="increment"
             type="number"
-            className="w-full sm:w-32 appearance-none rounded-sm border border-gray-200 px-3 py-2 text-sm leading-tight text-gray-700 focus:outline-hidden focus:ring-3 focus:ring-blue-300/50"
+            className="w-full sm:w-32 appearance-none rounded-sm border border-[#BFC37C] px-3 py-2 text-sm leading-tight text-[#7F8B9F] focus:outline-hidden focus:ring-2 focus:ring-[#011B2E]"
             {...form.register('increment')}
           />
         </label>
 
         {form.formState.errors.increment?.message && (
-          <div className="text-xs italic text-red-500">{form.formState.errors.increment?.message}</div>
+          <div className="text-xs italic text-[#7F8B9F]">{form.formState.errors.increment?.message}</div>
         )}
       </div>
 
       <div>
         <button
-          className="w-full sm:w-auto rounded-sm bg-[#EC0037] px-6 py-2 font-bold text-white hover:bg-[#4A1C23] focus:outline-hidden focus:ring-3 focus:ring-[#EC0037]/50 disabled:pointer-events-none disabled:opacity-50 transition-colors shadow-lg"
+          className="w-full sm:w-auto rounded-sm bg-[#BFC37C] px-6 py-2 font-bold text-[#7F8B9F] focus:outline-hidden disabled:pointer-events-none disabled:opacity-50 transition-colors shadow-lg border border-[#BFC37C]"
           type="submit"
           disabled={form.formState.isSubmitting}
         >

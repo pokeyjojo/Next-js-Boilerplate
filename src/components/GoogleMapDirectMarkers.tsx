@@ -80,9 +80,9 @@ export function GoogleMapDirectMarkers({
             icon: {
               path: google.maps.SymbolPath.CIRCLE,
               scale: 8,
-              fillColor: isPrivate ? '#EC0037' : '#002C4D',
+              fillColor: isPrivate ? '#BFC37C' : '#7F8B9F',
               fillOpacity: 1,
-              strokeColor: '#FFFFFF',
+              strokeColor: '#F4F5F6',
               strokeWeight: 2,
             },
           });

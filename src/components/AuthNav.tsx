@@ -79,7 +79,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
         <div className="lg:hidden fixed top-2 right-4 z-[1000]">
           <Link
             href={getI18nPath('/dashboard/user-profile', locale)}
-            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-[#69F0FD] hover:border-[#918AB5] transition-colors shadow-lg bg-white"
+            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-[#BFC37C] transition-colors shadow-lg bg-[#F4F5F6]"
           >
             {user.imageUrl
               ? (
@@ -90,7 +90,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
                   />
                 )
               : (
-                  <div className="w-full h-full bg-[#EC0037] flex items-center justify-center text-white font-semibold text-lg">
+                  <div className="w-full h-full bg-[#F4F5F6] flex items-center justify-center text-[#7F8B9F] font-semibold text-lg">
                     {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress?.[0] || 'U'}
                   </div>
                 )}
@@ -101,7 +101,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
         <div className="hidden lg:block fixed top-3 right-3 z-[1000]">
           <Link
             href={getI18nPath('/dashboard/user-profile', locale)}
-            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-gray-300 hover:border-blue-500 transition-colors shadow-sm hover:shadow-md"
+            className="flex items-center justify-center w-12 h-12 rounded-full overflow-hidden border-2 border-[#BFC37C] transition-colors shadow-sm hover:shadow-md bg-[#F4F5F6]"
           >
             {user.imageUrl
               ? (
@@ -112,7 +112,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
                   />
                 )
               : (
-                  <div className="w-full h-full bg-blue-500 flex items-center justify-center text-white font-semibold text-lg">
+                  <div className="w-full h-full bg-[#F4F5F6] flex items-center justify-center text-[#7F8B9F] font-semibold text-lg">
                     {user.firstName?.[0] || user.emailAddresses[0]?.emailAddress?.[0] || 'U'}
                   </div>
                 )}
@@ -133,13 +133,13 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
       <div className="lg:hidden fixed top-36 right-4 z-[1000] flex flex-row gap-2 max-w-[280px]">
         <Link
           href={getI18nPath('/sign-in', locale)}
-          className="inline-flex items-center justify-center rounded-lg border-2 border-[#50394D] bg-[#002C4D] px-3 py-2.5 text-xs font-medium text-[#BFC3C7] shadow-lg transition-all hover:bg-[#27131D] hover:border-[#69F0FD] hover:text-[#69F0FD] min-h-[44px] backdrop-blur-sm bg-opacity-95"
+          className="inline-flex items-center justify-center rounded-lg border-2 border-[#BFC37C] bg-[#F4F5F6] px-3 py-2.5 text-xs font-medium text-[#7F8B9F] shadow-lg transition-all min-h-[44px] backdrop-blur-sm bg-opacity-95"
         >
           Sign in
         </Link>
         <Link
           href={getI18nPath('/sign-up', locale)}
-          className="inline-flex items-center justify-center rounded-lg border-2 border-[#69F0FD] bg-[#69F0FD] px-3 py-2.5 text-xs font-medium text-[#27131D] shadow-lg transition-all hover:bg-[#4DADE3] hover:border-[#4DADE3] min-h-[44px] font-semibold backdrop-blur-sm bg-opacity-95"
+          className="inline-flex items-center justify-center rounded-lg border-2 border-[#BFC37C] bg-[#F4F5F6] px-3 py-2.5 text-xs font-medium text-[#7F8B9F] shadow-lg transition-all min-h-[44px] font-semibold backdrop-blur-sm bg-opacity-95"
         >
           Sign up
         </Link>
@@ -152,7 +152,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
             <li>
               <Link
                 href={getI18nPath('/sign-in', locale)}
-                className="inline-flex items-center justify-center rounded-lg border-2 border-[#50394D] bg-[#002C4D] px-6 py-2.5 text-base font-semibold text-[#BFC3C7] shadow-lg transition-all hover:bg-[#27131D] hover:border-[#69F0FD] hover:text-[#69F0FD] hover:shadow-xl"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-[#BFC37C] bg-[#F4F5F6] px-6 py-2.5 text-base font-semibold text-[#7F8B9F] shadow-lg transition-all hover:shadow-xl"
               >
                 Sign in
               </Link>
@@ -160,7 +160,7 @@ export default function AuthNav({ hideButtons = false }: AuthNavProps) {
             <li>
               <Link
                 href={getI18nPath('/sign-up', locale)}
-                className="inline-flex items-center justify-center rounded-lg border-2 border-[#69F0FD] bg-[#69F0FD] px-6 py-2.5 text-base font-semibold text-[#27131D] shadow-lg transition-all hover:bg-[#4DADE3] hover:border-[#4DADE3] hover:shadow-xl"
+                className="inline-flex items-center justify-center rounded-lg border-2 border-[#BFC37C] bg-[#F4F5F6] px-6 py-2.5 text-base font-semibold text-[#7F8B9F] shadow-lg transition-all hover:shadow-xl"
               >
                 Sign up
               </Link>

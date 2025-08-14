@@ -638,10 +638,10 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
   }, []);
 
   return (
-    <div className="h-full flex flex-col lg:flex-row bg-[#002C4D] overflow-hidden">
+    <div className="h-full flex flex-col lg:flex-row bg-[#F4F5F6] overflow-hidden">
       {/* Input Panel */}
       <div
-        className="w-full lg:w-1/3 bg-[#011B2E] border-r border-[#27131D] overflow-y-auto overscroll-contain"
+        className="w-full lg:w-1/3 bg-[#F4F5F6] border-r border-[#BFC37C] overflow-y-auto overscroll-contain"
         onWheel={(e) => {
           e.stopPropagation();
           const target = e.currentTarget;
@@ -655,9 +655,9 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
         }}
       >
         {/* Header */}
-        <div className="p-6 border-b border-[#27131D]">
-          <h2 className="text-2xl font-bold text-[#EC0037] mb-2">Meet in the Middle</h2>
-          <p className="text-[#BFC3C7] text-sm">
+        <div className="p-6 border-b border-[#BFC37C]">
+          <h2 className="text-2xl font-bold text-[#7F8B9F] mb-2">Meet in the Middle</h2>
+          <p className="text-[#7F8B9F] text-sm">
             Find tennis courts ordered by total driving distance. Neither player will drive more than the distance between your two addresses.
           </p>
         </div>
@@ -666,7 +666,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
         <div className="p-6 space-y-6">
           {/* Address 1 */}
           <div className="relative">
-            <label htmlFor="address1-input" className="block text-[#FFFFFF] font-medium mb-2">
+            <label htmlFor="address1-input" className="block text-[#7F8B9F] font-medium mb-2">
               First Address
             </label>
             <div className="relative">
@@ -677,11 +677,11 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 value={address1.query}
                 onChange={e => handleAddressInputChange(e.target.value, 1)}
                 placeholder="Enter first address..."
-                className="w-full px-4 py-3 bg-[#002C4D] border border-[#BFC3C7] rounded-lg text-white placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] transition-colors"
+                className="w-full px-4 py-3 bg-[#F4F5F6] border border-[#BFC37C] rounded-lg text-[#7F8B9F] placeholder-[#7F8B9F] focus:ring-2 focus:ring-[#011B2E] focus:border-[#011B2E] transition-colors"
               />
               {address1.isSearching && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#69F0FD]"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#011B2E]"></div>
                 </div>
               )}
             </div>
@@ -690,7 +690,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
             {address1.showSuggestions && address1.suggestions.length > 0 && (
               <div
                 ref={suggestions1Ref}
-                className="absolute z-50 w-full mt-1 bg-[#002C4D] border border-[#BFC3C7] rounded-lg shadow-lg max-h-60 overflow-y-auto overscroll-contain"
+                className="absolute z-50 w-full mt-1 bg-[#F4F5F6] border border-[#BFC37C] rounded-lg shadow-lg max-h-60 overflow-y-auto overscroll-contain"
                 onWheel={e => e.stopPropagation()}
                 onTouchMove={e => e.stopPropagation()}
               >
@@ -699,10 +699,10 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                     key={`addr1-${suggestion.address}-${index}`}
                     type="button"
                     onClick={() => handleSuggestionSelect(suggestion, 1)}
-                    className="w-full px-4 py-3 text-left hover:bg-[#011B2E] transition-colors border-b border-[#27131D] last:border-b-0"
+                    className="w-full px-4 py-3 text-left hover:bg-[#F4F5F6] transition-colors border-b border-[#BFC37C] last:border-b-0"
                   >
-                    <div className="text-white font-medium">{suggestion.address}</div>
-                    <div className="text-[#BFC3C7] text-sm">
+                    <div className="text-[#7F8B9F] font-medium">{suggestion.address}</div>
+                    <div className="text-[#7F8B9F] text-sm">
                       {suggestion.city}
                       ,
                       {' '}
@@ -718,7 +718,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
 
           {/* Address 2 */}
           <div className="relative">
-            <label htmlFor="address2-input" className="block text-[#FFFFFF] font-medium mb-2">
+            <label htmlFor="address2-input" className="block text-[#7F8B9F] font-medium mb-2">
               Second Address
             </label>
             <div className="relative">
@@ -729,11 +729,11 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 value={address2.query}
                 onChange={e => handleAddressInputChange(e.target.value, 2)}
                 placeholder="Enter second address..."
-                className="w-full px-4 py-3 bg-[#002C4D] border border-[#BFC3C7] rounded-lg text-white placeholder-[#7F8B95] focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] transition-colors"
+                className="w-full px-4 py-3 bg-[#F4F5F6] border border-[#BFC37C] rounded-lg text-[#7F8B9F] placeholder-[#7F8B9F] focus:ring-2 focus:ring-[#011B2E] focus:border-[#011B2E] transition-colors"
               />
               {address2.isSearching && (
                 <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#69F0FD]"></div>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#011B2E]"></div>
                 </div>
               )}
             </div>
@@ -742,7 +742,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
             {address2.showSuggestions && address2.suggestions.length > 0 && (
               <div
                 ref={suggestions2Ref}
-                className="absolute z-50 w-full mt-1 bg-[#002C4D] border border-[#BFC3C7] rounded-lg shadow-lg max-h-60 overflow-y-auto overscroll-contain"
+                className="absolute z-50 w-full mt-1 bg-[#F4F5F6] border border-[#BFC37C] rounded-lg shadow-lg max-h-60 overflow-y-auto overscroll-contain"
                 onWheel={e => e.stopPropagation()}
                 onTouchMove={e => e.stopPropagation()}
               >
@@ -751,10 +751,10 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                     key={`addr2-${suggestion.address}-${index}`}
                     type="button"
                     onClick={() => handleSuggestionSelect(suggestion, 2)}
-                    className="w-full px-4 py-3 text-left hover:bg-[#011B2E] transition-colors border-b border-[#27131D] last:border-b-0"
+                    className="w-full px-4 py-3 text-left hover:bg-[#F4F5F6] transition-colors border-b border-[#BFC37C] last:border-b-0"
                   >
-                    <div className="text-white font-medium">{suggestion.address}</div>
-                    <div className="text-[#BFC3C7] text-sm">
+                    <div className="text-[#7F8B9F] font-medium">{suggestion.address}</div>
+                    <div className="text-[#7F8B9F] text-sm">
                       {suggestion.city}
                       ,
                       {' '}
@@ -770,7 +770,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
 
           {/* Court Filters */}
           <div className="space-y-3">
-            <div className="block text-[#FFFFFF] font-medium">
+            <div className="block text-[#7F8B9F] font-medium">
               Filter Courts
             </div>
             <div className="flex gap-2 flex-wrap">
@@ -779,8 +779,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('all')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('all')
-                    ? 'bg-[#69F0FD] text-[#002C4D] hover:bg-[#918AB5]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 All
@@ -790,8 +790,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('lighted')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('lighted')
-                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 Lighted
@@ -801,8 +801,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('public')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('public')
-                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 Public
@@ -812,8 +812,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('private')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('private')
-                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 Private
@@ -823,8 +823,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('outdoor')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('outdoor')
-                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 Outdoor
@@ -834,8 +834,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                 onClick={() => handleFilterChange('indoor')}
                 className={`px-4 py-2 rounded-lg font-semibold transition-colors ${
                   activeFilters.includes('indoor')
-                    ? 'bg-[#EC0037] text-white hover:bg-[#4A1C23]'
-                    : 'bg-[#27131D] text-[#BFC3C7] hover:bg-[#50394D]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 Indoor
@@ -846,17 +846,17 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
           {/* Progress Indicator */}
           {searchProgress && (
             <div className="space-y-3">
-              <div className="text-[#69F0FD] text-sm font-medium">
+              <div className="text-[#7F8B9F] text-sm font-medium">
                 {searchProgress.phase}
               </div>
-              <div className="w-full bg-[#27131D] rounded-full h-2">
+              <div className="w-full bg-[#F4F5F6] rounded-full h-2 border border-[#BFC37C]">
                 <div
-                  className="bg-gradient-to-r from-[#EC0037] to-[#69F0FD] h-2 rounded-full transition-all duration-300"
+                  className="bg-[#BFC37C] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${searchProgress.current}%` }}
                 >
                 </div>
               </div>
-              <div className="text-[#BFC3C7] text-xs text-center">
+              <div className="text-[#7F8B9F] text-xs text-center">
                 {searchProgress.current}
                 % complete
               </div>
@@ -868,7 +868,7 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
             type="button"
             onClick={findCourtsInBetween}
             disabled={!address1.selected || !address2.selected || isCalculating}
-            className="w-full px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:bg-[#50394D] disabled:cursor-not-allowed transition-colors"
+            className="w-full px-4 py-2 bg-[#BFC37C] text-[#7F8B9F] rounded-lg font-semibold hover:bg-[#BFC37C] disabled:opacity-60 disabled:cursor-not-allowed transition-colors border border-[#BFC37C]"
           >
             {isCalculating
               ? (
@@ -887,18 +887,18 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
         <div>
           {allFoundCourts.length > 0 && (
             <div className="p-6 pt-0">
-              <div className="border-t border-[#27131D] pt-6">
+              <div className="border-t border-[#BFC37C] pt-6">
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-white mb-2">
+                  <h3 className="text-lg font-semibold text-[#7F8B9F] mb-2">
                     Courts Found (
                     {filteredCourts.length}
                     )
                   </h3>
-                  <p className="text-[#BFC3C7] text-xs mb-2">
+                  <p className="text-[#7F8B9F] text-xs mb-2">
                     Sorted by total driving distance (lowest first) • Map centered on most equidistant court
                   </p>
                   {!activeFilters.includes('all') && (
-                    <div className="text-[#69F0FD] text-sm">
+                    <div className="text-[#7F8B9F] text-sm">
                       Filtered by:
                       {' '}
                       {activeFilters.join(', ')}
@@ -911,23 +911,23 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                       key={court.id}
                       type="button"
                       onClick={() => handleCourtClick(court)}
-                      className={`w-full text-left p-4 bg-[#002C4D] border rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#00487E] ${
+                      className={`w-full text-left p-4 bg-[#F4F5F6] border rounded-lg cursor-pointer transition-all duration-200 hover:bg-[#F4F5F6] ${
                         selectedCourt?.id === court.id
-                          ? 'ring-2 ring-[#69F0FD] bg-[#00487E] border-[#69F0FD]'
+                          ? 'ring-2 ring-[#011B2E] bg-[#F4F5F6] border-[#011B2E]'
                           : mostEquidistantCourt?.id === court.id
-                            ? 'border-[#EC0037] border-2 bg-[#4A1C23]'
-                            : 'border-[#BFC3C7]'
+                            ? 'border-[#BFC37C] border-2 bg-[#F4F5F6]'
+                            : 'border-[#BFC37C]'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium text-white">{court.name}</div>
+                        <div className="font-medium text-[#7F8B9F]">{court.name}</div>
                         {mostEquidistantCourt?.id === court.id && (
-                          <div className="px-2 py-1 bg-[#EC0037] text-white text-xs rounded-full font-medium">
+                          <div className="px-2 py-1 bg-[#BFC37C] text-[#7F8B9F] text-xs rounded-full font-medium">
                             Map Center
                           </div>
                         )}
                       </div>
-                      <div className="text-[#BFC3C7] text-sm mb-3">
+                      <div className="text-[#7F8B9F] text-sm mb-3">
                         {court.address}
                         ,
                         {' '}
@@ -935,39 +935,39 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
                       </div>
 
                       {/* Cumulative Distance Display */}
-                      <div className="mb-3 p-2 bg-[#011B2E] rounded border border-[#27131D]">
-                        <div className="text-[#69F0FD] font-medium text-xs mb-1">Total Distance:</div>
-                        <div className="text-[#FFFFFF] font-semibold">
+                      <div className="mb-3 p-2 bg-[#F4F5F6] rounded border border-[#BFC37C]">
+                        <div className="text-[#7F8B9F] font-medium text-xs mb-1">Total Distance:</div>
+                        <div className="text-[#7F8B9F] font-semibold">
                           {(court.totalDistance || 0).toFixed(1)}
                           {' '}
                           mi
                         </div>
-                        <div className="text-[#918AB5] text-xs mt-1">
+                        <div className="text-[#7F8B9F] text-xs mt-1">
                           Combined driving distance for both players
                         </div>
                       </div>
 
                       <div className="grid grid-cols-2 gap-3 text-xs">
                         <div>
-                          <span className="text-[#69F0FD] font-medium">From Address 1:</span>
-                          <div className="text-[#BFC3C7]">
+                          <span className="text-[#7F8B9F] font-medium">From Address 1:</span>
+                          <div className="text-[#7F8B9F]">
                             {court.distanceFromAddress1.toFixed(1)}
                             {' '}
                             mi
                           </div>
                           {court.drivingTimeFromAddress1 && (
-                            <div className="text-[#918AB5]">{court.drivingTimeFromAddress1}</div>
+                            <div className="text-[#7F8B9F]">{court.drivingTimeFromAddress1}</div>
                           )}
                         </div>
                         <div>
-                          <span className="text-[#69F0FD] font-medium">From Address 2:</span>
-                          <div className="text-[#BFC3C7]">
+                          <span className="text-[#7F8B9F] font-medium">From Address 2:</span>
+                          <div className="text-[#7F8B9F]">
                             {court.distanceFromAddress2.toFixed(1)}
                             {' '}
                             mi
                           </div>
                           {court.drivingTimeFromAddress2 && (
-                            <div className="text-[#918AB5]">{court.drivingTimeFromAddress2}</div>
+                            <div className="text-[#7F8B9F]">{court.drivingTimeFromAddress2}</div>
                           )}
                         </div>
                       </div>
@@ -980,8 +980,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
 
           {allFoundCourts.length === 0 && address1.selected && address2.selected && !isCalculating && (
             <div className="p-6 pt-0">
-              <div className="border-t border-[#27131D] pt-6">
-                <div className="text-center text-[#BFC3C7]">
+              <div className="border-t border-[#BFC37C] pt-6">
+                <div className="text-center text-[#7F8B9F]">
                   No courts found between the selected addresses. Try expanding your search area.
                 </div>
               </div>
@@ -990,8 +990,8 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
 
           {allFoundCourts.length > 0 && filteredCourts.length === 0 && (
             <div className="p-6 pt-0">
-              <div className="border-t border-[#27131D] pt-6">
-                <div className="text-center text-[#BFC3C7]">
+              <div className="border-t border-[#BFC37C] pt-6">
+                <div className="text-center text-[#7F8B9F]">
                   No courts match the selected filters. Try removing some filters to see more results.
                 </div>
               </div>
@@ -1016,9 +1016,9 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
               icon={{
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 12,
-                fillColor: '#EC0037', // Crimson Rally
+                fillColor: '#BFC37C',
                 fillOpacity: 1,
-                strokeColor: '#FFFFFF',
+                strokeColor: '#F4F5F6',
                 strokeWeight: 3,
               }}
             />
@@ -1031,9 +1031,9 @@ export default function MeetInTheMiddle({ onCourtSelect }: MeetInTheMiddleProps)
               icon={{
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 12,
-                fillColor: '#4A1C23', // Battle Bronze
+                fillColor: '#7F8B9F',
                 fillOpacity: 1,
-                strokeColor: '#FFFFFF',
+                strokeColor: '#F4F5F6',
                 strokeWeight: 3,
               }}
             />

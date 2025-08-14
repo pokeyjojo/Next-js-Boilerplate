@@ -98,7 +98,7 @@ export default function BanButton({
       <button
         onClick={() => setShowModal(true)}
         className={`
-          bg-[#EC0037] text-white rounded-lg hover:bg-[#4A1C23] transition-colors
+          bg-[#BFC37C] text-[#7F8B9F] rounded-lg transition-colors border border-[#BFC37C]
           flex items-center gap-2 ${sizeClasses[size]} ${className}
         `}
         title={getBanTypeLabel(banType)}
@@ -113,61 +113,61 @@ export default function BanButton({
 
       {showModal && (
         <div className="fixed inset-0 z-[1001] flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-md border border-[#BFC3C7] mx-4">
+          <div className="bg-[#F4F5F6] rounded-lg shadow-lg p-6 w-full max-w-md border border-[#BFC37C] mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-[#7F8B9F]">
                 {getBanTypeLabel(banType)}
               </h3>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-[#BFC3C7] hover:text-white transition-colors"
+                className="text-[#7F8B9F] transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="mb-4 p-3 bg-[#011B2E] rounded-lg border border-[#BFC3C7]">
-              <p className="text-white text-sm">
+            <div className="mb-4 p-3 bg-[#F4F5F6] rounded-lg border border-[#BFC37C]">
+              <p className="text-[#7F8B9F] text-sm">
                 <strong>User:</strong> {userName}
               </p>
               {userEmail && (
-                <p className="text-[#BFC3C7] text-sm">
+                <p className="text-[#7F8B9F] text-sm">
                   <strong>Email:</strong> {userEmail}
                 </p>
               )}
-              <p className="text-[#BFC3C7] text-xs mt-1">
+              <p className="text-[#7F8B9F] text-xs mt-1">
                 <strong>ID:</strong> {userId}
               </p>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-white text-sm font-medium mb-2">
+                <label className="block text-[#7F8B9F] text-sm font-medium mb-2">
                   Reason for Ban (Optional)
                 </label>
                 <textarea
                   value={banReason}
                   onChange={(e) => setBanReason(e.target.value)}
-                  className="w-full bg-[#011B2E] text-white border border-[#BFC3C7] rounded-lg p-3 focus:outline-none focus:border-[#69F0FD] min-h-[80px] resize-none"
+                  className="w-full bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C] rounded-lg p-3 focus:outline-none focus:border-[#011B2E] min-h-[80px] resize-none"
                   placeholder={`Explain why this user should be banned from ${banType === 'full' ? 'all actions' : banType}...`}
                   maxLength={500}
                 />
-                <div className="text-right text-xs text-[#BFC3C7] mt-1">
+                <div className="text-right text-xs text-[#7F8B9F] mt-1">
                   {banReason.length}/500
                 </div>
               </div>
 
               <div>
-                <label className="block text-white text-sm font-medium mb-2">
+                <label className="block text-[#7F8B9F] text-sm font-medium mb-2">
                   Expiration Date (Optional)
                 </label>
                 <input
                   type="datetime-local"
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
-                  className="w-full bg-[#011B2E] text-white border border-[#BFC3C7] rounded-lg p-2 focus:outline-none focus:border-[#69F0FD]"
+                  className="w-full bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C] rounded-lg p-2 focus:outline-none focus:border-[#011B2E]"
                 />
-                <p className="text-[#BFC3C7] text-xs mt-1">
+                <p className="text-[#7F8B9F] text-xs mt-1">
                   Leave empty for permanent ban
                 </p>
               </div>
@@ -176,14 +176,14 @@ export default function BanButton({
                 <button
                   onClick={handleBanUser}
                   disabled={submitting}
-                  className="flex-1 bg-[#EC0037] text-white py-2 rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors disabled:opacity-60"
+                  className="flex-1 bg-[#BFC37C] text-[#7F8B9F] py-2 rounded-lg font-semibold transition-colors disabled:opacity-60 border border-[#BFC37C]"
                 >
                   {submitting ? 'Banning...' : `Ban ${banType === 'full' ? 'User' : `from ${banType}`}`}
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
                   disabled={submitting}
-                  className="flex-1 bg-[#50394D] text-[#BFC3C7] py-2 rounded-lg font-semibold hover:bg-[#918AB5] transition-colors disabled:opacity-60"
+                  className="flex-1 bg-[#F4F5F6] text-[#7F8B9F] py-2 rounded-lg font-semibold transition-colors disabled:opacity-60 border border-[#BFC37C]"
                 >
                   Cancel
                 </button>

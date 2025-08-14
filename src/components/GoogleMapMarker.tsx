@@ -30,9 +30,9 @@ export default function GoogleMapMarker({
       const markerIcon = icon || {
         path: google.maps.SymbolPath.CIRCLE,
         scale: 12,
-        fillColor: isPrivate ? '#EC0037' : '#002C4D', // Crimson Rally for private, Midnight Arena for public
+        fillColor: isPrivate ? '#BFC37C' : '#7F8B9F',
         fillOpacity: 1,
-        strokeColor: '#FFFFFF', // Precision White
+        strokeColor: '#F4F5F6',
         strokeWeight: 3,
       };
 

@@ -59,37 +59,37 @@ export default function GoogleMap({
           {
             featureType: 'all',
             elementType: 'labels.text.fill',
-            stylers: [{ color: '#002C4D' }], // Midnight Arena
+            stylers: [{ color: '#7F8B9F' }],
           },
           {
             featureType: 'all',
             elementType: 'labels.text.stroke',
-            stylers: [{ color: '#FFFFFF' }], // Precision White
+            stylers: [{ color: '#F4F5F6' }],
           },
           {
             featureType: 'road',
             elementType: 'geometry',
-            stylers: [{ color: '#EBEDEE' }], // Cloudy Court
+            stylers: [{ color: '#F4F5F6' }],
           },
           {
             featureType: 'road.highway',
             elementType: 'geometry',
-            stylers: [{ color: '#BFC3C7' }], // Silver Armor
+            stylers: [{ color: '#BFC37C' }],
           },
           {
             featureType: 'water',
             elementType: 'geometry',
-            stylers: [{ color: '#69F0FD' }], // Court Flash
+            stylers: [{ color: '#F4F5F6' }],
           },
           {
             featureType: 'landscape',
             elementType: 'geometry',
-            stylers: [{ color: '#EBEDEE' }], // Cloudy Court
+            stylers: [{ color: '#F4F5F6' }],
           },
           {
             featureType: 'poi',
             elementType: 'geometry',
-            stylers: [{ color: '#918AB5' }], // Victory Lavender
+            stylers: [{ color: '#F4F5F6' }],
           },
           // Hide all POI (Points of Interest) labels and icons
           {

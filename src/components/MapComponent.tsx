@@ -305,7 +305,7 @@ const CourtList = ({
                   onExternalSearchChange(e.target.value);
                 }
               }}
-              className="w-full px-3 py-2 border border-[#BFC3C7] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EC0037] text-sm bg-[#FFFFFF] text-[#27131D]"
+              className="w-full px-3 py-2 border border-[#BFC37C] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#011B2E] text-sm bg-[#F4F5F6] text-[#7F8B9F]"
               ref={searchInputRef}
             />
             {effectiveSearchQuery && (
@@ -332,8 +332,8 @@ const CourtList = ({
                 onClick={() => applyQuickFilter(filter.key)}
                 className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                   activeFilters.includes(filter.key)
-                    ? 'bg-[#EC0037] text-white shadow-lg'
-                    : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 {filter.label}
@@ -350,8 +350,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('az')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 sortType === 'az'
-                  ? 'bg-[#002C4D] text-white shadow-lg'
-                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                  ? 'bg-[#F4F5F6] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                  : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
               }`}
             >
               A-Z
@@ -361,8 +361,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('distance')}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
                 sortType === 'distance'
-                  ? 'bg-[#002C4D] text-white shadow-lg'
-                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                  ? 'bg-[#F4F5F6] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                  : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
               }`}
             >
               Distance
@@ -399,8 +399,8 @@ const CourtList = ({
                 onClick={() => applyQuickFilter(filter.key)}
                 className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                   activeFilters.includes(filter.key)
-                    ? 'bg-[#EC0037] text-white shadow-lg'
-                    : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                    ? 'bg-[#BFC37C] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                    : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
                 }`}
               >
                 {filter.label}
@@ -417,8 +417,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('az')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 sortType === 'az'
-                  ? 'bg-[#002C4D] text-white shadow-lg'
-                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                  ? 'bg-[#F4F5F6] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                  : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
               }`}
             >
               A-Z
@@ -428,8 +428,8 @@ const CourtList = ({
               onClick={() => handleSortToggle('distance')}
               className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 sortType === 'distance'
-                  ? 'bg-[#002C4D] text-white shadow-lg'
-                  : 'bg-[#00487E] text-white hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7]'
+                  ? 'bg-[#F4F5F6] text-[#7F8B9F] shadow-lg border border-[#BFC37C]'
+                  : 'bg-[#F4F5F6] text-[#7F8B9F] border border-[#BFC37C]'
               }`}
             >
               Distance
@@ -492,11 +492,11 @@ const CourtList = ({
                   })()}
                 </p>
                 <div className={`${isMobile ? 'mt-1' : 'mt-2'} flex gap-2 flex-wrap items-center`}>
-                  <span className={`px-2 py-1 rounded text-xs sm:text-sm border ${court.membership_required ? 'border-[#EC0037] text-[#EC0037] bg-[#27131D]/20' : 'border-[#002C4D] text-[#002C4D] bg-[#002C4D]/10'}`}>
+                  <span className={`px-2 py-1 rounded text-xs sm:text-sm border ${court.membership_required ? 'border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6]' : 'border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6]'}`}>
                     {court.membership_required ? 'Private' : 'Public'}
                   </span>
                   {court.lighted && (
-                    <span className="px-2 py-1 rounded border border-[#69F0FD] text-[#69F0FD] bg-[#69F0FD]/10 text-xs sm:text-sm">
+                    <span className="px-2 py-1 rounded border border-[#BFC37C] text-[#7F8B9F] bg-[#F4F5F6] text-xs sm:text-sm">
                       Lights
                     </span>
                   )}
@@ -610,7 +610,7 @@ const OptimizedSearchBar = React.memo(({
   }, []);
 
   return (
-    <div className="bg-[#011B2E] rounded-lg shadow-xl border-2 border-[#27131D] p-2">
+    <div className="bg-[#F4F5F6] rounded-lg shadow-xl border-2 border-[#BFC37C] p-2">
       <div className="relative">
         <input
           type="text"
@@ -618,13 +618,13 @@ const OptimizedSearchBar = React.memo(({
           value={localQuery}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
-          className="w-full px-3 py-2 border-2 border-[#50394D] rounded-lg bg-[#002C4D] text-[#EBEDEE] placeholder-[#7F8B95] text-sm focus:outline-none focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.4)] transition-all duration-200"
+          className="w-full px-3 py-2 border-2 border-[#BFC37C] rounded-lg bg-[#F4F5F6] text-[#7F8B9F] placeholder-[#7F8B9F] text-sm focus:outline-none focus:ring-2 focus:ring-[#011B2E] focus:border-[#011B2E] transition-all duration-200"
           aria-label="Search tennis courts"
         />
         {localQuery && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#BFC3C7] hover:text-[#69F0FD] hover:bg-[#27131D] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#7F8B9F] rounded-full w-6 h-6 flex items-center justify-center transition-all duration-200"
             aria-label="Clear search"
           >
             ✕
@@ -764,8 +764,8 @@ function ReviewModal({
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-[#002C4D] rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto border border-[#BFC3C7]">
-        <button className="absolute top-2 right-2 text-[#BFC3C7] hover:text-white transition-colors" onClick={onClose}>&times;</button>
+      <div className="bg-[#F4F5F6] rounded-lg shadow-lg p-6 w-full max-w-2xl relative max-h-[90vh] overflow-y-auto border border-[#BFC37C]">
+        <button className="absolute top-2 right-2 text-[#7F8B9F] transition-colors" onClick={onClose}>&times;</button>
         <h3 className="text-lg font-bold mb-4 text-white">{isEdit ? 'Edit Review' : 'Leave a Review'}</h3>
 
         <div className="mb-4">
@@ -773,7 +773,7 @@ function ReviewModal({
         </div>
 
         <textarea
-          className="w-full bg-[#00487E] text-white placeholder-[#7F8B95] border border-[#BFC3C7] rounded-lg p-2 mb-4 min-h-[80px] focus:outline-none focus:border-2 focus:border-[#69F0FD] focus:shadow-[0_0_15px_rgba(105,240,253,0.6),0_0_0_2px_#69F0FD] transition-all"
+          className="w-full bg-[#F4F5F6] text-[#7F8B9F] placeholder-[#7F8B9F] border border-[#BFC37C] rounded-lg p-2 mb-4 min-h-[80px] focus:outline-none focus:border-2 focus:border-[#011B2E] transition-all"
           placeholder="Share your experience..."
           value={text}
           onChange={e => setText(e.target.value)}
@@ -791,7 +791,7 @@ function ReviewModal({
         </div>
 
         <button
-          className="w-full bg-[#EC0037] text-white py-2 rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors disabled:opacity-60 shadow-lg"
+          className="w-full bg-[#BFC37C] text-[#7F8B9F] py-2 rounded-lg font-semibold transition-colors disabled:opacity-60 shadow-lg border border-[#BFC37C]"
           onClick={() => onSubmit(rating, text, photos)}
           disabled={loading || rating < 1}
         >
@@ -1181,7 +1181,7 @@ function CourtDetailsPanel({
   return (
     <div
       className={
-        'fixed z-50 bg-[#002C4D] shadow-2xl border-t border-l border-[#BFC3C7] '
+        'fixed z-50 bg-[#F4F5F6] shadow-2xl border-t border-l border-[#BFC37C] '
         + 'transition-all duration-300 '
         + 'w-full max-w-lg bottom-0 left-0 right-0 mx-auto rounded-t-xl p-6 '
         + 'lg:static lg:rounded-none lg:border-t-0 lg:border-l lg:w-[400px] lg:max-w-[400px] lg:h-full lg:overflow-y-auto lg:shadow-none lg:p-8 '
@@ -1203,7 +1203,7 @@ function CourtDetailsPanel({
       }}
     >
       <button
-        className="absolute top-4 right-4 text-[#BFC3C7] hover:text-white transition-colors"
+        className="absolute top-4 right-4 text-[#7F8B9F] transition-colors"
         onClick={() => setSelectedCourt(null)}
         aria-label="Close details"
       >
@@ -1226,7 +1226,7 @@ function CourtDetailsPanel({
           href={getDirectionsUrl(selectedCourt)}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-[#69F0FD] hover:text-[#EC0037] text-sm font-medium transition-colors"
+          className="inline-flex items-center gap-2 text-[#7F8B9F] text-sm font-medium transition-colors"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
@@ -1237,7 +1237,7 @@ function CourtDetailsPanel({
       <div className="flex space-x-8 border-b mb-4">
         <button
           onClick={() => setActiveTab('overview')}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'overview' ? 'border-[#BFC37C] text-[#7F8B9F]' : 'border-transparent text-[#7F8B9F]'}`}
         >
           Overview
         </button>
@@ -1246,7 +1246,7 @@ function CourtDetailsPanel({
             setActiveTab('photos');
             fetchPhotos();
           }}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'photos' ? 'border-[#BFC37C] text-[#7F8B9F]' : 'border-transparent text-[#7F8B9F]'}`}
         >
           Photos
         </button>
@@ -1255,7 +1255,7 @@ function CourtDetailsPanel({
             setActiveTab('reviews');
             fetchReviews();
           }}
-          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-[#EC0037] text-[#EC0037]' : 'border-transparent text-[#7F8B95] hover:text-[#69F0FD] hover:border-[#69F0FD]'}`}
+          className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'reviews' ? 'border-[#BFC37C] text-[#7F8B9F]' : 'border-transparent text-[#7F8B9F]'}`}
         >
           Reviews
         </button>
@@ -1272,11 +1272,11 @@ function CourtDetailsPanel({
 
               {/* Sign-in prompt for suggestions */}
               {!isSignedIn && (
-                <div className="mt-6 pt-4 border-t border-[#BFC3C7]">
-                  <div className="text-center text-[#BFC3C7] py-4">
+                <div className="mt-6 pt-4 border-t border-[#BFC37C]">
+                  <div className="text-center text-[#7F8B9F] py-4">
                     <p className="text-sm">
                       <span
-                        className="text-[#69F0FD] hover:text-[#4DADE3] cursor-pointer underline transition-colors"
+                        className="text-[#7F8B9F] cursor-pointer underline transition-colors"
                         onClick={() => router.push(getI18nPath('/sign-in', locale))}
                       >
                         Sign in
@@ -1290,7 +1290,7 @@ function CourtDetailsPanel({
 
               {/* Edit Buttons */}
               {isSignedIn && (
-                <div className="mt-6 pt-4 border-t border-[#BFC3C7]">
+                <div className="mt-6 pt-4 border-t border-[#BFC37C]">
                   <div className="flex items-center space-x-3">
                     <CourtEditSuggestion
                       court={{
@@ -1352,7 +1352,7 @@ function CourtDetailsPanel({
                     {isAdmin && (
                       <button
                         onClick={() => _setShowDeleteCourtModal(true)}
-                        className="flex items-center space-x-2 px-4 py-2 bg-[#EC0037] text-white rounded-lg hover:bg-[#4A1C23] transition-colors"
+                        className="flex items-center space-x-2 px-4 py-2 bg-[#BFC37C] text-[#7F8B9F] rounded-lg transition-colors border border-[#BFC37C]"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1389,9 +1389,9 @@ function CourtDetailsPanel({
               )}
 
               {/* Gladiator Tennis League Button */}
-              <div className="mt-8 pt-6 border-t border-[#BFC3C7]">
+              <div className="mt-8 pt-6 border-t border-[#BFC37C]">
                 <div className="text-center">
-                  <p className="text-[#BFC3C7] text-sm mb-4">
+                  <p className="text-[#7F8B9F] text-sm mb-4">
                     Want to play matches at these courts?
                     <br />
                     Join a Chicago tennis league
@@ -1400,7 +1400,7 @@ function CourtDetailsPanel({
                     href="https://www.gladiatortennis.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block w-full px-6 py-3 bg-[#002C4D] text-[#FFFFFF] font-bold text-sm rounded-lg hover:bg-[#011B2E] transition-colors duration-200 shadow-lg border border-[#27131D]"
+                    className="inline-block w-full px-6 py-3 bg-[#F4F5F6] text-[#7F8B9F] font-bold text-sm rounded-lg transition-colors duration-200 shadow-lg border border-[#BFC37C]"
                   >
                     RESERVE YOUR GLADIATOR SPOT
                   </a>
@@ -1413,19 +1413,19 @@ function CourtDetailsPanel({
               <div>
                 {loadingPhotos
                   ? (
-                      <div className="text-center text-[#BFC3C7]">Loading photos...</div>
+                      <div className="text-center text-[#7F8B9F]">Loading photos...</div>
                     )
                   : (
                       <>
                         {!isSignedIn && (
-                          <div className="mb-4 text-center text-[#BFC3C7] py-4">
+                          <div className="mb-4 text-center text-[#7F8B9F] py-4">
                             <p className="text-sm">Sign in to post photos</p>
                           </div>
                         )}
                         {isSignedIn && !isBanned && (
                           <div className="mb-4 flex justify-center">
                             <button
-                              className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] transition-colors shadow-lg"
+                              className="px-4 py-2 bg-[#BFC37C] text-[#7F8B9F] rounded-lg font-semibold transition-colors shadow-lg border border-[#BFC37C]"
                               onClick={() => setShowPhotoUploadModal(true)}
                             >
                               Add Photos
@@ -1433,7 +1433,7 @@ function CourtDetailsPanel({
                           </div>
                         )}
                         {isSignedIn && isBanned && (
-                          <div className="mb-4 text-center text-[#EC0037] py-4">
+                          <div className="mb-4 text-center text-[#7F8B9F] py-4">
                             <p className="text-sm">You are banned from submitting content</p>
                           </div>
                         )}
@@ -1453,12 +1453,12 @@ function CourtDetailsPanel({
               <div>
                 {loadingReviews
                   ? (
-                      <div className="text-center text-[#BFC3C7]">Loading reviews...</div>
+                      <div className="text-center text-[#7F8B9F]">Loading reviews...</div>
                     )
                   : (
                       <>
                         {reviews.length === 0 && (
-                          <div className="text-center text-[#BFC3C7]">No reviews yet.</div>
+                          <div className="text-center text-[#7F8B9F]">No reviews yet.</div>
                         )}
                         {reviews.length > 0 && (
                           <>
@@ -1471,8 +1471,8 @@ function CourtDetailsPanel({
                             />
 
                             {/* Text Reviews Section */}
-                            <div className="bg-[#002C4D] rounded-lg p-3 border border-[#BFC3C7] mb-4">
-                              <h4 className="text-sm font-semibold text-white mb-2">
+                            <div className="bg-[#F4F5F6] rounded-lg p-3 border border-[#BFC37C] mb-4">
+                              <h4 className="text-sm font-semibold text-[#7F8B9F] mb-2">
                                 Written Reviews (
                                 {reviews.filter((r: any) => r.text && r.text.trim()).length}
                                 )
@@ -1481,7 +1481,7 @@ function CourtDetailsPanel({
                               {reviews.filter((r: any) => r.text && r.text.trim()).length === 0
                                 ? (
                                     <div className="text-center py-3">
-                                      <p className="text-[#BFC3C7] text-xs">No written reviews yet.</p>
+                                      <p className="text-[#7F8B9F] text-xs">No written reviews yet.</p>
                                     </div>
                                   )
                                 : (
@@ -1489,19 +1489,19 @@ function CourtDetailsPanel({
                                       {reviews
                                         .filter((review: any) => review.text && review.text.trim())
                                         .map((review: any) => (
-                                          <div key={review.id} className="mb-3 border-b border-[#BFC3C7] pb-2 last:border-b-0">
+                                          <div key={review.id} className="mb-3 border-b border-[#BFC37C] pb-2 last:border-b-0">
                                             <div className="flex items-center gap-2 mb-1">
                                               <span className="font-semibold text-white text-sm">{review.userName}</span>
                                               <StarRating value={review.rating} />
-                                              <span className="text-xs text-[#BFC3C7]">{new Date(review.createdAt).toLocaleDateString()}</span>
+                                              <span className="text-xs text-[#7F8B9F]">{new Date(review.createdAt).toLocaleDateString()}</span>
                                             </div>
-                                            <div className="text-[#BFC3C7] text-xs leading-relaxed whitespace-pre-line">{review.text}</div>
+                                            <div className="text-[#7F8B9F] text-xs leading-relaxed whitespace-pre-line">{review.text}</div>
                                             {review.photos && (
                                               <div className="mt-2 grid grid-cols-2 gap-2">
                                                 {JSON.parse(review.photos).map((photo: string, index: number) => (
                                                   <button
                                                     key={index}
-                                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#69F0FD] hover:ring-2 hover:ring-[#69F0FD] transition-all"
+                                                    className="w-full aspect-square overflow-hidden rounded-lg focus:outline-none focus:ring-2 focus:ring-[#011B2E] hover:ring-2 hover:ring-[#011B2E] transition-all"
                                                     onClick={() => {
                                                       setPhotoViewerPhotos(JSON.parse(review.photos));
                                                       setPhotoViewerIndex(index);
@@ -1632,43 +1632,38 @@ function CourtDetailsPanel({
                 {/* Report Modal */}
                 {reportReviewId && (
                   <div className="fixed inset-0 z-[1100] flex items-center justify-center bg-black bg-opacity-60">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-gray-200">
-                      <h3 className="text-lg font-semibold mb-4">Report Review</h3>
+                    <div className="bg-[#F4F5F6] rounded-lg shadow-xl p-6 w-full max-w-md relative border-2 border-[#BFC37C]">
+                      <h3 className="text-lg font-semibold mb-4 text-[#7F8B9F]">Report Review</h3>
 
                       {/* Message Display */}
                       {reportMessage && (
-                        <div className={`mb-4 p-3 rounded-lg ${
-                          reportMessageType === 'success'
-                            ? 'bg-green-50 border border-green-200 text-green-800'
-                            : 'bg-red-50 border border-red-200 text-red-800'
-                        }`}
-                        >
+                        <div className="mb-4 p-3 rounded-lg border border-[#BFC37C] text-[#7F8B9F]">
                           {reportMessage}
                         </div>
                       )}
 
                       <div className="mb-4">
-                        <label htmlFor="report-reason" className="block text-sm font-medium text-gray-700 mb-2">
+                        <label htmlFor="report-reason" className="block text-sm font-medium text-[#7F8B9F] mb-2">
                           Reason for report:
                         </label>
                         <textarea
                           id="report-reason"
                           value={reportReason}
                           onChange={e => setReportReason(e.target.value)}
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#69F0FD] focus:border-[#69F0FD]"
+                          className="w-full p-3 border border-[#BFC37C] rounded-lg focus:ring-2 focus:ring-[#011B2E] focus:border-[#011B2E] text-[#7F8B9F] bg-[#F4F5F6]"
                           rows={4}
                           placeholder="Please explain why you're reporting this review..."
                           maxLength={100}
                           disabled={submittingReport}
                         />
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-[#7F8B9F] mt-1">
                           {reportReason.length}
                           /100 characters
                         </div>
                       </div>
-                      <div className="flex gap-3 justify-end pt-2 border-t border-gray-200">
+                      <div className="flex gap-3 justify-end pt-2 border-t border-[#BFC37C]">
                         <button
-                          className="px-4 py-2 bg-[#00487E] text-white rounded-lg font-semibold hover:bg-[#69F0FD] hover:text-[#27131D] border border-[#BFC3C7] shadow transition-colors"
+                          className="px-4 py-2 bg-[#F4F5F6] text-[#7F8B9F] rounded-lg font-semibold border border-[#BFC37C] shadow transition-colors"
                           onClick={cancelReport}
                           disabled={submittingReport}
                           style={{ minWidth: '80px' }}
@@ -1676,7 +1671,7 @@ function CourtDetailsPanel({
                           Cancel
                         </button>
                         <button
-                          className="px-4 py-2 bg-[#EC0037] text-white rounded-lg font-semibold hover:bg-[#4A1C23] disabled:opacity-50 disabled:cursor-not-allowed border-2 border-[#4A1C23] shadow-lg transition-colors"
+                          className="px-4 py-2 bg-[#BFC37C] text-[#7F8B9F] rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-[#BFC37C] shadow-lg transition-colors"
                           onClick={submitReport}
                           disabled={submittingReport || !reportReason.trim()}
                           style={{ minWidth: '120px' }}

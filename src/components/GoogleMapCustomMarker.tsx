@@ -29,8 +29,8 @@ export default function GoogleMapCustomMarker({
 }: CustomMarkerProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  const markerColor = customIcon ? customIcon.fillColor : (isPrivate ? '#EC0037' : '#002C4D'); // Crimson Rally for private, Midnight Arena for public
-  const borderColor = customIcon ? customIcon.strokeColor : '#FFFFFF'; // Precision White
+  const markerColor = customIcon ? customIcon.fillColor : (isPrivate ? '#BFC37C' : '#7F8B9F');
+  const borderColor = customIcon ? customIcon.strokeColor : '#F4F5F6';
   const hoverScale = isHovered ? 1.2 : 1;
 
   // If using custom icon, render as SVG
@@ -88,7 +88,7 @@ export default function GoogleMapCustomMarker({
           style={{
             width: size + 6,
             height: size + 6,
-            backgroundColor: 'rgba(39, 19, 29, 0.3)', // Arena Shadow with opacity
+            backgroundColor: 'rgba(127, 139, 159, 0.3)',
             left: -3,
             top: -3,
             zIndex: 1,
@@ -104,8 +104,8 @@ export default function GoogleMapCustomMarker({
             backgroundColor: markerColor,
             borderColor,
             boxShadow: isHovered
-              ? `0 4px 12px rgba(39, 19, 29, 0.4)`
-              : `0 2px 6px rgba(39, 19, 29, 0.3)`,
+              ? `0 4px 12px rgba(127, 139, 159, 0.4)`
+              : `0 2px 6px rgba(127, 139, 159, 0.3)`,
             zIndex: 2,
           }}
         >

@@ -9,14 +9,14 @@ export const BaseTemplate = (props: {
   const t = useTranslations('BaseTemplate');
 
   return (
-    <div className="w-full px-2 sm:px-4 lg:px-6 text-[#BFC3C7] antialiased bg-[#002C4D] min-h-screen">
+    <div className="w-full px-2 sm:px-4 lg:px-6 text-[#7F8B9F] antialiased bg-[#F4F5F6] min-h-screen">
       <div className="mx-auto max-w-screen-lg">
-        <header className="border-b border-[#69F0FD]">
+        <header className="border-b border-[#BFC37C]">
           <div className="pb-6 pt-12 sm:pb-8 sm:pt-16">
-            <h1 className="text-2xl sm:text-3xl font-bold text-[#BFC3C7]">
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#7F8B9F]">
               {AppConfig.name}
             </h1>
-            <h2 className="text-lg sm:text-xl text-[#7F8B95]">{t('description')}</h2>
+            <h2 className="text-lg sm:text-xl text-[#7F8B9F]">{t('description')}</h2>
           </div>
 
           {/* Mobile: Stack navigation vertically */}
@@ -39,13 +39,13 @@ export const BaseTemplate = (props: {
 
         <main className="py-4 sm:py-6">{props.children}</main>
 
-        <footer className="border-t border-[#69F0FD] py-6 sm:py-8 text-center text-sm text-[#7F8B95]">
+        <footer className="border-t border-[#BFC37C] py-6 sm:py-8 text-center text-sm text-[#7F8B9F]">
           {`© Copyright ${new Date().getFullYear()} ${AppConfig.name}. `}
           {t.rich('made_with', {
             author: () => (
               <a
                 href="https://creativedesignsguru.com"
-                className="text-[#69F0FD] hover:border-b-2 hover:border-[#69F0FD] transition-colors"
+                className="text-[#7F8B9F] hover:border-b-2 hover:border-[#7F8B9F] transition-colors"
               >
                 CreativeDesignsGuru
               </a>
