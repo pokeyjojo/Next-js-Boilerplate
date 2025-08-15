@@ -1,4 +1,5 @@
 import type { PgliteDatabase } from 'drizzle-orm/pglite';
+import fs from 'node:fs';
 import path from 'node:path';
 import { PGlite } from '@electric-sql/pglite';
 import { drizzle as drizzlePglite } from 'drizzle-orm/pglite';
@@ -17,7 +18,11 @@ export async function getDb() {
   }
 
   if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
-    const client = postgres('postgres://postgres:tennis@localhost:5432/tennis_courts');
+    const caPath = process.env.DATABASE_CA_PATH;
+    const ca = caPath ? fs.readFileSync(caPath, 'utf8') : undefined;
+    const client = postgres(process.env.DATABASE_URL ?? '', {
+      ssl: ca ? { ca, rejectUnauthorized: true } : 'require',
+    });
     drizzle = drizzlePg(client, { schema });
 
     // Check if table exists before running migrations

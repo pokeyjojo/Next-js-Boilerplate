@@ -2590,13 +2590,13 @@ function InlineCourtInfo({
 
     return (
       <div className="mb-2">
-        <div className="text-sm text-white">
+        <div className="text-sm text-[#011B2E]">
           <strong>
             {label}
             :
           </strong>
           {' '}
-          <span className="text-[#BFC3C7]">{displayValue || 'Not specified'}</span>
+          <span className="text-[#7F8B9F]">{displayValue || 'Not specified'}</span>
         </div>
         {fieldSuggestions.map((suggestion) => {
           const suggestedField = `suggested${field.charAt(0).toUpperCase() + field.slice(1)}` as keyof typeof suggestion;
@@ -2763,12 +2763,12 @@ function CourtNameWithSuggestions({
   const nameSuggestions = pendingSuggestions.filter(suggestion => suggestion.suggestedName);
 
   if (loading) {
-    return <h2 className="text-2xl font-bold mb-2 text-white">{court.name}</h2>;
+    return <h2 className="text-2xl font-bold mb-2 text-[#011B2E]">{court.name}</h2>;
   }
 
   return (
     <div className="mb-2">
-      <h2 className="text-2xl font-bold text-white">{court.name}</h2>
+      <h2 className="text-2xl font-bold text-[#011B2E]">{court.name}</h2>
       {nameSuggestions.map(suggestion => (
         <div key={suggestion.id} className="mt-1 p-2 bg-[#918AB5]/20 border border-[#918AB5] rounded text-xs overflow-hidden">
           <div className="flex items-center justify-between">
@@ -2903,7 +2903,7 @@ function CourtAddressWithSuggestions({
 
   if (loading) {
     return (
-      <div className="text-[#BFC3C7] mb-2">
+      <div className="text-[#7F8B9F] mb-2">
         {court.address}
         {court.city && `, ${court.city}`}
         {court.zip && court.zip !== '00000' && `, ${court.zip}`}
@@ -2913,7 +2913,7 @@ function CourtAddressWithSuggestions({
 
   return (
     <div className="mb-2">
-      <div className="text-[#BFC3C7]">
+      <div className="text-[#7F8B9F]">
         {court.address}
         {court.city && `, ${court.city}`}
         {court.zip && court.zip !== '00000' && `, ${court.zip}`}

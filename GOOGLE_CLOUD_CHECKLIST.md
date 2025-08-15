@@ -54,3 +54,4 @@ NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=AIzaSyDxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 3. **API Restrictions**: Remove all restrictions during testing
 4. **Wrong Environment File**: Use `.env.local` not `.env`
 
+
